@@ -1,3 +1,5 @@
+We will try to find useful ways of thinking about data systems—not just **how they work**, but also **why they work that way**, and **what questions we need to ask**.
+
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
 ### Definition 
