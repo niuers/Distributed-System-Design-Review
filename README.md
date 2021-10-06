@@ -60,7 +60,12 @@ The ability of a system to deal with increased load.
 
 
 ### Describing Load
-1. 
+1. We use **load parameters** to describe load
+   * Requests per Second to a web server
+   * The ratios of reads to writes in DB
+   * The number of  simultaneously active users in a chat room
+   * The hit rate on a cache
+   * 
 ## 3. Maintainability
 ## 4. Availability
 ## 5. Efficiency
@@ -68,3 +73,9 @@ The ability of a system to deal with increased load.
 # References
 1. Designing Data-Intensive Applications (DDIA), The Big Ideas Behind Reliable, Scalable, and Maintainable Systems, Martin Kleppmann, 2017.
 2. Grokking the System Design Interview
+
+# Twitter
+## Main Operations
+1. post tweet
+   * Scaling challenge not primarily due to tweet volume but due to fan-out. 
+3. home timeline
