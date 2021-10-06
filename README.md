@@ -1,6 +1,6 @@
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
-### Definition: 
+### Definition 
 
 The system should continue to work correctly (performing the correct function at the desired level of performance) even in the face of adversity (hardware or software **faults**, and even human error). The probability a system will fail in a given period.
 
@@ -49,7 +49,16 @@ The system should continue to work correctly (performing the correct function at
 
 
 ## 2. Scalablility
-   * Test
+### Definition
+The ability of a system to deal with increased load.
+
+1. A system can become unreliable if the load increases a lot.
+1. If the system grows in a particular ways, what are our options for coping with the growth? 
+2. How can we add computing resources to handle the additional load?
+
+
+### Describing Load
+1. 
 ## 3. Maintainability
 ## 4. Availability
 ## 5. Efficiency
