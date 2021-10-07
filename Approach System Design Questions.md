@@ -61,7 +61,7 @@
 1. Focus on Scalability, Performance, Availability
 1. Need find trade-offs between different qualities 
 1. CAP Theorem
-   * It tells me that I should be choosing between Availability and consistency, we choose availability.
+   * It tells me that I should be choosing between Availability and consistency, we choose availability, i.e. prefer to show stale data over no data at all.
 
 
 # Step 2: Create a high level design
@@ -125,9 +125,69 @@
       * Terminate queries that takes too long to run
    * To increase availability, we need replicate data
       * Master/Leader shard with read replica (which only allow reads), the replicas can be in a different data center than the master shard
-      * 
-10. 
-
+10. NoSQL Databases (Apache Cassandra)
+   * We also split data into chunks (shards) or nodes.
+      * Each shard is equal, no leader and followers
+      * No configuration service needed, Shards talks to each other and exchange information
+      * Gossip Protocol: To reduce network load, shards only talk to less than 3 other shards every second
+      * No cluster proxy needed, Every node knows about each other, and can forward request to corresponding node
+   * We can use round robin to choose inital node to process request, or choose the node with the shortest distance to client
+      * The initial node is called: coordinator node. The coordinator decides which node to process the input data
+         * We can use **consistent hashing** algorithm to pick the node
+         * N.B. **consisten hasing** is also used to design distributed cache
+      * It uses **quorum writes** to write to replicas (asynchronously, since synchronous writing is slow)
+      * Similarly, there's **quorum reads** approach
+      * Cassandra uses version  number to determine staleness of data
+   * Consistency
+      * Eventual consistency: in SQL DB, although some followers may lag behind leader DB in terms of data staleness, they'll eventuall become the same.
+      * Cassandra offers **tunable consistency**: 
+   * Four types of NoSQL DBs
+      * Column: 
+         * Cassandra is a wide column DB that supports asynchronous masterless replication
+         * HBase has master-based replication
+      * Document Oriented: MongoDB uses leader based replication
+      * Key-Value
+      * Graph
+   * Cassandra
+      * Fault tolerant: support multi-data center replication
+      * Scalable: both read and write throughput increases linearly as new machines are added
+      * Works well with time series data
+   * We need to know the advantages/disadvantages of different databases, and when to use what
+11. How we store the data?
+   * SQL
+      * We usually start by defining noun in the system. 
+      * We then convert nouns into tables, and use foreign keys to reference related data
+      * Data is normalized: we minimize data duplication across different table
+   * NoSQL
+      * Think in terms of queries to be executed on the system
+      * Denormalization is perfectly normal
+         * Instead of adding rows in relational database, we add columns for every hour
+12. Data Processing Service        
+   * Start with the written requirements: Scalable, reliable, fast
+     * How to scale?
+     * How to achieve high throughput?  
+     * How not to lose data when processing node crashes?
+     * What to do when database is unavailable or slow? 
+   * Scalable: partitioning
+   * Reliable: Replication and checkpointing
+   * Fast: in-memory, minimize disk reads
+   * Data Aggregation Basics
+      * Write count to DB each time we see an event
+      * Save current count in memory and write to DB every other second (better for large scale system)
+   * PUSH or PULL
+      * push means that some other services sends events  synchronously to the processing service
+      * pull means the processing service pulls event from some temporary storage (e.g. a queue)
+      * In this case, pull has more advantages
+         * better fault-tolerant support
+         * easier to scale
+   * Checkpointing
+      * After we have processed several events in the temporary storage (e.g. a queue) and successfully stored them in a DB, we write checkpoint to some persistent storage. 
+      * If processing service machine fails, the new machine will resume processing where the failed machine left off. 
+   * Partitioning
+      * Instead of putting all events into a single queue, let's have several independent queues.
+      * Every queue physically lives on its own machine, and stores a subset of all events
+      * This allows us to parallize event processing, 
+14. 
 
 
 
