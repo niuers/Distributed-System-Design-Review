@@ -187,7 +187,40 @@
       * Instead of putting all events into a single queue, let's have several independent queues.
       * Every queue physically lives on its own machine, and stores a subset of all events
       * This allows us to parallize event processing, 
-14. 
+   * Processing service reads events from the queue , counts events in memory, and wirtes to DB periodically, 
+      * Components to read events: partition consumer establishes and maintains TCP connection with the event partition to fetch data
+         * Think of it as an infinite loop that polls data from the partition
+         * It deserializes the event from byte array to actual event object
+         * Consumer is usually a single threaded component
+         * Consumer helps to eliminte duplicate events through a distributed "deduplication cache" which stores unique event's identifiers for, say last 10 minutes
+      * Aggrator then does the in-memory counting, e.g. hash table
+      * The counts were sent to an internal queue, which decouples consumption and processing, thus it's possible to increase the processing throughput
+      * Then DB writer (single or multiple threaded) writes the data to DB
+         * With multi-threaded, it's harder to use checkpoint though, even it increases throughput    
+      * The Dead-Letter Queue 
+         * The queue to which messages are sent if they cannot be routed to their correct destination
+         * This is to protect us from from database performance of availability issues
+         * There's another service that reads the dead-letter queue and write to DB
+         * Widely used when you need perserve data in case of downstream services degradation
+         * Another viable option is to store undelivered messages on a local disk of the processing service machine, 
+      * Data Enrichment
+         * Embeded Database: This DB lives on the same machine as the processing service
+         * All additional attributes (e.g. extra things you want to display) should be retrieved from this DB really quickly
+      * State Management
+         * Every time we keep anything in memory, we need to understand what to do when machine fails and this in-memory state is lost
+         * Solution is to periodically save the entire in-memory data to a durable storage. New machine just reloads  this state int its memory when started.
+
+14. Partitioner Service
+   * Distribute data across partitions
+15. Load Balancer
+   * To evenly distribute events across partitioner service machines
+16. API Gateway
+   * Represents a single-entry point into a video content delivery system.
+   * It routes client requests to to backend services
+17. Partitioner Service Client
+   * 
+18. 
+
 
 
 
