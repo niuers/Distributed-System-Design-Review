@@ -1,6 +1,6 @@
 # General Advices:
 1. Interviewee should drive the conversation and move forward
-
+3. We should always know about the trade offs. 
 
 # Step 1: Outline use cases, constraints, and assumptions
 1. Gather requirements and scope the problem. Ask questions to clarify use cases and constraints. Discuss assumptions.
@@ -219,10 +219,169 @@
    * It routes client requests to to backend services
 17. Partitioner Service Client
    * 
-18. 
+## Partitioner Service Client
+### Blocking vs. Non-Blocking I/O
+1. Client initiates request by using sockets. When a client makes a request, the socket on the server side is blocked. The thread handles the connection is blocked as well.
+2. To handle new request, we need create a new thread to handle the new connection.
+3. When the machine slows down with increasing number of requests and eventually dies, it may bring down the full cluster.
+4. This is why we need rate limiting solution to keep system stable during traffic peeks.
+5. Non-blocking I/O:
+   * A single thread can handle multiple concurrent connections
+   * Server queues the requests, and the actual I/O is processed later.
+   * It's far less expensive to pile up requests in queue than pile up threads. 
+   * This is more efficient and has higher throughput.
+   * This however increases the complexity of operations. Very hard to debug.
+### Buffering and Batching
+1. To process large number of requests, API gateway cluster has to be big in size, e.g. thousands of machines.
+2. If we pass individual events to partitioner service, partitioner service cluster has to be big as well.
+3. It's more efficient to combine events together and send several of them in a single request.
+4. We put events into buffer, and wait a couple of seconds before sending buffer's contents
+5. It increases throughput, save on cost, request compression is more effective.
+6. It introduces some complexity on both client and server sides. 
+   * If some events failed when partitioner server process the batch, what shall we do? re-send whole batch, re-send the failed ones only? 
+### Timeout
+1. It defines how much time a client is willing to wait for a response from a server.
+2. Two types
+   * Connection Timeout: defines how much time a client is willing to wait for a connection to establish
+      * Usually very small, tens of milliseconds
+   * Request Timeout : happens when request processing takes too much time, and a client is not willing to wait any longer.
+      * To choose request timeout value, we need analyze latency percentiles.
+      * For example, we measure latency of 1% of the slowest requests in the system, and set this value as request timeout. It means that about 1% of the requests will timeout.
+### Retries
+1. What to do with failed requests?
+   * Re-try them: maybe hit a new machine? 
+2. Need to be smart when doing re-try
+   * If all clients retry at the same time, or do it aggressively, we may create so-called **retry storm event**,  and overload server with too many requests.
+### Exponential Backoff and Jitter
+1. To prevent **retry storm event**
+2. Exponential Backoff:
+   * Increases the waiting time between retries up to a maximum backoff time
+   * We retry requests several times, but wait a bit longer with every retry attempt
+3. Jitter
+   * It adds randomness to retry intervals to spread out the load
+   * If we don't add jitter, backoff algorithms will retry requests at the same time. 
+   * It helps to separate retries.
+4. We may still be in the danger of too many retries
+   * Ex. when partitioner service is down or degraded., and majority requests are retried.
+### Circuit Breaker 
+1. The circuit breaker pattern stops a client from repeatedly trying to execute an operation that's likely to fail.
+2. We calculate how many requests have failed recently and if error threshold is exceeded, we stop calling a downstream service.
+3. Some time later, limited number of requests  from the client are allowed to pass through and invoke the operation.
+4. If the failed requests are successful, we restart counting failed requests from scratch.
+5. It makes the system more difficult to test. It's also hard to properly set error threshold and timers. 
 
+## Load Balancer
+1. Load balancer distribute data traffic between multiple servers
+2. Hardware vs. Software Load Balancers
+3. Another gradation of load balancers is what traffic they serve: TCP or HTTP
+### Hardware Load Balancer
+1. Network devices that are powerful machines optimized to handle very high throughput: millions of requests per second
+2. 
+### Software Load Balancer
+1. Load Balancer provided from public cloud
+   * ELB from AWS 
+### Networking Protocols
+1. TCP: simply forward network packets without inspecting the content of the packets
+   * Super fast, millions of requests per second 
+3. HTTP: 
+ * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
+ * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
 
+### Loading Balancing Algorithms
+1. Round Robin:
+   * It distributes the requests in order across the list of servers. 
+2. Least Connections: it sends requests to the server with the lowest number of active connections.
+3. Least Response Time Algorithm: sends requests to the server with the fastest response time.
+4. Hash based algrithms: distribute requests based on a key we define, such as the client IP address or the request URL. 
 
+### DNS (Domain Name System)
+1. How does our partitioner service client know about load balancer? 
+   * DNS is a phonebook of internet, it maintains a directory of domain name and translate to IP address.
+   * We register our partitioner service in DNS, specify domain name, e.g. partitionerservice.domain.com, and associate it with the IP address of load balancer service, so when clients hit domain name, the requests are forwarded to the load balancer device. 
+3. How does the load balancer know about the partitioner service machines ? 
+   * We need explicitly tell the load balancer the IP address of each machine, 
+   * Both software/hardware load balancers provide API to register and unregister servers.  
+### Health Checking
+   * Load balancer needs to know which server from the registered list are healthy and which are unavailable. So it can ensure the traffic is enrouted to the healthy servers. 
+   * Load balancer pings each server periodically and if unhealthy server is identified, load balancer stops to send traffic to it. 
+### High Availability
+1. How does load balancer guarantee high availability? 
+   * It uses the concept of primary and secondary nodes
+   * The primary nodes accept connections and serve requests, while the seondary monitors the primary.
+   * If the primary is unable to accept connections, secondary takes over. 
+   * Primary and secondary live in different data center. 
+
+## Partitioner Service and Partitions
+1. It's a web service that gets requests from clients, looks inside each request to retrieve each individual video events (remember batch? ), and routes each event (or message) to some partition. 
+### Partitions
+1. Partitions are also a web service, that gets messages and stores them on disk in the form of append-only log file. 
+2. So we have totally ordered sequence of messages ordered by time.
+3. This is not a single very large log file, but a set of log files of the predefined size. 
+### Partition Strategy
+1. Partitioner service has to use some rule, partition strategy, that defines which partition gets what messages.
+2. Calculate hash function based on some key, and choose machine based on this hash
+   * This doesn't work well with large scale. It may lead to **hot partitions**
+   * We can include event time, e.g. in minutes, into the partition key. 
+   * Or We can split the hot partitions into two new partitions. Remember **Consistent Hash Algirhtm**
+      * Adding a new node to the consistent hashing ring splits a range of keys into two new ranges. 
+   * Or we may allocate dedicated partitions to some hot partitions. 
+### Service Discovery
+1. To send messages to partitions, partitioner service needs to know every partition
+2. Two main service discovery patterns
+   * Server-side, e.g. load balancer
+      * Clients know load balancer, load balancer knows about server-side instances
+      * But we don't need a load balancer between partition service and partitions.
+      * Partitioner service itself acts like load balancer by distributing events over partitiosn
+      * This is perfect for client side discovery
+   * Client-side
+      * Every server instance registers itself in some common place, named **service registry** 
+      * Service Registry is another highly available web service, which can perform health checks to determine health of each registered isntance.
+      * Clients then query service registry and obtain a list of avaiable servers. 
+      * Example of such registry service is Zookeeper. 
+      * Each partition registers itself in Zookeeper, while every partitioner service instances queries Zookeeper for the list of partitions. 
+      * Distributed Cache Design: when cache client needs to pick a cache shard that stores the data, where we can use client-side service discovery as well.
+  
+3. One more option for service discovery is like Cassandra
+   * Cassandra nodes talk to each other
+   * So clients only needs to contact one node from the server cluster to figure out the information about the whole cluster.
+### Replication
+1. When event is persistent in partition, we need to replicate it in the case the partiton machine goes down.
+2. Three main approaches in replication
+   * Single Leader
+      * Each partition has a leader and several followers
+      * Leader checks all followers, and keep a list of active followers
+      * Related: how to scale the SQL database
+      * Related concept: Quorum write
+         * When partition service makes a call to a partition, we may send response back as soon as leader partition persisted the message, or only when message was  replicated to a specified number of replicas.
+         * When we write only to leader, we may still lose data if the leader goes down before replication really happened.
+         * If we wait for the repliation to complete, we increase durability, but increases latency. Plus, if the required number of replications is not available at the moment,availability will suffer.
+   * Multiple Leader
+      * Mostly used to replicate in several data centers
+   * Leaderless Replication 
+      * Related: when we discuss how Cassandra works
+
+### Message Formats
+1. Textual format
+   * XML
+   * JSON
+      * Every message contains field names, which greatly increase total message size. 
+   * CSV 
+   * Human readable, well-known, widely supported, and heavily used by many distributed systems. 
+3. Binary Format
+   * Apache Thrift
+      * Use field tags
+   * Protocal Buffer
+      * Use field tags, numbers, act like alias to field names
+   * Avro: good choice for counting system.
+   * It provide much benefits for large scale real time processing systems. 
+   * Messages are more compact, faster to parse. 
+      * They use schema, no longer need field names, 
+      * Tags occupy less space when encoded
+   * Message producers (clients) need to know the schema to serialize the data 
+   * Message consumers (processing service) require the schema to deserialize the data. 
+   * So schemas are usually stored in some shared database, 
+   * Schema may change  over time
+      * 
 
 
 
