@@ -1,6 +1,6 @@
 # General Advices:
 1. Interviewee should drive the conversation and move forward
-3. We should always know about the trade offs. 
+3. We should always know about the trade offs of our options. 
 
 # Step 1: Outline use cases, constraints, and assumptions
 1. Gather requirements and scope the problem. Ask questions to clarify use cases and constraints. Discuss assumptions.
@@ -382,8 +382,18 @@
    * So schemas are usually stored in some shared database, 
    * Schema may change  over time
       * 
-
-
+## Data Retrieval  Path
+### Data Roll Up 
+1. Minutes level data rolled up to hours level data
+2. Older data dont' have to be in DB (hot storage, frequently used data that must be accessed fast)
+   * Object Storage, AWS S3  (cold storage, archived and infrequently accessed data)
+### Data Query Service
+1. Data Federation
+   * Retrieve data from several data storage and combine the data together
+   * This is an ideal use case for distributed cache (store query results)
+      * This improve query performance
+      * Scale query service
+2.
 
 # Step 3: Design core components
 Dive into details for each core component. For example, if you were asked to design a url shortening service, discuss:
@@ -398,13 +408,52 @@ Dive into details for each core component. For example, if you were asked to des
   * API and object-oriented design
 
 # Step 4: Scale the design
-Identify and address bottlenecks, given the constraints. For example, do you need the following to address scalability issues?
+## Identify and address bottlenecks, given the constraints. 
+1. For example, do you need the following to address scalability issues?
+  Load balancer
+  Horizontal scaling
+  Caching
+  Database sharding
+  Discuss potential solutions and trade-offs. Everything is a trade-off. Address bottlenecks using principles of scalable system design.
 
-Load balancer
-Horizontal scaling
-Caching
-Database sharding
-Discuss potential solutions and trade-offs. Everything is a trade-off. Address bottlenecks using principles of scalable system design.
+3. How to identify bottlenect? Performance Testing
+   * Load Testing:  Measure system behavior under specifc expected load
+      * We want to see the system is indeed scalable and can handle expected load, e.g. 2-3 times increases in traffic
+   * Stress Testing: Test beyond normal operation capacity, often to a breaking point
+      * Which component will suffer first and what resource would it be: memory, CPU, netowrk, disk IO
+   * Soak Testing: Test a system with a typical production load for an extended period of time
+      * Leaks in system, e.g. memory leak
+   * Generate high load is key
+      * Tools: Apache JMeter 
+
+4. How do you make sure the system is running healthy? 
+   * Need monitor all components
+   * metrics: error count, processing time, 
+   * dashboard: summary view of service's core metrics
+   * alerts
+   * Four Golden Signals of Monitor
+      * Latency
+      * Traffic
+      * Errors
+      * Saturation
+
+5. How to make sure the system produce the accurate results?
+   * Build an audit system
+      * Weak
+         * A continuously running end-to-end system, 
+         * e.g. generate view events, and query to check if the count is the same as expected
+      * Strong
+         * It can compute the counts using a different path than our main system, 
+         * Lambda Architecture
+            * The key idea is to send events to a batch system and a stream processing system in parallel
+            * Stich together the results from both systems at query time
+         * We should use a batch processing framework like MapReduce if we aren't latency sensitive, and use stream processing framework if we are, but not try to do both at the same time unless we absolutely must. 
+
+6. If we have a hugely popular video, will it become a bottleneck? 
+   * Spread events coming from a popular video across several partitions
+7. What if the processing service can't keep up with the speed new events arrive?
+   *  Batch events and store them in the object storage, every time we persist a batch of events, we send a message to message broker, e.g. SQS, then we have a big cluster of machines, e.g. EC2, that retrieve messages from SQS, read a corresponding batch from S3 and process events.
+   *  This is slower than stream processing but faster than batch processing.
 
 Back-of-the-envelope calculations
 You might be asked to do some estimates by hand. Refer to the Appendix for the following resources:
