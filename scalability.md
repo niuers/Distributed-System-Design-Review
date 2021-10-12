@@ -12,7 +12,12 @@
    * Load balancer can now send requests to the servers using TCP/IP, 
 4. It's not a good idea to put DB server on the same web server, as a user can connect to another server, which doesn't have his/her information there.
 
+## Rules for Scalibility
+1. The first golden rule for scalability: Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
+   * A user expects to get the same results back regardless of which server he "lands on" 
+
 ## Load Balancer
+
 ## Caching
 ## Replication
 
@@ -31,3 +36,4 @@
 
 # Resources:
 1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
+1. [Scalability for Dummies - Part 1: Clones](https://www.lecloud.net/post/7295452622/scalability-for-dummies-part-1-clones)
