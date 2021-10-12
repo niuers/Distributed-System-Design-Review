@@ -212,7 +212,7 @@
 
 14. Partitioner Service
    * Distribute data across partitions
-15. Load Balancer
+15. [Load Balancer](https://github.com/niuers/Distributed-System-Design-Review/blob/main/Load%20Balancer.md)
    * To evenly distribute events across partitioner service machines
 16. API Gateway
    * Represents a single-entry point into a video content delivery system.
