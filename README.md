@@ -79,3 +79,6 @@ The ability of a system to deal with increased load.
 1. post tweet
    * Scaling challenge not primarily due to tweet volume but due to fan-out. 
 3. home timeline
+
+# Resources
+1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
