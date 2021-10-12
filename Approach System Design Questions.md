@@ -270,30 +270,6 @@
 4. If the failed requests are successful, we restart counting failed requests from scratch.
 5. It makes the system more difficult to test. It's also hard to properly set error threshold and timers. 
 
-## Load Balancer
-1. Load balancer distribute data traffic between multiple servers
-2. Hardware vs. Software Load Balancers
-3. Another gradation of load balancers is what traffic they serve: TCP or HTTP
-### Hardware Load Balancer
-1. Network devices that are powerful machines optimized to handle very high throughput: millions of requests per second
-2. 
-### Software Load Balancer
-1. Load Balancer provided from public cloud
-   * ELB from AWS 
-### Networking Protocols
-1. TCP: simply forward network packets without inspecting the content of the packets
-   * Super fast, millions of requests per second 
-3. HTTP: 
- * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
- * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
-
-### Loading Balancing Algorithms
-1. Round Robin:
-   * It distributes the requests in order across the list of servers. 
-2. Least Connections: it sends requests to the server with the lowest number of active connections.
-3. Least Response Time Algorithm: sends requests to the server with the fastest response time.
-4. Hash based algrithms: distribute requests based on a key we define, such as the client IP address or the request URL. 
-
 ### DNS (Domain Name System)
 1. How does our partitioner service client know about load balancer? 
    * DNS is a phonebook of internet, it maintains a directory of domain name and translate to IP address.
