@@ -1,6 +1,17 @@
 
 # Load Balancer
 
+1. Load balancer distribute data traffic among multiple servers
+
+## Networking Protocols Served by Load Balancer
+1. TCP: 
+   * Simply forward network packets without inspecting the content of the packets
+   * Super fast, millions of requests per second 
+1. HTTP: 
+ * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
+ * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
+
+
 ## Types of Load Balancer
 ### Software Load Balancer
 1. AWS ELB (Elastic Load Balancer)
@@ -8,13 +19,14 @@
 3. LVS (Linux Virtual Server) 
 
 ### Hardware Load Balancer
+Network devices that are powerful machines optimized to handle very high throughput: millions of requests per second
 1. Barracuuda
 2. Cisco
 3. Citrix
 
 
 ## Load Balancer Algorithms
-### Round Robin:
+### Round Robin: distributes the requests in order across the list of servers. 
 1. We can use a fancy DNS as simple load balancer, when user types a domain in browser, DNS just sends the request to different servers in order.
   * A popular DNS server called BIND
   * Disadvantages
@@ -42,8 +54,9 @@
         * It breaks down when user disables the cookie though.
 
 ### Randomly Assignment
-
-### Take load etc. into account
+### Least Connections: sends requests to the server with the lowest number of active connections.
+### Least Response Time: sends requests to the server with the fastest response time.
+### Hash Based Algrithms: distribute requests based on a key we define, such as the client IP address or the request URL. 
 
 
 ## Redundancy of Load Balancer
