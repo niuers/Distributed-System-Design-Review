@@ -26,7 +26,9 @@ Network devices that are powerful machines optimized to handle very high through
 
 
 ## Load Balancer Algorithms
-### Round Robin: distributes the requests in order across the list of servers. 
+### Round Robin 
+It distributes the requests in order across the list of servers. 
+
 1. We can use a fancy DNS as simple load balancer, when user types a domain in browser, DNS just sends the request to different servers in order.
   * A popular DNS server called BIND
   * Disadvantages
@@ -54,9 +56,15 @@ Network devices that are powerful machines optimized to handle very high through
         * It breaks down when user disables the cookie though.
 
 ### Randomly Assignment
-### Least Connections: sends requests to the server with the lowest number of active connections.
-### Least Response Time: sends requests to the server with the fastest response time.
-### Hash Based Algrithms: distribute requests based on a key we define, such as the client IP address or the request URL. 
+
+### Least Connections
+It sends requests to the server with the lowest number of active connections.
+
+### Least Response Time
+It sends requests to the server with the fastest response time.
+
+### Hash Based Algrithms
+It distributes requests based on a key we define, such as the client IP address or the request URL. 
 
 
 ## Redundancy of Load Balancer
