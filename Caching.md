@@ -17,7 +17,28 @@
 5. Google Data Protocal
 6. Amazon Elastic MapReduce
 
-
+## Distributed Caching
+1. Write-through
+   * Directly write to DB
+3. Write-behind
+   * Use even-queue to write to DB
+4. Eviction Policies
+   * TTL 
+   * Bounded FIFO
+   * Bounded LIFO
+   * Explicit Cache Invalidation
+6. Replication
+7. Peer-To-Peer P2P
+   * Decentralized
+   * No special nodes
+   * Nodes can join and leave as they please
+8. Products
+   * memcached
+      * Very fast, simple, key-value, 
+      * Not replicated, so 1/N chance for local access in cluster
+   * EHCache
+   * JBoss Cache
+   * OSCache
 
 ## Website Cache
 1. .html: Craiglist saves data as .html and re-use them to improve performance instead of in XML, MySQL and generate pages dynamically
