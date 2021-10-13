@@ -126,33 +126,6 @@
    * To increase availability, we need replicate data
       * Master/Leader shard with read replica (which only allow reads), the replicas can be in a different data center than the master shard
 10. NoSQL Databases (Apache Cassandra)
-   * We also split data into chunks (shards) or nodes.
-      * Each shard is equal, no leader and followers
-      * No configuration service needed, Shards talks to each other and exchange information
-      * Gossip Protocol: To reduce network load, shards only talk to less than 3 other shards every second
-      * No cluster proxy needed, Every node knows about each other, and can forward request to corresponding node
-   * We can use round robin to choose inital node to process request, or choose the node with the shortest distance to client
-      * The initial node is called: coordinator node. The coordinator decides which node to process the input data
-         * We can use **consistent hashing** algorithm to pick the node
-         * N.B. **consisten hasing** is also used to design distributed cache
-      * It uses **quorum writes** to write to replicas (asynchronously, since synchronous writing is slow)
-      * Similarly, there's **quorum reads** approach
-      * Cassandra uses version  number to determine staleness of data
-   * Consistency
-      * Eventual consistency: in SQL DB, although some followers may lag behind leader DB in terms of data staleness, they'll eventuall become the same.
-      * Cassandra offers **tunable consistency**: 
-   * Four types of NoSQL DBs
-      * Column: 
-         * Cassandra is a wide column DB that supports asynchronous masterless replication
-         * HBase has master-based replication
-      * Document Oriented: MongoDB uses leader based replication
-      * Key-Value
-      * Graph
-   * Cassandra
-      * Fault tolerant: support multi-data center replication
-      * Scalable: both read and write throughput increases linearly as new machines are added
-      * Works well with time series data
-   * We need to know the advantages/disadvantages of different databases, and when to use what
 11. How we store the data?
    * SQL
       * We usually start by defining noun in the system. 
