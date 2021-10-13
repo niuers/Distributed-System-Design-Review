@@ -36,4 +36,4 @@
 
 # Resources:
 1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
-1. [Scalability for Dummies - Part 1: Clones](https://www.lecloud.net/post/7295452622/scalability-for-dummies-part-1-clones)
+1. [Scalability for Dummies](https://www.lecloud.net/tagged/scalability)
