@@ -47,6 +47,31 @@
 1. If you have a performance problem, your system is slow for a single user.
 1. If you have a scalability problem, your system is fast for a single user but slow under heavy load.
 
+# Latency vs. Throughput
+1. You should strive for maximum throughput with acceptable latency
+
+
+# Availability vs. Consistency
+## Brewer's CAP Theorem
+1. You can only pick two below at any given time
+   * Consistency
+   * Availability
+   * Partition Tolerance
+
+
+### Centralized System
+1. In RDBMS, we don't have the 'P', i.e. network partitions
+2. ACID
+   * Atomic
+   * Consistent
+   * Isolated
+   * Durable
+### Distributed System
+1. We'll have 'P', so we can only pick one from Availability and Consistency
+2. There are only two types of systems
+   * CP
+   * AP
+3. BASE (Basically Available, Soft State, Eventually Consistent)
 
 
 # Resources:
