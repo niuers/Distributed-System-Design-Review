@@ -31,10 +31,53 @@
 ### RDBMS Sharding
 ### NOSQL
 ### Distributed Caching
-### Data Grids
+### Data Grids/Clustering
+1. Parallel Data Storage
+   * Data Replication
+   * Data partition
+   * Continous availability
+   * Data Invalidation
+   * Fail-over
+   * C+P in CAP
+2. Products
+   * Coherence,Terracotta etc.
 ### Concurrency
+#### Shared-State Concurrency
+1. Everyone can access anything anytime
+2. Totally indeterministic
+3. Introduce determinism at well defined locations using locks
+   * Locks do not compose
+   * We may take too few/too many/wrong locks
+   * Taking locks in the wrong order
+   * Error recovery is hard
 
+#### Message-Passing Concurrency
+1. Actors
+   * Encapsulates state and behavior, closer to the definition of OO than class
+   * Share NOTHING
+   * Isolate lightweight processes
+   * Communicate through messages
+   * Asynchronous and non-blocking: no shared state so nothing to synchronize
+   * Each actor has a mailbox (message queue)
+2. Advantages
+   * Easier to reason about
+   * Raised abstraction level
+   * Easier to avoid: race conditions, dead locks, starvation, live locks
+#### Dataflow Concurrency
+1. Declarative
+2. No observable non-determinism
+3. Data driven: thread blocks until data is avaiable
+4. On deman, lazy
+5. No difference between concurrent and sequential code
+6. Limitations: can't have side effects
 
+#### Software Transactional Memory
+1. See the memory (heap and stack) as a transactional dataset
+2. Similar to a database: begin, commit, roll back/abort
+3. Transactions are retried automatically on collision
+4. Rolls back the memory on abort
+5. Transactions can nest/compose
+6. All operations in the scope of transactions need to be idempotent
 
 ## Load Balancer
 ## Replication
