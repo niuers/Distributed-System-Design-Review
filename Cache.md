@@ -3,6 +3,21 @@
 
 1. Please never do file-based caching, it makes cloning and auto-scaling of your servers just a pain. 
 
+## HTTP Caching
+### Reverse Proxy
+1. Varnish, Squid, Nginx, 
+### CDN, Akamai
+
+## Generate Static Content
+### Precompute content
+1. Homegrown + cron or Quartz
+2. Spring Batch
+3. Gearman
+4. Hadooop
+5. Google Data Protocal
+6. Amazon Elastic MapReduce
+
+
 
 ## Website Cache
 1. .html: Craiglist saves data as .html and re-use them to improve performance instead of in XML, MySQL and generate pages dynamically
