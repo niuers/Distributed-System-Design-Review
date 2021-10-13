@@ -25,12 +25,20 @@
 1. The first golden rule for scalability: Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
    * A user expects to get the same results back regardless of which server he "lands on" 
 
-## Load Balancer
-## Caching
-## Replication
-## Partition
-## High Availability
+## Scalibility Patterns: State
+### Partitioning
+### HTTP Caching
+### RDBMS Sharding
+### NOSQL
+### Distributed Caching
+### Data Grids
+### Concurrency
 
+
+
+## Load Balancer
+## Replication
+## High Availability
 ## Security
 1. Types of traffic allowed to come in
    * TCP:80
