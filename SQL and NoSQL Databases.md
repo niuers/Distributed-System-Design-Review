@@ -1,6 +1,6 @@
-# Comparision of SQL and NoSQL
+# SQL and NoSQL Databases
 
-## SQL
+## SQL Databases
 1. If you denormalize your data and include no more Joins in any database query, You can stay with MySQL, and use it like a NoSQL database.
 2. Scale Out RDBMS
    * Sharding
@@ -20,7 +20,7 @@
 ### Denormalization
 ### SQL Tuning
 
-## NoSQL
+## NoSQL Databases
 MongoDB or CouchDB
 1. Joins will now need to be done in your application code.
 
