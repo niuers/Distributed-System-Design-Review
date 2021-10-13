@@ -39,6 +39,7 @@
    * EHCache
    * JBoss Cache
    * OSCache
+9. You can run out of RAM for the cache   
 
 ## Website Cache
 1. .html: Craiglist saves data as .html and re-use them to improve performance instead of in XML, MySQL and generate pages dynamically
@@ -63,9 +64,6 @@
 1. activity streams
 1. user<->friend relationships 
 
-### Memcached 
-   * You can run out of RAM for the cache
-   * We can expire objects based on when they are put in (FIFO), or recently used. 
 
 ### Redis
 1. Redis can do several hundreds of thousands of read operations per second when being hosted on a standard server. 
