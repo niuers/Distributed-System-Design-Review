@@ -120,6 +120,34 @@
    * Hadoop
 ### Load Balancer
 ### Parallel Computing
+#### Patterns
+1. SPMD Pattern (Single Program Multiple Data)
+   * Use the UE's ID to select different pathways through the program,e.g. branching on ID, use ID in loop index to split loop
+   * Keep interactions between UE explict
+3. Master/Worker Pattern
+   * Good scalability
+   * Automatic load-balancing
+   * How to detect termination?
+      *  Bag of tasks is empty
+      *  Posion pill
+   *  What if we bottleneck on single queue?
+      *  Use multiple work queue
+      *  Work stealing
+   *  What about fault tolerance?
+      *  Use in-progress queue
+5. Loop Parallelism Pattern
+   *  
+7. Fork/Join Pattern
+8. MapReduce Pattern
+   * Hadoop, AWS MapReduce
+   * Many NoSQL DB uses for query/search
+#### UE: Unit of Execution
+1. Process
+2. Thread
+3. Coroutine
+4. Actor
+
+
 
 
 ## Replication
