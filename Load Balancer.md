@@ -13,10 +13,18 @@
 
 
 ## Types of Load Balancer
+
 ### Software Load Balancer
 1. AWS ELB (Elastic Load Balancer)
-2. HAProxy (High Availability Proxy, open source)
 3. LVS (Linux Virtual Server) 
+1. Reverse Proxy
+   * HAProxy (High Availability Proxy, open source)
+   * Nginx
+   * Apache mod_proxy
+   * A reverse proxy accepts a request from a client, forwards it to a server that can fulfill it, and returns the server’s response to the client.
+       * Whereas deploying a load balancer makes sense only when you have multiple servers, it often makes sense to deploy a reverse proxy even with just one web server or application server. You can think of the reverse proxy as a website’s “public face.” Its address is the one advertised for the website, and it sits at the edge of the site’s network to accept requests from web browsers and mobile apps for the content hosted at the website. The benefits are two-fold:
+       * Increased security and Increased scalability and flexibility
+
 
 ### Hardware Load Balancer
 Network devices that are powerful machines optimized to handle very high throughput: millions of requests per second
@@ -26,7 +34,8 @@ Network devices that are powerful machines optimized to handle very high through
 
 
 ## Load Balancer Algorithms
-### Round Robin 
+
+### Round Robin
 It distributes the requests in order across the list of servers. 
 
 1. We can use a fancy DNS as simple load balancer, when user types a domain in browser, DNS just sends the request to different servers in order.
@@ -44,20 +53,14 @@ It distributes the requests in order across the list of servers.
       * Load balancer may break with sessions, which is specific to the machine(/temp in Linux). When you are directed to another server, you may have to be asked to log in again, or your shopping cart won't have all the stuffs you buy.
 
 ### Randomly Assignment
-
-### Least Connections
-It sends requests to the server with the lowest number of active connections.
-
-### Least Response Time
-It sends requests to the server with the fastest response time.
-
-### Hash Based Algrithms
-It distributes requests based on a key we define, such as the client IP address or the request URL. 
+### Dynamic Load Balancing
+1. Least Connections: It sends requests to the server with the lowest number of active connections.
+1. Least Response Time: It sends requests to the server with the fastest response time.
+1. Hash Based Algrithms: It distributes requests based on a key we define, such as the client IP address or the request URL. 
+### Weighted Allocation
 
 ## Deal with the First Golden Rule for Scalability
-
 Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
-
 ### Sticky Sessions
 
 Even if you visit website multiple times, you should end up with the same session, or the same back-end server
