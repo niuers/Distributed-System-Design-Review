@@ -90,3 +90,22 @@ MongoDB or CouchDB
 ## Who's BASE
 1. Distributed Databases: Cassandra, Riak, Dynomite, SimpleDB
 
+## Consistency
+### Client-Side Consistency
+1. Strong  Consistency
+2. Weak Consistency
+   * Eventual Consistency
+   * Never Consistency
+3. Eventual Consistency Levels
+   * Casual Consistency
+   * Read-your-writes consistency (important
+   * Session Consistency
+   * Monotonic read Consistency
+   * Monotonic write Consistency
+
+### Server-Side Consistency
+1. N: The number of nodes that store replicas of data
+2. W: The number of replicas that need to acknowledge the receipt of the update before the update completes
+3. R: The number of replicas that are contacted when a data object is accessed through a read operation
+4. W+R > N: Strong consistency
+5. W+R <=N: Eventual consistency
