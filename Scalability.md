@@ -169,15 +169,22 @@
 1. If you have a scalability problem, your system is fast for a single user but slow under heavy load.
 
 # Latency vs. Throughput
+
+1. Latency is the time to perform some action or to produce some result. Latency is measured in units of time -- hours, minutes, seconds, nanoseconds or clock periods.
+
+1. Throughput is the number of such actions or results per unit of time. This is measured in units of whatever is being produced (cars, I/O samples, memory words, iterations) per unit of time.
+
 1. You should strive for maximum throughput with acceptable latency
 
 
 # Availability vs. Consistency
+
 ## Brewer's CAP Theorem
-1. You can only pick two below at any given time
-   * Consistency
-   * Availability
-   * Partition Tolerance
+1. You can only pick two out of three guarantees across a write/read pair at any given time in a distributed system.
+   * Consistency: Every read receives the most recent write or an error.
+   * Availability: Every request receives a response, without guarantee that it contains the most recent version of the information.
+   * Partition Tolerance: The system continues to operate despite arbitrary partitioning due to network failures.
+      * Given that networks aren't completely reliable, you must tolerate partitions in a distributed system.
 
 
 ### Centralized System
@@ -187,11 +194,15 @@
    * Consistent
    * Isolated
    * Durable
+
 ### Distributed System
-1. We'll have 'P', so we can only pick one from Availability and Consistency
+1. We'll always have 'P', so we can only pick one from Availability and Consistency
 2. There are only two types of systems
-   * CP
-   * AP
+   * CP: Wait for a response from the partitioned node which could result in a timeout error. The system can also choose to return an error, depending on the scenario you desire. 
+      * Choose Consistency over Availability when your business requirements dictate atomic reads and writes.
+   * AP: Return the most recent version of the data you have, which could be stale. This system state will also accept writes that can be processed later when the partition is resolved. Writes might take some time to propagate when the partition is resolved. 
+      * Choose Availability over Consistency when your business requirements allow for some flexibility around when the data in the system synchronizes (eventual consistency).
+      * Availability is also a compelling option when the system needs to continue to function in spite of external errors (shopping carts, etc.)
 3. BASE (Basically Available, Soft State, Eventually Consistent)
 
 
