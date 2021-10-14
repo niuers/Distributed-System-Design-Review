@@ -79,7 +79,49 @@
 5. Transactions can nest/compose
 6. All operations in the scope of transactions need to be idempotent
 
-## Load Balancer
+## Scalibility Patterns: Behavior
+### Event-Driven Architecture
+1. Domain Events
+   * It represents the state at given time when an important event occurred and decouple subsystems with event stream, 
+3. Event Sourcing
+4. Command and Query Responsibility Segration (CQRS) Pattern
+   * All state changes are represented by domain events
+   * Aggregate roots receive commands and publish events
+   * Reporting (query database) is updated as a result of the published events
+   * All queries from presentations go directly to Reporting and the domain is not involved
+   * Advantages
+      * Fully encapsulated domain that only exposes behavior
+      * Queries do not use domain model
+      * 
+6. Event Stream Processing
+7. Messaging
+   * Publish-Subscribe
+   * Point-to-Point
+   * Store forward
+   * Request Replay
+   * Products
+      * RabbitMQ (AMQP)
+9. Enterprise Service Bus
+10. Actors
+11. Enterprise Integration Architecture (EIA): Enterprise Integration Patterns Book
+### Compute Grids
+1. Divide and Conquer
+   * Split up job in independent tasks
+   * Execute tasks in parallel
+   * Aggregate and return results
+3. MapReduce - Master/Worker
+1. Features
+   * Automatical provisioning
+   * Load balancing
+   * Fail over
+   * Topology resolution
+1. Products
+   * Google MapReduce
+   * Hadoop
+### Load Balancer
+### Parallel Computing
+
+
 ## Replication
 ## High Availability
 ## Security
