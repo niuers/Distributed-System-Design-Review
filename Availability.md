@@ -22,3 +22,21 @@ There are two complementary patterns to support high availability: fail-over and
 
 ### [Replication](https://github.com/niuers/Distributed-System-Design-Review/blob/main/Replication.md)
 
+## Availability in numbers
+1. Availability is often quantified by uptime (or downtime) as a percentage of time the service is available. 
+2. Availability is generally measured in number of 9s--a service with 99.99% availability is described as having four 9s.
+
+## Availability in parallel vs in sequence
+If a service consists of multiple components prone to failure, the service's overall availability depends on whether the components are in sequence or in parallel.
+
+### In sequence
+1. Overall availability decreases when two components with availability < 100% are in sequence:
+1. Availability (Total) = Availability (Foo) * Availability (Bar)
+2. If both Foo and Bar each had 99.9% availability, their total availability in sequence would be 99.8%.
+
+### In parallel
+1. Overall availability increases when two components with availability < 100% are in parallel:
+1. Availability (Total) = 1 - (1 - Availability (Foo)) * (1 - Availability (Bar))
+2. If both Foo and Bar each had 99.9% availability, their total availability in parallel would be 99.9999%.
+
+
