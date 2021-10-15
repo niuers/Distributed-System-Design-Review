@@ -92,10 +92,16 @@
 1. DAU: Daily Active Users
 2. Traffic: (Average DAU X average reads/writes per user)/86400 = requests per second
 
+### Memory Estimates
+1. Read Requests per day x Average Request size x 0.2 x Replication Number
+2. 80-20 rule: 20% of your data will be 80% of your traffic
 
+### Bandwidth Requestments
+1. Requests per day x Request size / 864000 = bandwidth per second
 
-
-
+### Storage
+1. Writes per day x Size of write x Time to store data
+2. 
 
 
 
