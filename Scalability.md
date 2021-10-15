@@ -182,9 +182,34 @@
 ## Brewer's CAP Theorem
 1. You can only pick two out of three guarantees across a write/read pair at any given time in a distributed system.
    * Consistency: Every read receives the most recent write or an error.
+      * will all executions of reads and writes seen by all nodes be atomic or linearizably consistent?
    * Availability: Every request receives a response, without guarantee that it contains the most recent version of the information.
-   * Partition Tolerance: The system continues to operate despite arbitrary partitioning due to network failures.
+      * will a request made to the data store always eventually complete?
+   * Partition Tolerance: The system continues to operate despite arbitrary partitioning due to network failures. i.e. The network is allowed to drop any messages.
       * Given that networks aren't completely reliable, you must tolerate partitions in a distributed system.
+2. The CAP Theorem says that it is impossible to build an implementation of read-write storage in an asynchronous network that satisfies all of the three properties.
+   * An asynchronous network is one in which there is no bound on how long messages may take to be delivered by the network or processed by a machine. The important consequence of this property is that there's no way to distinguish between a machine that has failed, and one whose messages are getting delayed.
+   * If
+      * Your nodes do not have clocks (unlikely) or they have clocks that may drift apart (more likely)
+      * System processes may arbitrarily delay delivery of a message (due to retries, or GC pauses)
+   * then your network may be considered asynchronous.
+
+
+   * A data store is available if and only if all get and set requests eventually return a response that's part of their specification. This does not permit error responses, since a system could be trivially available by always returning an error.
+      * There is no requirement for a fixed time bound on the response, so the system can take as long as it likes to process a request. But the system must eventually respond.
+      * Notice how this is both a strong and a weak requirement. It's strong because 100% of the requests must return a response (there's no 'degree of availability' here), but weak because the response can take an unbounded (but finite) amount of time.
+   * A partition is when the network fails to deliver some messages to one or more nodes by losing them (not by delaying them - eventual delivery is not a partition).
+      * The term is sometimes used to refer to a period during which no messages are delivered between two sets of nodes. This is a more restrictive failure model. We'll call these kinds of partitions total partitions.
+      * The proof of CAP relied on a total partition. In practice, these are arguably the most likely since all messages may flow through one component; if that fails then message loss is usually total between two nodes.
+3. Is a failed machine the same as a partitioned one?
+   * No. A 'failed' machine is usually excused the burden of having to respond to client requests. CAP does not allow any machines to fail (in that sense it is a strong result, since it shows impossibility without having any machines fail).
+   * It is possible to prove a similar result about the impossibility of atomic storage in an asynchronous network when there are up to N-1 failures. This result has ramifications about the tradeoff between how many nodes you write to (which is a performance concern) and how fault tolerant you are (which is a reliability concern).
+
+4. Real systems choose to relax availability - in the case of systems for whom consistency is of the utmost importance, like ZooKeeper. Other systems, like Amazon's Dynamo, relax consistency in order to maintain high degrees of availability.
+
+
+### Why CAP is True?
+1. The basic idea is that if a client writes to one side of a partition, any reads that go to the other side of that partition can't possibly know about the most recent write. Now you're faced with a choice: do you respond to the reads with potentially stale information, or do you wait (potentially forever) to hear from the other side of the partition and compromise availability?
 
 
 ### Centralized System
@@ -197,13 +222,24 @@
 
 ### Distributed System
 1. We'll always have 'P', so we can only pick one from Availability and Consistency
-2. There are only two types of systems
+2. CAP is better understood as describing the tradeoffs you have to make when you are building a system that may suffer partitions.
+3. There are only two types of systems
    * CP: Wait for a response from the partitioned node which could result in a timeout error. The system can also choose to return an error, depending on the scenario you desire. 
       * Choose Consistency over Availability when your business requirements dictate atomic reads and writes.
    * AP: Return the most recent version of the data you have, which could be stale. This system state will also accept writes that can be processed later when the partition is resolved. Writes might take some time to propagate when the partition is resolved. 
       * Choose Availability over Consistency when your business requirements allow for some flexibility around when the data in the system synchronizes (eventual consistency).
       * Availability is also a compelling option when the system needs to continue to function in spite of external errors (shopping carts, etc.)
-3. BASE (Basically Available, Soft State, Eventually Consistent)
+4. BASE (Basically Available, Soft State, Eventually Consistent)
+
+# FLP
+1. The Fischer, Lynch and Patterson theorem ('FLP') is an extraordinary impossibility result from nearly thirty years ago, which determined that the problem of consensus - having all nodes agree on a common value - is unsolvable in general in asynchronous networks where one node might fail.
+2. Here are some of the ways in which FLP is different from CAP:
+   * FLP permits the possibility of one 'failed' node which is totally partitioned from the network and does not have to respond to requests.
+   * Otherwise, FLP does not allow message loss; the network is only asynchronous but not lossy.
+   * FLP deals with consensus, which is a similar but different problem to atomic storage.
+
+
+
 
 
 # Resources:
