@@ -10,8 +10,10 @@
 
 ## Types of Scaling
 ### Vertical Scaling
-1. Increase the power of CPU, storage of Disk (PATA, SATA-7200rmp,SAS-15000rpm, SSD), capacity of Memory
-2. Constrained by real-world limits
+1. Increase the power of CPU, I/O of storage Disk (PATA, SATA-7200rmp,SAS-15000rpm, SSD), capacity of Memory, Bandwidth
+2. Constrained by real-world limits, diminishing returns, limits to scalibility
+3. Single point of failure
+4. Latency issue for users far away from server
 
 ### Horizontal Scaling
 1. Increase the number of servers, each may still has a unique IP address
@@ -20,6 +22,11 @@
    * The back-end servers now have private IP addresses, which can't be seen by public 
    * Load balancer can now send requests to the servers using TCP/IP, 
 4. It's not a good idea to put DB server on the same web server, as a user can connect to another server, which doesn't have his/her information there.
+5. Advantages and Disadvantages
+   * More complexity up front, but more efficient long term
+   * Redundancy built in
+   * Need load balancer to distribute traffic
+   * Cloud providers make this easier
 
 ## Rules for Scalibility
 1. The first golden rule for scalability: Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
