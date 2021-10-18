@@ -1,4 +1,45 @@
 # SQL and NoSQL Databases
+## Database Scaling
+Most web apps are majority reads, around 95% +
+### Basic Scaling Techniques
+1. Indexes
+   * based on columns
+   * Speed up read performance
+   * Writes and updates become slightly slower
+   * More storage required for index
+3. Denormalization
+   * Add redundant data to tables to reduce joins
+   * Boosts read performance
+   * Slows down writes
+   * Risk inconsistent data across tables
+   * Code is harder to write
+5. Connection pooling
+   * Allow multiple application threads to use same DB connection
+   * Saves on overhead of independent DB connections
+7. Caching
+   * One of the most important way to scale the DB
+   * Can't cache everything
+      * Dynamic data, e.g. real-time driver location
+   * Redis/Memcached
+9. Vertical Scaling
+### Replications and Partitioning
+
+#### Replications
+1. Read Replicas
+   * Master server dedicated only to writes
+   * Consistency : Have to handle making sure new data reaches replicas
+   * Side effect: fault-tolerance
+1. 
+#### Partitioning
+1. Sharding: 
+   * Horizontal partitioning
+   * Schema of table stays the same, but split across multiple DBs
+   * Downside- Hot Keys, no joins across shards
+      * InstantGram: famous people, Justin Bieber
+2. Vertical Partition
+   * Divide schema of database into separate tables
+   * Generally divid by functionality
+   * Best when most data in row isn't need for most queries
 
 ## SQL Databases
 1. If you denormalize your data and include no more Joins in any database query, You can stay with MySQL, and use it like a NoSQL database.
@@ -25,6 +66,11 @@ MongoDB or CouchDB
 1. Joins will now need to be done in your application code.
 1. Need use cache to improve the performance.
 1. We need to know the advantages/disadvantages of different databases, and when to use what
+
+
+### When to Consider NoSQL
+1. If you do transactions or banking, you want consistency
+2. But for Google or FB, no strict consistency, we can trade it off for scale
 
 ### Types of NoSQL DBs
 1. Column: 
