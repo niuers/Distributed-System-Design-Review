@@ -4,6 +4,7 @@
 1. Load balancer distribute incoming data traffic among multiple servers
 2. Used to improve reliability and scalibility of application
 
+
 ## Networking Protocols Served by Load Balancer
 1. TCP: 
    * Simply forward network packets without inspecting the content of the packets
@@ -12,6 +13,17 @@
  * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
  * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
 
+## L4 vs. L7
+1. Layer 4
+   * Only has access to TCP and UDP data
+   * Faster
+   * Lack of information can lead to uneven traffic
+   * It's good on your edge of your data center or your network because it can look at the ip address and for example, if you are getting a Denial of Service attack, instead of wastiing processing power allowing it through your web server, you can just toss that request right at the edge. So a lot of data route all incoming traffice throgh  a L4 load balancer before allowing it further into your application. 
+1. Layer 7
+   * Full access to HTTP protocol and data
+   * SSL termination
+   * Check for authentication
+   * Smarter routing options
 
 ## Types of Load Balancer
 
@@ -57,12 +69,17 @@ It distributes the requests in order across the list of servers.
 ### Randomly Assignment
 ### Dynamic Load Balancing
 1. Least Connections: It sends requests to the server with the lowest number of active connections.
-1. Least Response Time: It sends requests to the server with the fastest response time.
-1. Hash Based Algrithms: It distributes requests based on a key we define, such as the client IP address or the request URL. 
+   * Chat or streaming services
+3. Least Response Time: It sends requests to the server with the fastest response time.
+4. Hash Based Algrithms: It distributes requests based on a key we define, such as the client IP address or the request URL. 
+   * Useful to maintain a stateful session
+   * Amazon shopping cart, when you refresh your page, the same information sent to the same server
+
 ### Weighted Allocation
 
 ## Deal with the First Golden Rule for Scalability
 Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
+
 ### Sticky Sessions
 
 Even if you visit website multiple times, you should end up with the same session, or the same back-end server
@@ -81,9 +98,14 @@ Even if you visit website multiple times, you should end up with the same sessio
    * Store the ID of the server in the cookie, but that exposes the private IP to external world. Also, what if the IP changed  for the server?
    * It's better to store the hash of the corresponding server. This can be set by the load balancer.
    * It breaks down when user disables the cookie though.
+3. Hash based Loading balancer
 
 ## Redundancy of Load Balancer
 1. Load balancer can be a single point of failure
 2. We can have multiple load balancers, 
    * Active-Active/Passive load balancer pairs
       * They send heartbeat from/to each other to check the status. If an active load balancer dies, the passive one can take over its IP address.
+
+## Web Server
+1. Ninginx
+2. Apache
