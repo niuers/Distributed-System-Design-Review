@@ -1,7 +1,8 @@
 
 # Load Balancer
 
-1. Load balancer distribute data traffic among multiple servers
+1. Load balancer distribute incoming data traffic among multiple servers
+2. Used to improve reliability and scalibility of application
 
 ## Networking Protocols Served by Load Balancer
 1. TCP: 
@@ -31,6 +32,7 @@ Network devices that are powerful machines optimized to handle very high through
 1. Barracuuda
 2. Cisco
 3. Citrix
+4. F5
 
 
 ## Load Balancer Algorithms
