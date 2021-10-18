@@ -2,6 +2,14 @@
 # Caching
 
 1. Please never do file-based caching, it makes cloning and auto-scaling of your servers just a pain. 
+2. Improve performance: reading from memory is 50-200x faster than reading from disk
+3. save money: can serve the same amount of traffic with fewer resources
+
+## Caching Layers
+### DNS
+### CDN
+### APllication
+### Database
 
 ## HTTP Caching
 ### Reverse Proxy
@@ -9,6 +17,7 @@
 ### CDN, Akamai
 
 ## Generate Static Content
+
 ### Precompute content
 1. Homegrown + cron or Quartz
 2. Spring Batch
@@ -18,15 +27,30 @@
 6. Amazon Elastic MapReduce
 
 ## Distributed Caching
-1. Write-through
+### Summary
+1. It has built-in functionality to replicate data, shard data across servers, and locate proper server for each key.
+2. It can have active/passive caches
+   * We can warm-up the passive caches to fill the data when we bring them active to avoid 'cache-missing' in the initial time
+
+### **Eviction Policies**
+* We need to prevent stale data, and to save resources we only cache most valuable data
+* TTL: set a time period before a cache entry is deleted automatically, used to prevent stale data
+* Bounded FIFO
+* Bounded LIFO
+* Explicit Cache Invalidation
+* LRU/LFU (least frequently used)
+  * FB Thundering herd problem: where some popular user updates a post, we dump the old post, update the DB, and before we update the cache with the new post, thousands of requests coming in, cause 'cache miss' and DB issues.
+  * They implement a lease a kind of backup cache that serves the old data while the new one is being updated
+
+### Caching Strategies
+1. Cache Aside - most common
+2. Read Through
+3. Write-through  (for write heavy)
    * Directly write to DB
-3. Write-behind
+   * * Consistency vs. Performance
+4. Write-behind (for write heavy)
    * Use even-queue to write to DB
-4. Eviction Policies
-   * TTL 
-   * Bounded FIFO
-   * Bounded LIFO
-   * Explicit Cache Invalidation
+   * Consistency vs. Performance
 6. Replication
 7. Peer-To-Peer P2P
    * Decentralized
@@ -40,6 +64,11 @@
    * JBoss Cache
    * OSCache
 9. You can run out of RAM for the cache   
+
+### Cache Consistency
+1. Writes: make sure for user who's writing data get that fresh data immediately
+   * FB posts wrong image, don't want too long delay between the time user posts image and user sees the image
+3. 
 
 ## Website Cache
 1. .html: Craiglist saves data as .html and re-use them to improve performance instead of in XML, MySQL and generate pages dynamically
