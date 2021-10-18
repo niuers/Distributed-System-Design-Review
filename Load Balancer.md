@@ -50,7 +50,7 @@ Network devices that are powerful machines optimized to handle very high through
 ## Load Balancer Algorithms
 
 ### Round Robin
-It distributes the requests in order across the list of servers. 
+In a nutshell, round-robin algorithms pair an incoming request to a specific machine by cycling (or, more specifically, circling) through a list of servers capable of handling the request. It distributes the requests in order across the list of servers. 
 
 1. We can use a fancy DNS as simple load balancer, when user types a domain in browser, DNS just sends the request to different servers in order.
    * A popular DNS server called BIND
@@ -66,11 +66,16 @@ It distributes the requests in order across the list of servers.
    * Also sessions can be broken in PHP if our back-end server is PHP based, and they are using the session superglobal 
       * Load balancer may break with sessions, which is specific to the machine(/temp in Linux). When you are directed to another server, you may have to be asked to log in again, or your shopping cart won't have all the stuffs you buy.
 
+#### Round Robin vs. Weighted Round Robin
+1. Weighted round-robin provides a clean and effective way of focusing on fairly distributing the load amongst available resources, verses attempting to equally distribute the requests. In a weighted round-robin algorithm, each destination (in this case, server) is assigned a value that signifies, relative to the other servers in the pool, how that server performs. This “weight” determines how many more (or fewer) requests are sent that server’s way; compared to the other servers on the pool.
+1. Weights must be positive integer values; a node with a weight of ‘4’ will receive 4 times as many requests as a node with a weight of ‘1’.
+
+
 ### Randomly Assignment
 ### Dynamic Load Balancing
 1. Least Connections: It sends requests to the server with the lowest number of active connections.
    * Chat or streaming services
-3. Least Response Time: It sends requests to the server with the fastest response time.
+3. Least Response Time (Latency Based): It sends requests to the server with the fastest response time.
 4. Hash Based Algrithms: It distributes requests based on a key we define, such as the client IP address or the request URL. 
    * Useful to maintain a stateful session
    * Amazon shopping cart, when you refresh your page, the same information sent to the same server
