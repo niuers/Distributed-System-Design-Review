@@ -30,3 +30,113 @@
    * Example, minimum throughput
 6. Requirements around cost-effectiveness
    * Example, minimize operational cost
+
+## VIP
+1. Virtual IP addresses 
+2. VIP refers to a symbolic hostname (e.g. myexample.domain.com) that resolves to a load balance system.
+3. When a domain name is queried, request is transferred to one of the VIPs registered in DNS for our domain name
+4. VIP is resolved to a load balance device which knows the front-end hosts
+5. VIP Partitioning: 
+   * We can assign multiple A records in DNS to the same domain name, so a request can be partitioned into several load balancers.
+   * Improve both availability and performance
+6. "Release It!" book by Michael T. Nygard (1st edition).
+8. https://landing.google.com/sre/sre-book/chapters/load-balancing-frontend/
+
+## Front-End WebServices
+1. light-weight web service
+2. Stateless service deployed across several data centers
+3. The rule of thumb: To keep it as simple as possible
+4. 
+### Actions
+1. Request Validation
+   * Ensure all required parameters are present
+   * Data falls within an acceptable range
+3. Authentication/Authorization
+   * Authentication: Validate identity of user or service
+   * Authorization: Determine whether or not a specific actor is permitted to take an action
+5. TLS(SSL) Termination
+   * TLS is a protocol that aims to provide privacy and data integrity
+   * TLS termination refers to the process of decrypting the request and passing on an unencrypted request to the back-end service
+   * SSL on the load balancer is expensive
+   * Termination is usually not handled by not the Front-End service itself, but a separate TLS HTTP proxy that runs as a process on the same host
+7. Server-Side data encryption
+   * Because  we want to save the message securely on back-end hosts, message are encrypted as soon as FrondEnd receive them
+   * Messages are stored in encrypted form and frontend decrypts the messages only when they are sent back to consumer 
+9. Caching
+   * In FrontEnd cache, we store meta data about the mostly actively used queues as well as user identifications to save calls to auth service.
+   * 
+11. Rate Limiting (throttling)
+   * It is the process of limiting the number of requests you can submit to a given operation in a given amount of time
+   * Throttling protects the web from being overwhelmed with requests
+   * Leaky bucket algorithm is the most famous
+13. Request dispatching
+   * Frontend service makes calls to at least two services: metadata and backend. Frontend service creates HTTP clients for both services and make sure that calls to these services are properly isolated. e.g. if metadata service is experiencing a slowdown, the requests to backend service are not impacted. 
+   * Request dispatching is responsible for all the activities associated with sending requests to backend services (clients management, response handling, resources isolation etc.)
+   * **Bulkhead Pattern** helps to isolate elements of an application into pools so that if one fails the others will continue
+   * **Circuit Break** pattern prevents an application from repeatedly trying to execute an operation that's likely to fail
+15. Request deduplication
+   * It may occur when a response from a successful sendMessage request failed to reach a client
+   * Lesser an issue for "at least once" delivery semantics, a bigger issue for 'exactly once' and 'at most once' delivery semantics
+   * Caching is usually used to store previously seen request ids to avoid deduplication
+17. Usage data collection
+   * Real-time data for audit and billing
+
+## MetaData Service
+1. It stores information about queues
+2. It's a caching layer between frontend and a persistent database (to store metadata)
+3. It handles many reads, and relatively small number of writes (when new queue is created)
+4. Strong consistency storage is preferred to avoid potential concurrent updates but not requried
+
+
+## Ask Questions to Proceed
+1. Where and how do we store the messages?
+   * Database? How to build a highly scalable, high throughput DB? 
+   * Memory?
+   * File System?
+   * Answer: RAM and local disk of a backend host
+1. How do we replicate data ? 
+   * Replicate copies within a group of hosts
+1. How does Frontend select backend to send message to?    
+3. How does Frontend know where to retrieve message from?    
+   * Leverage metadata service to check where to send/retrieve message
+
+## Backend Service
+### OptionA: Leader-Follower Relationship
+1. A backend instance is considered a leader for a particular set of queues. Meaning all requests for a particular queue go to this instance.
+2. The leader is responsible for replicates in the followers
+3. Need a component for leader election and management(in-cluster manager), e.g. ZooKeeper
+   * Needs to be reliable, scalable, and performant
+
+### Option B: A small cluster of independent hosts
+1. Still need to manage queue to cluster assignments (out-cluster manager)
+
+
+## Other Issues
+1. Queue creation and deletion
+2. Message deletion
+   * Need maintain order of messages in a queue
+      * Option 1: Kafka, only delete messages after serveral days
+      * Option 2: Amazon SQS, mark messages as invisible so other consumers may not get already consumed messages
+3. Message Replication
+   * Synchronously: response is sent back to producer only after the data have been replicated
+   * Asynchornously: response is sent back to producer as long as a single host has the message
+4. Message Delivery Semantics
+   * At most once: messages maybe lost but never redelivered
+   * At least once:  messages are never lost but maybe redelivered (mostly supported by message queues), good balance between durability, availability and performance
+   * Exactly once: each message is delivered once and only once (hard to achieve in practice)
+
+5. Push vs. Pull
+   * Pull model: consumer constantly sends retrieve message requests and when new message is available in the queue, it is sent back to a consumer. 
+      * Pull is easier to implement than Push
+      * From consumer perspective, we need to do more work in Pull model
+   * Push model: consumer is not bombarding the frontend with receive calls, instead consumer is notified as soon as a new mesage arrives to a queue
+6. FIFO
+   * It's hard to maintaini a strict order in distributed queue.
+7. Security
+   * Need to make sure messages are securely transferred to and from a queue
+      * Encryption using SSL over HTTPS helps to protect message in transit
+      * We also encrypt messages while store in backend hosts
+8. Monitoring
+   * Monitor frontend, metadata, backend services
+   * Provide visibility into customers' experience
+   * 
