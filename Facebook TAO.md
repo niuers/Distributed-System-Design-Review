@@ -50,9 +50,15 @@
       * Distributed write is more complicate, has latency problem, 
    * Solution: Add another layer of cache (Leader Cache)
       * Responsible for coordinating the writes and updating the caches in the followers and protecting DBs against Thundering Herds.
+      * Used to reduce the temperature of hot spots. 
 ## Timeliness of Writes
 1. Want to distribute writes out everywhere as soon as possible
 2. Want to provide read what you wrote consistency
 3. Solution: Use a write-through cache instead of lookaside cache
-4. 
-5. 
+4. The leader cache send request to follower cache to ask them to 'get a refill of something' (instead of sending the data to followers). This way we make the consistency messages **Idempotent**, so in multi-datacenter cases, we dont have to guarantee that the cache consistency messages are delivered only once, or in the correct order. If we have some sort of failure, we can replay cache consistency messages to get ourselves back to a good state.
+5. MySQL asynchronous replication to keep the data in sync
+
+## High Read Availability
+1. Cost of fail over read ? 
+2. MetaStable state: We have failures because of out of capacity. Where we may never have the opportunity to catch up.
+3. What's the fail over path? 
