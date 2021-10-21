@@ -82,3 +82,10 @@ The ability of a system to deal with increased load.
 
 # Resources
 1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
+2. Check Bronson's TAO pdf paper in same link as video
+3. Check Nishtala's pdf paper in same link as video
+4. Lamport's ordering paper: https://lamport.azurewebsites.net/pubs/time-clocks.pdf
+5. Paxos (simpler version, not the greek parliament metaphor version): https://www.microsoft.com/en-us/research/publication/paxos-made-simple/
+6. Raft: http://thesecretlivesofdata.com/raft/ and also http://kanaka.github.io/raft.js/
+7. Dynamo: https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html
+
