@@ -88,4 +88,13 @@ The ability of a system to deal with increased load.
 5. Paxos (simpler version, not the greek parliament metaphor version): https://www.microsoft.com/en-us/research/publication/paxos-made-simple/
 6. Raft: http://thesecretlivesofdata.com/raft/ and also http://kanaka.github.io/raft.js/
 7. Dynamo: https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html
-
+8. DDIA - https://dataintensive.net/buy.html
+9. Grokking - https://www.educative.io/courses/grokking-the-system-design-interview
+10. Nathan Bronson's Tao: https://www.usenix.org/conference/atc13/technical-sessions/presentation/bronson
+11. Nishtala's memcache: https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala
+12. Kulkarni's Facebook live: https://www.youtube.com/watch?v=IO4teCbHvZw
+13. Aroskar's Zuul push: https://www.youtube.com/watch?v=6w6E_B55p0E
+14. NALSD on Google SRE book: https://sre.google/workbook/non-abstract-design/
+15. Krikorian's timelines at scale: https://www.infoq.com/presentations/Twitter-Timeline-Scalability/
+16. Cassandra's capacity planning guidelines by datastax: https://docs.datastax.com/en/dse-planning/doc/planning/capacityPlanning.html
+17. Youtube guy: https://www.youtube.com/channel/UC9vLsnF6QPYuH51njmIooCQ
