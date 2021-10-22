@@ -68,4 +68,4 @@ Following Stores can do this:
 ## They use JSON protocol
 1. Could use binary protocol as well
 
-1. Deduplication of messages
+1. Deduplication of messages on client side which is easier than server side
