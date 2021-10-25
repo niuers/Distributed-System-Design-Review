@@ -71,10 +71,36 @@ challenges.
 1. Managing, provisioning, and solving problems for numerous customers with varying needs, varying workloads, and varying amounts of content.
 1. Isolating customers so they cannot negatively affect each other.
 1. Ensuring data integrity over many terabytes of storage across the network. Because low-level (file system or disk) checks are inadequate to protect against possible errors — including those caused by operators and software bugs — we also perform end-to-end checks.
-1. Collecting logs with information about user requests, processing these logs (for billing), and delivering accurate, timely billing information to customers. To meet the challenges of monitoring and controlling content servers, Akamai developed a distributed monitoring service that is resilient to temporary loss of information. To solve problems for customers, Akamai has customer-focused teams that diagnose problems and provide billing services.
+1. Collecting logs with information about user requests, processing these logs (for billing), and delivering accurate, timely billing information to customers. 
+2. To meet the challenges of monitoring and controlling content servers, Akamai developed a distributed monitoring service that is resilient to temporary loss of information. To solve problems for customers, Akamai has customer-focused teams that diagnose problems and provide billing services.
+
 
 
 #### Reliability
+1. For customers still using cached DNS answers, two mechanisms help prevent denial of service: the DNS resolution can return multiple IP addresses, so that the client can try another address; or a live server at the site can assume the failed server’s IP address. To prevent problems when network failures make sites unreachable (due to router and switch problems, for example), the top-level (TL) DNS will identify local DNS servers at different sites to ensure that clients can reach a live DNS server.
+2. 
+#### Content Visibility and Control
+1. Akamai’s network distributes and serves content for providers, who must retain control over their content as we serve it at the edge, and see real-time information about what content is served to whom and when. Providing this visibility and content control offers challenges in cache consistency, lifetime and integrity control, and several other areas.
+2. Cache Consistency
+   * TTL
+   * Use different URL for each object version. Versioned objects typically have infinite TTLs.
+   * 
+3. To improve uncacheable objects’ performance, we introduce an edge server between the client and origin to split the client’s TCP connection into two separate connections — one from the client to the edge server and one from the edge server to the origin. Contrary to intuition, splitting the connection can deliver faster responses in some cases because the edge server can react to packet loss more quickly than the origin server, improving the connection’s bandwidth-delay product. We also map clients to edge servers that have low congestion and packet loss. Furthermore, the edge server can accept the origin server’s response faster than the client could, and can serve it from memory at the client’s pace. This frees up origin server resources to serve subsequent requests, reducing origin site demand even for uncacheable content. Finally, the edge server can maintain much longer persistent connections with the client than can an origin server; the origin need only maintain connections with relatively few Akamai edge servers
+
+#### Lifetime Control
+#### Authentication and authorization
+#### Integrity control. 
+A server must ensure that each client request receives the correct response, and also detect when origin servers issue incomplete responses and avoid caching those responses.
+#### 
+
+
+##### Cache consistency. 
+1. When objects that the edge servers deliver are cacheable, we must address the consistency of cached content; when they are uncacheable, high-performance delivery is a challenge.
+2. Web Caching
+   * The Web has long used caching, first in browsers and then in forward proxies.
+   * 5Web caching’s lack of success relative to other types of caching might be because Web proxy caches are not closely coordinated with the data sources; caching software is built and administered by organizations distinct from those that provide the data.
+3. 
+
 
 ## Types of CDN
 ### Push CDNs
