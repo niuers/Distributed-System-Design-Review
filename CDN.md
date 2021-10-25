@@ -118,3 +118,6 @@ A server must ensure that each client request receives the correct response, and
 1. Content might be stale if it is updated before the TTL expires it.
 1. CDNs require changing URLs for static content to point to the CDN.
 
+### Product
+1. Amazon CloudFront
+2. 
