@@ -20,11 +20,17 @@
 
 ## Layer 4 vs. Layer 7 Load Balancers
 1. Layer 4
+   * Layer 4 load balancers look at info at the transport layer to decide how to distribute requests. Generally, this involves the source, destination IP addresses, and ports in the header, but not the contents of the packet. Layer 4 load balancers forward network packets to and from the upstream server, performing Network Address Translation (NAT). For Internet traffic specifically, a Layer 4 load balancer bases the load-balancing decision on the source and destination IP addresses and ports recorded in the packet header, without considering the contents of the packet.
    * Transport(Layer 4) This layer provides transparent transfer of data between end systems, or hosts, and is responsible for end-to-end error recovery and flow control. It ensures complete data transfer.
    * Only has access to TCP and UDP data
    * Faster
    * Lack of information can lead to uneven traffic
    * It's good on your edge of your data center or your network because it can look at the ip address and for example, if you are getting a Denial of Service attack, instead of wastiing processing power allowing it through your web server, you can just toss that request right at the edge. So a lot of data route all incoming traffice throgh  a L4 load balancer before allowing it further into your application. 
+   * Today the term “Layer 4 load balancing” most commonly refers to a deployment where the load balancer’s IP address is the one advertised to clients for a web site or service (via DNS, for example). As a result, clients record the load balancer’s address as the destination IP address in their requests.
+   * When the Layer 4 load balancer receives a request and makes the load balancing decision, it also performs Network Address Translation (NAT) on the request packet, changing the recorded destination IP address from its own to that of the content server it has chosen on the internal network. Similarly, before forwarding server responses to clients, the load balancer changes the source address recorded in the packet header from the server’s IP address to its own. (The destination and source TCP port numbers recorded in the packets are sometimes also changed in a similar way.)
+   * Layer 4 load balancers make their routing decisions based on address information extracted from the first few packets in the TCP stream, and do not inspect packet content. A Layer 4 load balancer is often a dedicated hardware device supplied by a vendor and runs proprietary load-balancing software, and the NAT operations might be performed by specialized chips rather than in software.
+   * Layer 4 load balancing was a popular architectural approach to traffic handling when commodity hardware was not as powerful as it is now, and the interaction between clients and application servers was much less complex. It requires less computation than more sophisticated load balancing methods (such as Layer 7), but CPU and memory are now sufficiently fast and cheap that the **performance advantage for Layer 4 load balancing has become negligible or irrelevant in most situations**.
+
 1. Layer 7
    * Application(Layer 7) This layer supports application and end-user processes. Communication partners are identified, quality of service is identified, user authentication and privacy are considered, and any constraints on data syntax are identified. Everything at this layer is application-specific. This layer provides application services for file transfers, e-mail, and other network software services.
    * Full access to HTTP protocol and data
@@ -32,6 +38,15 @@
       * Removes the need to install X.509 certificates on each server
    * Check for authentication
    * Smarter routing options
+1. Layer 4 vs. Layer 7
+   * Layer 7 load balancers operate at the highest level in the OSI model, the application layer (on the Internet, HTTP is the dominant protocol at this layer). Layer 7 load balancers base their routing decisions on various characteristics of the HTTP header and on the actual contents of the message, such as the URL, the type of data (text, video, graphics), or information in a cookie.
+
+Taking into consideration so many more aspects of the information being transferred can make Layer 7 load balancing more expensive than Layer 4 in terms of time and required computing power, but it can nevertheless lead to greater overall efficiency. For instance, because a Layer 7 load balancer can determine what type of data (video, text, and so on) a client is requesting, you don’t have to duplicate the same data on all of the load-balanced servers.
+
+Modern general-purpose load balancers, such as NGINX Plus and the open source NGINX software, generally operate at Layer 7 and serve as full reverse proxies. Rather than manage traffic on a packet-by-packet basis like Layer 4 load balancers that use NAT, Layer 7 load balancing proxies can read requests and responses in their entirety. They manage and manipulate traffic based on a full understanding of the transaction between the client and the application server.
+
+Some load balancers can be configured to provide Layer 4 or Layer 7 load balancing, depending on the nature of the service. As mentioned previously, modern commodity hardware is generally powerful enough that the savings in computational cost from Layer 4 load balancing are not large enough to outweigh the benefits of greater flexibility and efficiency from Layer 7 load balancing.
+
 
 ## Types of Load Balancer
 
