@@ -123,20 +123,6 @@ In a nutshell, round-robin algorithms pair an incoming request to a specific mac
 2. Layer 7
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Deal with the First Golden Rule for Scalability
 Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
 
@@ -180,5 +166,28 @@ Even if you visit website multiple times, you should end up with the same sessio
 
 
 ## Web Server
-1. Ninginx
+1. Nginx
 2. Apache
+
+# Nginx
+1. Whereas many web servers and application servers use a simple threaded or process‑based architecture, NGINX stands out with a sophisticated event‑driven architecture that enables it to scale to hundreds of thousands of concurrent connections on modern hardware.
+
+## The NGINX Process Model
+1. NGINX has a master process (which performs the privileged operations such as reading configuration and binding to ports) and a number of worker and helper processes (Cache loader/Cache manager, cache helper processes which manage the on‑disk content cache).
+1. From the Linux OS perspective, threads and processes are mostly identical; the major difference is the degree to which they share memory
+2. Processes and threads consume resources. They each use memory and other OS resources, and they need to be swapped on and off the cores (an operation called a context switch). Most modern servers can handle hundreds of small, active threads or processes simultaneously, but performance degrades seriously once memory is exhausted or when high I/O load causes a large volume of context switches.
+3. The common way to design network applications is to assign a thread or process to each connection. This architecture is simple and easy to implement, but it does not scale when the application needs to handle thousands of simultaneous connections.
+
+### How Does NGINX Work?
+1. NGINX uses a predictable process model that is tuned to the available hardware resources:
+1. The master process performs the privileged operations such as reading configuration and binding to ports, and then creates a small number of child processes (the next three types).
+   * The cache loader process runs at startup to load the disk‑based cache into memory, and then exits. It is scheduled conservatively, so its resource demands are low.
+   * The cache manager process runs periodically and prunes entries from the disk caches to keep them within the configured sizes.
+   * The worker processes do all of the work! They handle network connections, read and write content to disk, and communicate with upstream servers.
+1. The NGINX configuration recommended in most cases – running one worker process per CPU core – makes the most efficient use of hardware resources.
+2. When an NGINX server is active, only the worker processes are busy. Each worker process handles multiple connections in a nonblocking fashion, reducing the number of context switches. Each worker process is single‑threaded and runs independently, grabbing new connections and processing them. The processes can communicate using shared memory for shared cache data, session persistence data, and other shared resources.
+
+
+
+
+
