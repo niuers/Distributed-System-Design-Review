@@ -8,7 +8,19 @@
    * Helping to eliminate a single point of failure
    * SSL Termination
    * Session Persistence
+3. Horizontal scaling
+1. Load balancers can also help with horizontal scaling, improving performance and availability.
+1. Disadvantages
+   * Scaling horizontally introduces complexity and involves cloning servers
+   * Servers should be stateless: they should not contain any user-related data like sessions or profile pictures
+   * Sessions can be stored in a centralized data store such as a database (SQL, NoSQL) or a persistent cache (Redis, Memcached)
+   * Downstream servers such as caches and databases need to handle more simultaneous connections as upstream servers scale out
 
+
+## Disadvantage(s): load balancer
+1. The load balancer can become a performance bottleneck if it does not have enough resources or if it is not configured properly.
+1. Introducing a load balancer to help eliminate a single point of failure results in increased complexity.
+1. A single load balancer is a single point of failure, configuring multiple load balancers further increases complexity.
 
 ## Networking Protocols Served by Load Balancer
 1. TCP: 
@@ -32,6 +44,8 @@
    * Layer 4 load balancing was a popular architectural approach to traffic handling when commodity hardware was not as powerful as it is now, and the interaction between clients and application servers was much less complex. It requires less computation than more sophisticated load balancing methods (such as Layer 7), but CPU and memory are now sufficiently fast and cheap that the **performance advantage for Layer 4 load balancing has become negligible or irrelevant in most situations**.
 
 1. Layer 7
+   * Layer 7 load balancers look at the application layer to decide how to distribute requests. This can involve contents of the header, message, and cookies. Layer 7 load balancers terminate network traffic, reads the message, makes a load-balancing decision, then opens a connection to the selected server. For example, a layer 7 load balancer can direct video traffic to servers that host videos while directing more sensitive user billing traffic to security-hardened servers.
+At the cost of flexibility, layer 4 load balancing requires less time and computing resources than Layer 7, although the performance impact can be minimal on modern commodity hardware.
    * Application(Layer 7) This layer supports application and end-user processes. Communication partners are identified, quality of service is identified, user authentication and privacy are considered, and any constraints on data syntax are identified. Everything at this layer is application-specific. This layer provides application services for file transfers, e-mail, and other network software services.
    * Full access to HTTP protocol and data
    * SSL termination: Decrypt incoming requests and encrypt server responses so backend servers do not have to perform these potentially expensive operations
@@ -46,6 +60,8 @@ Taking into consideration so many more aspects of the information being transfer
 Modern general-purpose load balancers, such as NGINX Plus and the open source NGINX software, generally operate at Layer 7 and serve as full reverse proxies. Rather than manage traffic on a packet-by-packet basis like Layer 4 load balancers that use NAT, Layer 7 load balancing proxies can read requests and responses in their entirety. They manage and manipulate traffic based on a full understanding of the transaction between the client and the application server.
 
 Some load balancers can be configured to provide Layer 4 or Layer 7 load balancing, depending on the nature of the service. As mentioned previously, modern commodity hardware is generally powerful enough that the savings in computational cost from Layer 4 load balancing are not large enough to outweigh the benefits of greater flexibility and efficiency from Layer 7 load balancing.
+
+1. The more accurate term for layer 4 is “Layer 3/4 load balancing” – because the load balancer bases its decision on both the IP addresses of the origin and destination servers (Layer 3) and the TCP port number of the applications (Layer 4). The more exact term for “Layer 7 load balancing” might be “Layer 5 through 7 load balancing” because HTTP combines the functions of OSI Layers 5, 6, and 7.
 
 
 ## Types of Load Balancer
