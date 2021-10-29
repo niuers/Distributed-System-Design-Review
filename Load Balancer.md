@@ -31,7 +31,7 @@
  * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
 
 ## Layer 4 vs. Layer 7 Load Balancers
-1. Layer 4
+### Layer 4
    * Layer 4 load balancers look at info at the transport layer to decide how to distribute requests. Generally, this involves the source, destination IP addresses, and ports in the header, but not the contents of the packet. Layer 4 load balancers forward network packets to and from the upstream server, performing Network Address Translation (NAT). For Internet traffic specifically, a Layer 4 load balancer bases the load-balancing decision on the source and destination IP addresses and ports recorded in the packet header, without considering the contents of the packet.
    * Transport(Layer 4) This layer provides transparent transfer of data between end systems, or hosts, and is responsible for end-to-end error recovery and flow control. It ensures complete data transfer.
    * Only has access to TCP and UDP data
@@ -43,7 +43,12 @@
    * Layer 4 load balancers make their routing decisions based on address information extracted from the first few packets in the TCP stream, and do not inspect packet content. A Layer 4 load balancer is often a dedicated hardware device supplied by a vendor and runs proprietary load-balancing software, and the NAT operations might be performed by specialized chips rather than in software.
    * Layer 4 load balancing was a popular architectural approach to traffic handling when commodity hardware was not as powerful as it is now, and the interaction between clients and application servers was much less complex. It requires less computation than more sophisticated load balancing methods (such as Layer 7), but CPU and memory are now sufficiently fast and cheap that the **performance advantage for Layer 4 load balancing has become negligible or irrelevant in most situations**.
 
-1. Layer 7
+1. When you use TCP (layer 4) for both front-end and back-end connections, your load balancer forwards the request to the back-end instances without modifying the headers. After your load balancer receives the request, it attempts to open a TCP connection to the back-end instance on the port specified in the listener configuration. 
+2. ELB: Using this configuration, you do not receive cookies for session stickiness or X-Forwarded headers.
+
+
+
+### Layer 7
    * Layer 7 load balancers look at the application layer to decide how to distribute requests. This can involve contents of the header, message, and cookies. Layer 7 load balancers terminate network traffic, reads the message, makes a load-balancing decision, then opens a connection to the selected server. For example, a layer 7 load balancer can direct video traffic to servers that host videos while directing more sensitive user billing traffic to security-hardened servers.
 At the cost of flexibility, layer 4 load balancing requires less time and computing resources than Layer 7, although the performance impact can be minimal on modern commodity hardware.
    * A Layer 7 load balancer terminates the network traffic and reads the message within. It can make a load‑balancing decision based on the content of the message (the URL or cookie, for example). It then makes a new TCP connection to the selected upstream server (or reuses an existing one, by means of HTTP keepalives) and writes the request to the server.
@@ -53,6 +58,10 @@ At the cost of flexibility, layer 4 load balancing requires less time and comput
       * Removes the need to install X.509 certificates on each server
    * Check for authentication
    * Smarter routing options
+1. When you use HTTP (layer 7) for both front-end and back-end connections, your load balancer parses the headers in the request and terminates the connection before sending the request to the back-end instances.
+1. ELB: When you use HTTP/HTTPS, you can enable sticky sessions on your load balancer. A sticky session binds a user's session to a specific back-end instance. This ensures that all requests coming from the user during the session are sent to the same back-end instance.
+
+
 1. Layer 4 vs. Layer 7
    * Layer 7 load balancers operate at the highest level in the OSI model, the application layer (on the Internet, HTTP is the dominant protocol at this layer). Layer 7 load balancers base their routing decisions on various characteristics of the HTTP header and on the actual contents of the message, such as the URL, the type of data (text, video, graphics), or information in a cookie.
 
@@ -175,6 +184,9 @@ Even if you visit website multiple times, you should end up with the same sessio
 
 # Nginx
 1. Whereas many web servers and application servers use a simple threaded or process‑based architecture, NGINX stands out with a sophisticated event‑driven architecture that enables it to scale to hundreds of thousands of concurrent connections on modern hardware.
+1. To better understand this design, you need to understand how NGINX runs. There’s one worker process per core to make efficient use of hardware resources, the ability to interleave multiple connections within a single worker process, and the capability to switch from connection to connection almost instantaneously as network traffic arrives. Put this magic together and you create the massively scalable  **HTTP application delivery engine** that is NGINX.
+1. nginx (pronounced "engine x") is a free open source web server written by Igor Sysoev, a Russian software engineer. Since its public launch in 2004, nginx has focused on high performance, high concurrency and low memory usage. Additional features on top of the web server functionality, like load balancing, caching, access and bandwidth control, and the ability to integrate efficiently with a variety of applications, makes it the second most popular open source web server on the Internet.
+
 
 ## The NGINX Process Model
 1. NGINX has a master process (which performs the privileged operations such as reading configuration and binding to ports) and a number of worker and helper processes (Cache loader/Cache manager, cache helper processes which manage the on‑disk content cache).
@@ -188,9 +200,47 @@ Even if you visit website multiple times, you should end up with the same sessio
    * The cache loader process runs at startup to load the disk‑based cache into memory, and then exits. It is scheduled conservatively, so its resource demands are low.
    * The cache manager process runs periodically and prunes entries from the disk caches to keep them within the configured sizes.
    * The worker processes do all of the work! They handle network connections, read and write content to disk, and communicate with upstream servers.
+      * Each NGINX worker process is initialized with the NGINX configuration and is provided with a set of listen sockets by the master process.
+      * Events are initiated by new incoming connections. These connections are assigned to a state machine – the HTTP state machine is the most commonly used, but NGINX also implements state machines for stream (raw TCP) traffic and for a number of mail protocols (SMTP, IMAP, and POP3).
+      * The state machine is essentially the set of instructions that tell NGINX how to process a request.
+      * Think of the state machine like the rules for chess. Each HTTP transaction is a chess game. On one side of the chessboard is the web server – a grandmaster who can make decisions very quickly. On the other side is the remote client – the web browser that is accessing the site or application over a relatively slow network.
+      * Most web application platforms use A Blocking I/O (State Machine): Most web servers and web applications use a process‑per‑connection or thread‑per‑connection model to play the chess game. Each process or thread contains the instructions to play one game through to the end. During the time the process is run by the server, it spends most of its time ‘blocked’ – waiting for the client to complete its next move.
+      * The web server process listens for new connections (new games initiated by clients) on the listen sockets.
+      * When it gets a new game, it plays that game, blocking after each move to wait for the client’s response.
+      * Once the game completes, the web server process might wait to see if the client wants to start a new game (this corresponds to a keepalive connection). If the connection is closed (the client goes away or a timeout occurs), the web server process returns to listening for new games.
+      * The important point to remember is that every active HTTP connection (every chess game) requires a dedicated process or thread (a grandmaster). This architecture is simple and easy to extend with third‑party modules (‘new rules’). However, there’s a huge imbalance: the rather lightweight HTTP connection, represented by a file descriptor and a small amount of memory, maps to a separate thread or process, a very heavyweight operating system object. It’s a programming convenience, but it’s massively wasteful.
+
 1. The NGINX configuration recommended in most cases – running one worker process per CPU core – makes the most efficient use of hardware resources.
 2. When an NGINX server is active, only the worker processes are busy. Each worker process handles multiple connections in a nonblocking fashion, reducing the number of context switches. Each worker process is single‑threaded and runs independently, grabbing new connections and processing them. The processes can communicate using shared memory for shared cache data, session persistence data, and other shared resources.
+3. NginX uses a non-blocking "Event-driven" architecture: That’s how an NGINX worker process plays “chess.” Each worker (remember – there’s usually one worker for each CPU core) is a grandmaster that can play hundreds (in fact, hundreds of thousands) of games simultaneously.
+   * The worker waits for events on the listen and connection sockets.
+   * Events occur on the sockets and the worker handles them:
+      * An event on the listen socket means that a client has started a new chess game. The worker creates a new connection socket.
+      * An event on a connection socket means that the client has made a new move. The worker responds promptly.
+   * A worker never blocks on network traffic, waiting for its “opponent” (the client) to respond. When it has made its move, the worker immediately proceeds to other games where moves are waiting to be processed, or welcomes new players in the door.
+1. NGINX scales very well to support hundreds of thousands of connections per worker process. Each new connection creates another file descriptor and consumes a small amount of additional memory in the worker process. There is very little additional overhead per connection. NGINX processes can remain pinned to CPUs. Context switches are relatively infrequent and occur when there is no work to be done.
 
+In the blocking, connection‑per‑process approach, each connection requires a large amount of additional resources and overhead, and context switches (swapping from one process to another) are very frequent.
+
+
+
+
+
+
+#### Rate Limiting and Concurrency Limiting
+
+## Security
+You can create a load balancer with the following security features.
+
+### SSL server certificates
+1. If you use HTTPS or SSL for your front-end connections, you must deploy an X.509 certificate (SSL server certificate) on your load balancer. The load balancer decrypts requests from clients before sending them to the back-end instances (known as SSL termination). 
+1. If you don't want the load balancer to handle the SSL termination (known as SSL offloading), you can use TCP for both the front-end and back-end connections, and deploy certificates on the registered instances handling requests.
+
+### SSL negotiation
+1. Elastic Load Balancing provides predefined SSL negotiation configurations that are used for SSL negotiation when a connection is established between a client and your load balancer. The SSL negotiation configurations provide compatibility with a broad range of clients and use high-strength cryptographic algorithms called ciphers. However, some use cases might require all data on the network to be encrypted and allow only specific ciphers. Some security compliance standards (such as PCI, SOX, and so on) might require a specific set of protocols and ciphers from clients to ensure that the security standards are met. In such cases, you can create a custom SSL negotiation configuration, based on your specific requirements. Your ciphers and protocols should take effect within 30 seconds. For more information, see SSL negotiation configurations for Classic Load Balancers.
+
+### Back-end server authentication
+If you use HTTPS or SSL for your back-end connections, you can enable authentication of your registered instances. You can then use the authentication process to ensure that the instances accept only encrypted communication, and to ensure that each registered instance has the correct public key.
 
 
 
