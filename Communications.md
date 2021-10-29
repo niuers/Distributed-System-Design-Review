@@ -148,3 +148,162 @@ There is also no guarantee that this note will actually reach the person it is i
 This is because the internet is designed to be self-organizing and self-repairing, able to route around connectivity problems rather than relying on direct connections between computers.
 
 1. 
+# Remote procedure call (RPC)
+1. RPC, a session layer (or application layer in TCP/IP layer model) protocol, is an inter-process communication that allows a computer program to cause a subroutine or procedure to execute in another address space (commonly on another computer on a shared network), without the programmer explicitly coding the details for this remote interaction. That is, the programmer writes essentially the same code whether the subroutine is local to the executing program, or remote. In an Object-Oriented Programming context, RPC is also called remote invocation or remote method invocation (RMI).
+
+1. In an RPC, a client causes a procedure to execute on a different address space, usually a remote server. The procedure is coded as if it were a local procedure call, abstracting away the details of how to communicate with the server from the client program. Remote calls are usually slower and less reliable than local calls so it is helpful to distinguish RPC calls from local calls. Popular RPC frameworks include Protobuf, Thrift, and Avro.
+   * Stub procedure: a local procedure that marshals the procedure identifier and the arguments into a request message, and then to send via its communication module to the server. When the reply message arrives, it unmarshals the results.
+   * Google Protobuf, 
+   * Facebook Thrift: User case: Hbase/Cassandra/Hypertable/Scrib/
+   * Apache Avro: Avro is heavily used in the hadoop ecosystem and based on dynamic schemas in Json. It features dynamic typing, untagged data, and no manually-assigned field IDs.
+
+1. Generally speaking, RPC is internally used by many tech companies for performance issues, but it is rather hard to debug and not flexible. So for public APIs, we tend to use HTTP APIs, and are usually following the RESTful style.
+
+## FB Thrift
+
+
+
+### RPC is a request-response protocol:
+1. Client program - Calls the client stub procedure. The parameters are pushed onto the stack like a local procedure call.
+1. Client stub procedure - Marshals (packs) procedure id and arguments into a request message.
+1. Client communication module - OS sends the message from the client to the server.
+1. Server communication module - OS passes the incoming packets to the server stub procedure.
+1. Server stub procedure - Unmarshalls the results, calls the server procedure matching the procedure id and passes the given arguments.
+1. The server response repeats the steps above in reverse order.
+
+### Sample RPC calls:
+```
+GET /someoperation?data=anId
+
+POST /anotheroperation
+{
+  "data":"anId";
+  "anotherdata": "another value"
+}
+```
+1. RPC is focused on exposing behaviors. RPCs are often used for performance reasons with internal communications, as you can hand-craft native calls to better fit your use cases.
+
+### Choose a native library (aka SDK) when:
+1. You know your target platform.
+1. You want to control how your "logic" is accessed.
+1. You want to control how error control happens off your library.
+1. Performance and end user experience is your primary concern.
+1. HTTP APIs following REST tend to be used more often for public APIs.
+
+### Disadvantage(s): RPC
+1. RPC clients become tightly coupled to the service implementation.
+1. A new API must be defined for every new operation or use case.
+1. It can be difficult to debug RPC.
+1. You might not be able to leverage existing technologies out of the box. For example, it might require additional effort to ensure RPC calls are properly cached on caching servers such as Squid.
+
+# Representational State Transfer (REST)
+1. REST is an architectural style enforcing a client/server model where the client acts on a set of resources managed by the server. The server provides a representation of resources and actions that can either manipulate or get a new representation of resources. All communication must be stateless and cacheable.
+
+### There are four qualities of a RESTful interface:
+1. Identify resources (URI in HTTP) - use the same URI regardless of any operation.
+1. Change with representations (Verbs in HTTP) - use verbs, headers, and body.
+1. Self-descriptive error message (status response in HTTP) - Use status codes, don't reinvent the wheel.
+1. HATEOAS (HTML interface for HTTP) - your web service should be fully accessible in a browser.
+
+### Sample REST calls:
+```
+GET /someresources/anId
+
+PUT /someresources/anId
+{"anotherdata": "another value"}
+```
+
+1. REST is focused on exposing data. It minimizes the coupling between client/server and is often used for public HTTP APIs. REST uses a more generic and uniform method of exposing resources through URIs, representation through headers, and actions through verbs such as GET, POST, PUT, DELETE, and PATCH. **Being stateless, REST is great for horizontal scaling and partitioning.**
+
+### Disadvantage(s): REST
+1. With REST being focused on exposing data, it might not be a good fit if resources are not naturally organized or accessed in a simple hierarchy. For example, returning all updated records from the past hour matching a particular set of events is not easily expressed as a path. With REST, it is likely to be implemented with a combination of URI path, query parameters, and possibly the request body.
+1. REST typically relies on a few verbs (GET, POST, PUT, DELETE, and PATCH) which sometimes doesn't fit your use case. For example, moving expired documents to the archive folder might not cleanly fit within these verbs.
+1. Fetching complicated resources with nested hierarchies requires multiple round trips between the client and server to render single views, e.g. fetching content of a blog entry and the comments on that entry. For mobile applications operating in variable network conditions, these multiple roundtrips are highly undesirable.
+1. Over time, more fields might be added to an API response and older clients will receive all new data fields, even those that they do not need, as a result, it bloats the payload size and leads to larger latencies.
+
+## RPC and REST calls comparison
+1. why should I considered REST’s request style (resource oriented) better than RPC’s (operation oriented)? Is RPC’s request style so evil? Is REST’s the panacea?
+1. Both RPC and REST use HTTP protocol which is a request/response protocol. A basic HTTP request consists of:
+   * A verb (or method)
+   * A resource (or endpoint)
+1. Each HTTP verb:
+   * Has a meaning
+   * Is idempotent or not: A request method is considered “idempotent” if the intended effect on the server of multiple identical requests with that method is the same as the effect for a single such request.
+      * GET, PUT, DELETE
+   * Is safe or not: Request methods are considered “safe” if their defined semantics are essentially read-only.
+      * GET
+   * Is cacheable or not
+      * GET
+      * POST/PATCH(Only cacheable if response contains explicit freshness information)
+
+#### RPC
+1. when I talk about RPC I talk about WYGOPIAO: What You GET Or POST Is An Operation
+2. With this type of RPC, you expose operations to manipulate data through HTTP as a transport protocol. As far as I know, there are no particular rules for this style but generally:
+   * The endpoint contains the name of the operation you want to invoke.
+   * This type of API generally only uses GET and POST HTTP verbs.
+#### REST
+1. With a REST API you expose data as resources that you manipulate through HTTP protocol using the right HTTP verb
+2. The endpoint contains the resource you manipulate. Many use the CRUD analogy to explain REST requests principles. The HTTP verb indicates what you want to do (Create/Read/Update/Delete) with that resource.
+
+3. REST is an architectural approach and means that a RESTful system has the following properties:
+   * It is client/server: the business logic is decoupled from presentation. So you can change one without impacting the other. The cons, it adds negligible latency, but who cares, the web is the platform and everything is client/server.
+   * It is stateless: All messages exchanged between client and server has all the context needed to know what to do with the message. This visibility has several benefits: 
+      * you can route a message where ever you want depending on its contents and any server can service a request. So you an just scale your server by creating several instances of it.
+      * You dont need to send all messages from the same client or user to the same server. And if you want to supertune the backend, you can rout messages to different server depending on the message. For example, having a CPU intensive request to one server and a memory intensive one to another. 
+      * The cons: the client is sending all messages with redundant information. This adds bandwidth and again, negligible latency.
+   * It is cacheable, so if you were worried about latency you save bandwidth cacheing responses from the server.
+   * It has a uniform interface based on hypermedia (you know, that HATEOAS thing). The great thing about this is that you can greatly improve decoupling between client and server. If server responses contain hypermedia to all referenced resources and available actions within the context of the last request, the client does not need to know much about the server but an entry point and a few conventions about the hypermedia. Properly implemented, you could change many things in the server side without rewriting a single line in the client.
+   * And finally, it's layered, like an onion. You can put several layers of components between client and server, for routing purposes, load balancing, cacheing or whatever you need. Of course it adds latency but also lots of flexibility. And if you change a layer, only the previous layer could be impacted, so propagation of change effects is limited.
+1. In general the only cons are related to latency in request processing times and bandwidth usage. But its a great general purpose architecture that provides:
+   * great flexibility
+   * lower maintenance costs
+   * high scalability
+   * simplicity
+
+#### Caching
+1. I’ve often seen (http) caching used as a killer reason to choose REST over RPC.
+But after reading HTTP RFCs, I do not agree with this argument (maybe I missed something). Of course if your RPC API only use POST for all requests, caching may be a little tricky to handle (but not impossible). If you use GET and POST wisely, your RPC API will be able to obtain the same level of cacheability as a REST API.
+
+#### Predictability and semantic
+1. With RPC the semantic relies (mostly) on the endpoint and there are no global shared understanding of its meaning. 
+2. With RPC you rely on your human interpretation of the endpoint’s meaning to understand what it does but you can therefore have a fine human readable description of what is happening when you call this endpoint.
+3. With REST the semantic relies (mostly) on the HTTP verb. The verb’s semantic is globally shared.
+4. REST is more predictable than RPC as it relies on the shared semantic of HTTP verbs. You don’t know what happen exactly but you have a general idea of what you do.
+### RPC Problems
+1. Focus on language (fit the distributed system to the language, not the other way around)
+1. "Make it look local" (and cope with failure and latency as exceptions rather than the rule)
+1. intended to be language-independent, but still has "function calls" across languages as main ingredient
+1. IDL (Interface Description Language) boilerplate
+1. Illusion of type safety
+
+1. The fundamental problem with RPC is coupling. RPC clients become tightly coupled to service implementation in several ways and it becomes very hard to change service implementation without breaking clients:
+   * Clients are required to know procedure names;
+      * Procedure parameters order, types and count matters. It's not that easy to change procedure signatures(number of arguments, order of arguments, argument types etc...) on server side without breaking client implementations;
+      * RPC style doesn't expose anything but procedure endpoints + procedure arguments. It's impossible for client to determine what can be done next.
+
+1. On the other hand in REST style it's very easy to guide clients by including control information in representations(HTTP headers + representation). For example:
+   * It's possible (and actually mandatory) to embed links annotated with link relation types which convey meanings of these URIs;
+   * Client implementations do not need to depend on particular procedure names and arguments. Instead, clients depend on message formats. This creates possibility to use already implemented libraries for particular media formats (e.g. Atom, HTML, Collection+JSON, HAL etc...)
+   * It's possible to easily change URIs without breaking clients as far as they only depend on registered (or domain specific) link relations;
+   * It's possible to embed form-like structures in representations, giving clients the possibility to expose these descriptions as UI capabilities if the end user is human;
+   * Support for caching is additional advantage;
+   * Standardised status codes;
+
+#### When RPC might be better than REST?
+1. In general, RPC offers far more of a language integration than REST. As you mentioned, this comes with a number of problems in terms of scale, error handling, type safety, etc., especially when a single distributed system involves multiple hosts running code written in multiple languages. However, after having written business systems that use RPC, REST, and even both simultaneously, I've found that there are some good reasons to choose RPC over REST in certain cases.
+
+1. Here's the cases where I've found RPC to be a better fit:
+   * Tight coupling. The (distributed) components of the system are designed to work together, and changing one will likely impact all of the others. It is unlikely that the components will have to be adapted to communicate with other systems in the future.
+   * Reliable communication. The components will communicate with each other either entirely on the same host or on a network that is unlikely to experience latency issues, packet loss, etc.. (This still means you need to design your system to handle these cases, however.)
+   * Uniform language. All (or mostly all) components will be written in a single language. It is unlikely that additional components written in a different language will be added in the future.
+
+1. Regarding the point about IDL, in a REST system you also have to write code that converts the data in the REST requests and responses to whatever internal data representation you are using. IDL sources (with good comments) can also serve as documentation of the interface, which has to be written and maintained separately for a REST API.
+
+1. The above three items often occur when you are looking to build one component of a larger system. In my experience, these components are often ones where their subsystems need to be able to fail independently and not cause the total failure of other subsystems or the entire component. Many systems are written in Erlang to accomplish these goals as well, and in some cases Erlang may be a better choice than writing a system in another language and using RPC just to gain these benefits.
+
+
+
+
+
+
+
