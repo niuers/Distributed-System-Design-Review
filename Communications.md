@@ -3,6 +3,9 @@
 1. Check the ["OSI 7 LAYER MODEL"](http://www.escotal.com/osilayer.html)
    * The OSI, or Open System Interconnection, model defines a networking framework for implementing protocols in seven layers. Control is passed from one layer to the next, starting at the application layer in one station, proceeding to the bottom layer, over the channel to the next station and back up the hierarchy.
 1. At each layer there are standards that define how data is packaged and transported. Among other things, the standards define how to segment the stream of bits that constitute a request or response into discrete packages called protocol data units (PDUs). The standards also define the metadata added to each PDU in the form of a header; the metadata might specify the addresses of the origin and destination hosts, for example.
+1. The Open System Interconnection (OSI) defines a model framework for implementing a standard format for communication, called a protocol, in these layers.
+# SSL
+The Secure Sockets Layer (SSL) protocol is primarily used to encrypt confidential data over insecure networks such as the internet. The SSL protocol establishes a secure connection between a client and the back-end server, and ensures that all the data passed between your client and your server is private and integral.
 
 
 # Hypertext transfer protocol (HTTP)
