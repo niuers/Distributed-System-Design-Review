@@ -1,6 +1,9 @@
 
-3. Check the ["OSI 7 LAYER MODEL"](http://www.escotal.com/osilayer.html)
+# OSI
+1. Check the ["OSI 7 LAYER MODEL"](http://www.escotal.com/osilayer.html)
    * The OSI, or Open System Interconnection, model defines a networking framework for implementing protocols in seven layers. Control is passed from one layer to the next, starting at the application layer in one station, proceeding to the bottom layer, over the channel to the next station and back up the hierarchy.
+1. At each layer there are standards that define how data is packaged and transported. Among other things, the standards define how to segment the stream of bits that constitute a request or response into discrete packages called protocol data units (PDUs). The standards also define the metadata added to each PDU in the form of a header; the metadata might specify the addresses of the origin and destination hosts, for example.
+
 
 # Hypertext transfer protocol (HTTP)
       * HTTP is a method for encoding and transporting data between a client (browser) and a server. It is a request/response protocol: clients issue requests and servers issue responses with relevant content and completion status info about the request. HTTP is self-contained, allowing requests and responses to flow through many intermediate routers and servers that perform load balancing, caching, encryption, and compression. This self‑contained design allows for the distributed nature of the Internet, where a request or response might pass through many intermediate routers and proxy servers.
@@ -13,6 +16,7 @@
 1. TCP is a connection-oriented protocol over an IP network. Connection is established and terminated using a handshake. All packets sent are guaranteed to reach the destination in the original order and without corruption through:
    * Sequence numbers and checksum fields for each packet
    * Acknowledgement packets and automatic retransmission
+1. Each application is assigned a unique TCP port number to enable delivery to the correct application on hosts where many applications are running.
 1. TCP connections are reliable and ordered. All data you send is guaranteed to arrive at the other side and in the order you wrote it. This imply the use of acknowledgement packets sent back to the sender. 
 2. It’s also a stream protocol, so TCP automatically splits your data into packets and sends them over the network for you. 
 3. When a file or message send it will get delivered unless connections fails. If connection lost, the server will request the lost part. There is no corruption while transferring a message.
@@ -139,6 +143,7 @@ You can't even rely on the UDP checksum so you must add your own
 
 
 # IP or “internet protocol
+1. Internet Protocol (IP) operates at the internetwork layer (Layer 3). Its PDUs are called packets, and IP is responsible for delivering them from a origin host to a destination host, usually across the boundaries between the multiple smaller networks that make up the Internet. Each device that is directly connected to the Internet has a unique IP address, which is used to locate the device as the recipient of packets.
 1. Here there is no concept of connection, packets are simply passed from one computer to the next. You can visualize this process being somewhat like a hand-written note passed from one person to the next across a crowded room, eventually, reaching the person it’s addressed to, but only after passing through many hands.
 
 There is also no guarantee that this note will actually reach the person it is intended for. The sender just passes the note along and hopes for the best, never knowing whether or not the note was received, unless the other person decides to write back!
