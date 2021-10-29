@@ -159,9 +159,16 @@ This is because the internet is designed to be self-organizing and self-repairin
 
 1. Generally speaking, RPC is internally used by many tech companies for performance issues, but it is rather hard to debug and not flexible. So for public APIs, we tend to use HTTP APIs, and are usually following the RESTful style.
 
-## FB Thrift
-
-
+## Apache/FB Thrift
+1.  Thrift, a cross-language framework for handling RPC, including serialization/deserialization, protocol transport, and server creation.
+1. For example, one issue we ran into was that internal service owners were constantly re-inventing the same features again and again — such as transport compression, authentication, and counters — to track the health of their servers. Engineers were also spending a lot of time trying to eke out more performance from their services.
+2. Over time, we found that parallel processing of requests from the same client and out-of-order responses solved many of the performance issues. The benefits of the former are obvious; the latter helps avoid application-level, head-of-line blocking.
+3. Head-of-line blocking in computer networking is a performance-limiting phenomenon that occurs when a line of packets is held up by the first packet. Examples include input buffered network switches, out-of-order delivery and multiple requests in HTTP pipelining.
+4. Service requests that go between data centers are dynamically compressed based on the size of the message, while in-rack requests skip compression (and thus avoid the CPU hit).
+5. To improve asynchronous workload performance, we updated the base Thrift transport to be folly’s IOBuf class, a chained memory buffer with views similar to BSD’s mbuf or Linux’s sk_buff.
+   * To reduce the performance impact of allocating new buffers, we allocate constant-sized buffers from JEMalloc to hit the thread-local buffer cache as often as possible. Hitting the thread-local cache was an impressive performance improvement — for the average Thrift server, it’s just as fast as reusing or pooling buffers, without any of the complicated code. These buffers are then chained together to become as large as needed, and freed when not needed, preventing some memory issues seen in previous Thrift servers where memory was pooled indefinitely
+6. To allow for per-request attributes and features, we introduced a new THeader protocol and transport. The THeader format is very similar to HTTP headers — each request passes along headers that the server can interpret. With some clever programming, it was possible to make the THeader format backward compatible with all the previous Thrift transports and protocols.
+7. Apache Thrift has become a ubiquitous piece of software for backend and embedded systems operating at scale.
 
 ### RPC is a request-response protocol:
 1. Client program - Calls the client stub procedure. The parameters are pushed onto the stack like a local procedure call.
@@ -195,6 +202,10 @@ POST /anotheroperation
 1. A new API must be defined for every new operation or use case.
 1. It can be difficult to debug RPC.
 1. You might not be able to leverage existing technologies out of the box. For example, it might require additional effort to ensure RPC calls are properly cached on caching servers such as Squid.
+
+### Why REST for internal use and not RPC?
+1. RPC is a nearly transparent mechanism that makes communication between two processes nearly painless- in theory. I can see the appeal of REST if you want to provide an API to clients beyond your control- everyone can do REST while RPC is more complex (if you don't have a matching RPC library for your platform of choice, you're probably fucked- but if you have control over front *and* backend, you should be able to pick a well-supported mechanism on both ends).
+2. 
 
 # Representational State Transfer (REST)
 1. REST is an architectural style enforcing a client/server model where the client acts on a set of resources managed by the server. The server provides a representation of resources and actions that can either manipulate or get a new representation of resources. All communication must be stateless and cacheable.
