@@ -4,6 +4,14 @@
 1. Please never do file-based caching, it makes cloning and auto-scaling of your servers just a pain. 
 2. Improve performance: reading from memory is 50-200x faster than reading from disk
 3. save money: can serve the same amount of traffic with fewer resources
+4. Caching consists of: precalculating results (e.g. the number of visits from each referring domain for the previous day), pre-generating expensive indexes (e.g. suggested stories based on a user’s click history), and storing copies of frequently accessed data in a faster backend (e.g. Memcache instead of PostgreSQL.
+5. In practice, caching is important earlier in the development process than load-balancing, and starting with a consistent caching strategy will save you time later on. It also ensures you don’t optimize access patterns which can’t be replicated with your caching mechanism or access patterns where performance becomes unimportant after the addition of caching (I’ve found that many heavily optimized Cassandra applications are a challenge to cleanly add caching to if/when the database’s caching strategy can’t be applied to your access patterns, as the datamodel is generally inconsistent between the Cassandra and your cache).
+
+## Types
+1. Application vs. database caching
+   * There are two primary approaches to caching: application caching and database caching (most systems rely heavily on both).
+
+
 
 ## Caching Layers
 ### DNS
@@ -68,7 +76,16 @@
 ### Cache Consistency
 1. Writes: make sure for user who's writing data get that fresh data immediately
    * FB posts wrong image, don't want too long delay between the time user posts image and user sees the image
-3. 
+3. While caching is fantastic, it does require you to maintain consistency between your caches and the source of truth (i.e. your database), at risk of truly bizarre applicaiton behavior. Solving this problem is known as cache invalidation.
+4. If you’re dealing with a single datacenter, it tends to be a straightforward problem, but it’s easy to introduce errors if you have multiple codepaths writing to your database and cache (which is almost always going to happen if you don’t go into writing the application with a caching strategy already in mind). At a high level, the solution is: each time a value changes, write the new value into the cache (this is called a write-through cache) or simply delete the current value from the cache and allow a read-through cache to populate it later (choosing between read and write through caches depends on your application’s details, but generally I prefer write-through caches as they reduce likelihood of a stampede on your backend database).
+
+Invalidation becomes meaningfully more challenging for scenarios involving fuzzy queries (e.g if you are trying to add application level caching in-front of a full-text search engine like SOLR), or modifications to unknown number of elements (e.g. deleting all objects created more than a week ago).
+
+In those scenarios you have to consider relying fully on database caching, adding aggressive expirations to the cached data, or reworking your application’s logic to avoid the issue (e.g. instead of DELETE FROM a WHERE..., retrieve all the items which match the criteria, invalidate the corresponding cache rows and then delete the rows by their primary key explicitly).
+
+
+
+
 
 ## Website Cache
 1. .html: Craiglist saves data as .html and re-use them to improve performance instead of in XML, MySQL and generate pages dynamically
