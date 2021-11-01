@@ -306,6 +306,17 @@ If you use HTTPS or SSL for your back-end connections, you can enable authentica
 2. A forward proxy is essentially used by a client and a reverse proxy is used by servers.
 
 
+## Load balancer Implementation
+1. A moderately large system may balance load at three layers:
+   * user to your web servers,
+   * web servers to an internal platform layer,
+   * internal platform layer to your database.
+
+### Smart Client
+1. What is a smart client? It is a client which takes a pool of service hosts and balances load across them, detects downed hosts and avoids sending requests their way (they also have to detect recovered hosts, deal with adding new hosts, etc, making them fun to get working decently and a terror to setup).
+1. Seems impossible? 
+
+
 
 
 
