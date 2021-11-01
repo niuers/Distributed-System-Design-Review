@@ -158,6 +158,15 @@ Even if you visit website multiple times, you should end up with the same sessio
    * It's better to store the hash of the corresponding server. This can be set by the load balancer.
    * It breaks down when user disables the cookie though.
 3. Hash based Loading balancer
+4. Sometimes on the internet, you will find a few percent of the clients which disable cookies on their browser. Obviously they have troubles everywhere on the web, but you can still help them access your site by using the "source" balancing algorithm instead of the "roundrobin". It ensures that a given IP address always reaches the same server as long as the number of servers remains unchanged. Never use this behind a proxy or in a small network, because the distribution will be unfair. However, in large internal networks, and on the internet, it works quite well. Clients which have a dynamic address will not be affected as long as they accept the cookie, because the cookie always has precedence over load balancing.
+
+### KeepAlive
+1. Keepalived implements VRRP (Virtual Router Redundancy Protocol) on a Linux system as well as managing Linux Virtual Server configuration. Keepalived can implement High Availability (active/passive) and load balancing (active/active) setups that can be made responsive to several customisable factors.
+2. A keepalive (KA) is a message sent by one device to another to check that the link between the two is operating, or to prevent the link from being broken.
+
+
+
+
 
 ## Redundancy of Load Balancer
 1. Load balancer can be a single point of failure
@@ -241,6 +250,62 @@ You can create a load balancer with the following security features.
 
 ### Back-end server authentication
 If you use HTTPS or SSL for your back-end connections, you can enable authentication of your registered instances. You can then use the authentication process to ensure that the instances accept only encrypted communication, and to ensure that each registered instance has the correct public key.
+
+
+# Reverse proxy (web server)
+1. A reverse proxy is a web server that centralizes internal services and provides unified interfaces to the public. Requests from clients are forwarded to a server that can fulfill it before the reverse proxy returns the server's response to the client.
+
+## Additional benefits include:
+1. Increased security - Hide information about backend servers, blacklist IPs, limit number of connections per client
+1. Increased scalability and flexibility - Clients only see the reverse proxy's IP, allowing you to scale servers or change their configuration
+1. SSL termination - Decrypt incoming requests and encrypt server responses so backend servers do not have to perform these potentially expensive operations
+   * Removes the need to install X.509 certificates on each server
+1. Compression - Compress server responses
+1. Caching - Return the response for cached requests
+1. Static content - Serve static content directly
+   * HTML/CSS/JS
+   * Photos
+   * Videos
+   * Etc
+
+### Load balancer vs reverse proxy
+1. Deploying a load balancer is useful when you have multiple servers. Often, load balancers route traffic to a set of servers serving the same function.
+1. Reverse proxies can be useful even with just one web server or application server, opening up the benefits described in the previous section.
+1. Solutions such as NGINX and HAProxy can support both layer 7 reverse proxying and load balancing.
+### Disadvantage(s): reverse proxy
+1. Introducing a reverse proxy results in increased complexity.
+1. A single reverse proxy is a single point of failure, configuring multiple reverse proxies (ie a failover) further increases complexity.
+
+#### Common Points
+1. Both types of application sit between clients and servers, accepting requests from the former and delivering responses from the latter. No wonder there’s confusion about what’s a reverse proxy vs. load balancer.
+
+#### Differences
+1. Load balancers are most commonly deployed when a site needs multiple servers because the volume of requests is too much for a single server to handle efficiently. Deploying multiple servers also eliminates a single point of failure, making the website more reliable. Most commonly, the servers all host the same content, and the load balancer’s job is to distribute the workload in a way that makes the best use of each server’s capacity, prevents overload on any server, and results in the fastest possible response to the client.
+2. A load balancer can also enhance the user experience by reducing the number of error responses the client sees. It does this by detecting when servers go down, and diverting requests away from them to the other servers in the group. In the simplest implementation, the load balancer detects server health by intercepting error responses to regular requests. 
+3. Another useful function provided by some load balancers is session persistence, which means sending all requests from a particular client to the same server.
+#### Reverse Proxy
+4. It often makes sense to deploy a reverse proxy even with just one web server or application server. You can think of the reverse proxy as a website’s “public face.” Its address is the one advertised for the website, and it sits at the edge of the site’s network to accept requests from web browsers and mobile apps for the content hosted at the website. The benefits are two-fold:
+   * Increased security – No information about your backend servers is visible outside your internal network, so malicious clients cannot access them directly to exploit any vulnerabilities. Many reverse proxy servers include features that help protect backend servers from distributed denial-of-service (DDoS) attacks, for example by rejecting traffic from particular client IP addresses (blacklisting), or limiting the number of connections accepted from each client.
+   * Increased scalability and flexibility – Because clients see only the reverse proxy’s IP address, you are free to change the configuration of your backend infrastructure. This is particularly useful In a load-balanced environment, where you can scale the number of servers up and down to match fluctuations in traffic volume.
+
+1.Another reason to deploy a reverse proxy is for web acceleration – reducing the time it takes to generate a response and return it to the client. Techniques for web acceleration include the following:
+   * Compression – Compressing server responses before returning them to the client (for instance, with gzip) reduces the amount of bandwidth they require, which speeds their transit over the network.
+   * SSL termination – Encrypting the traffic between clients and servers protects it as it crosses a public network like the Internet. But decryption and encryption can be computationally expensive. By decrypting incoming requests and encrypting server responses, the reverse proxy frees up resources on backend servers which they can then devote to their main purpose, serving content.
+   * Caching – Before returning the backend server’s response to the client, the reverse proxy stores a copy of it locally. When the client (or any client) makes the same request, the reverse proxy can provide the response itself from the cache instead of forwarding the request to the backend server. This both decreases response time to the client and reduces the load on the backend server.
+
+1. Every load balancer that operates at layer seven (http) is a reverse proxy, but not every reverse proxy is a load balancer. You could say that a load balancer is a type of reverse proxy.
+   * Load balancers that work at layer four (eg AWS NLB) or below are probably also reverse proxies, but since they don't parse requests like http packets they're not as functional and have fewer features. They're usually faster.
+   * A load balancer's primary job is to take requests and distribute them to a number of servers to service the request. It may also do things like path based routing, so for example static resource requests are filled from one server farm or AWS S3, while application pages are filled by another server farm.
+   * A reverse proxy, if it's not a load balancer, can be installed on a single server to send requests to another application on the server. For example, you may have Nginx or Apache in front of Tomcat, as they have more features than Tomcat and can protect Tomcat from some classes of attacks. For example, Apache may be configured to cache Tomcat responses if for some reason you don't want to do that in Tomcat.
+
+1. A reverse proxy is a layer 7 load balancer (or, vice versa) that operates at the highest level applicable and provides for deeper context on the Application Layer protocols such as HTTP. By using additional application awareness, a reverse proxy or layer 7 load balancer has the ability to make more complex and informed load balancing decisions on the content of the message – whether it’s to optimise and change the content (HTTP header manipulation, compression and encryption) and/or monitor the health of applications to ensure reliability and availability. On the other hand, layer 4 load balancers are FAST routers rather than application (reverse) proxies where the client effectively talks directly (transparently) to the backend servers.  
+
+1. All modern load balancers are capable of doing both – layer 4 as well as layer 7 load balancing, by acting either as reverse proxies (layer 7 load balancers) or routers (layer 4 load balancers). An initial tier of layer 4 load balancers can distribute the inbound traffic across a second tier of layer 7 (proxy-based) load balancers. Splitting up the traffic allows the computationally complex work of the proxy load balancers to be spread across multiple nodes. Thus, the two-tiered model serves far greater volumes of traffic than would otherwise be possible and therefore, is a great option for load balancing object storage systems – the demand for which has significantly exploded in the recent years.
+1. Essentially Load Balancer is one of the applications of a Reverse Proxy.
+1. Both reverse proxy and load balancer are key components of the client-server architecture. A client-server model is basically an application structure that separates between the providers of resources and the ones which are getting the services.
+2. A forward proxy is essentially used by a client and a reverse proxy is used by servers.
+
+
 
 
 
