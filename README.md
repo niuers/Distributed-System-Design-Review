@@ -3,6 +3,9 @@
 
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
+
+Tolerating hardware & software faults, human errors
+
 ### Definition 
 
 The system should continue to work correctly (performing the correct function at the desired level of performance) even in the face of adversity (hardware or software **faults**, and even human error). The probability a system will fail in a given period.
@@ -52,6 +55,8 @@ The system should continue to work correctly (performing the correct function at
 
 
 ## 2. Scalablility
+Measuring Load & Performance: Latency Percentiles, throughput
+
 ### Definition
 The ability of a system to deal with increased load.
 
@@ -68,6 +73,8 @@ The ability of a system to deal with increased load.
    * The hit rate on a cache
    * 
 ## 3. Maintainability
+Operability, simplicity & evolvability
+
 ## 4. Availability
 ## 5. Efficiency
 
