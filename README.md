@@ -1,4 +1,5 @@
-We shall find useful ways of thinking about data systems—not just **how they work**, but also **why they work that way**, and **what questions we need to ask**.
+1. We shall find useful ways of thinking about data systems—not just **how they work**, but also **why they work that way**, and **what questions we need to ask**.
+2. Building for scale that you don’t need is wasted effort and may lock you into an inflexible design.
 
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
