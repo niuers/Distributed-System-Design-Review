@@ -134,7 +134,14 @@ This is an inherent issue of having multiple services, I wish I could tell you t
 With the spider web of all the services to work with, chances of failures increases, and handling them becomes more complex, well, more complex than calling a method in a class anyway. Fortunately, MSA is not a new thing and there are well defined and tried and tested methodologies to work with the complexities. Some of things that you must have while connecting to other services:
 
 1. Retries
-2. 
+
+## Technologies
+1. NoSQL
+2. Message Queues
+3. Caches
+4. Search Indexes
+5. Frameworks for batch and stream processing
+6. A/B Test
 
 
 # Resources
