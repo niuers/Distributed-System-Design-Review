@@ -1,79 +1,150 @@
+# Overview
+
 1. We shall find useful ways of thinking about data systems—not just **how they work**, but also **why they work that way**, and **what questions we need to ask**.
 2. Building for scale that you don’t need is wasted effort and may lock you into an inflexible design.
+3. Data-Intensive Applications: Bigger problems are usually the amount of data, the complexity of data, and the speed at which it is changing, instead of compute-intensive.
+4. Common Building Blocks of Data Systems
+   * Databases: store data
+   * Caches: speed up reads
+   * Search Indexes: Allow users to search data by keyword or filter it in various ways
+   * Stream Processing: Send a message to another process, to be handled asynchronously
+   * Batch Processing: Periodically crunch a large amount of accumulated data
+5. We try to achieve reliable, scalable, and maintainable data systems.
+6. Questions to ask
+   * How do you ensure that the data remains correct and complete, even when things go wrong internally?
+   * How do you provide consistently good performance to clients, even when parts of your system are degraded?
+   * How do you scale to handle an increase in load? 
+      * If the system grows in a particular ways, what are our options for coping with the growth? 
+      * How can we add computing resources to handle the additional load?
+   * What does a good API for the service look like?
 
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
 
-Tolerating hardware & software faults, human errors
-
 ### Definition 
+The system should continue to work *correctly* (performing the correct function at the desired level of performance) even in the face of *adversity* (hardware & software faults, human errors). 
 
-The system should continue to work correctly (performing the correct function at the desired level of performance) even in the face of adversity (hardware or software **faults**, and even human error). The probability a system will fail in a given period.
-
-1. In simple terms, a distributed system is considered reliable if it keeps delivering its services even when one or several of its software or hardware components fail.
-1. **Fault-Tolerant or Resilient Systems**: The systems anticipate (certain types of ) faults and can cope with them.
-1. It is impossible to reduce the probability of a fault to zero; therefore it is usually best to design fault-tolerance mechanisms that prevent faults from causing failures. 
-2. We generally prefer tolerating faults over preventing faults.
-
-### Examples
-1. AMAZON: A purchase shouldn't be cancelled due to the failure of the machine which runs the transaction.
+1. **Fault-Tolerant or Resilient Systems**: The systems anticipate (certain types of) faults and can cope with them.
+1. Fault is not the same as failure
+   * Fault is defined as one component of the system deviating from its spec
+   * Failure is when the system as a whole stops providing the required service to the user.
+   * It is impossible to reduce the probability of a fault to zero; therefore it is usually best to design fault-tolerance mechanisms that prevent faults from causing failures.
+1. Use Netflix *Chaos Monkey* to introduce/increase the rate of faults and test the fault-toerance machinery.
+1. We generally prefer tolerating faults over preventing faults.
+1. We want to build reliable systems from unreliable parts.
+   * In simple terms, a distributed system is considered reliable if it keeps delivering its services even when one or several of its software or hardware components fail.
+   * Example of AMAZON: A purchase shouldn't be cancelled due to the failure of the machine which runs the transaction.
+1. We sometimes balance reliability with development cost, operational cost.
 
 ### Faults
+#### Hardware Faults
+1. We usually think of hardware faults as being random and independent from each other, i.e. weakly correlated. It is unlikely that a large number of hardware components will fail at the same time
+1. Types of Hardware Faults
+   * Hard Disks Crash
+      * Hard disks *mean time to failure (MTTF)*: 10-50 years.
+      * On a storage with 10,000 disks, 1 disk dies everyday on average.
+   * RAM Faults
+   * Power Outage
+   * Network Outage
+1. Solutions
+   * Add redundancy to the individual hardware components to reduce the failure rate of the system. 
+      * Use RAID for disks
+      * Use dual power supplies for servers
+      * Use hot-swappable CPUs
+      * Use batteries and diesel generators for backup power
+      * Until recently, It's sufficient for most applications since it makes total failure of a single machine fairly rare.
+   * Multi-machine redundancy (for high availability): Due to large data volumes, increased computing demands, more applications use larger number of machines, which increases the rate of hardware faults. There's a move toward systems that can *tolerate the loss of entire machines*, by using software fault-tolerance techniques in preference or in addition to hardware redundancy.
+      * Rolling Upgrade
 
 #### Software Faults
-1. These are systematic errors in the system.
-2. Solutions
+1. These are systematic errors in the system.Harder to predict, correlated across nodes. They tend to cause many more system failures than uncorrelated hardware faults.
+2. Examples
+   * Bug
+   * Process uses up shared resources: CPU, memory, disk space, network bandwidth
+   * A service that the system depends on that slows down, unresponsive, returns corrupted responses
+   * Cascading failures
+4. Solutions
    * Carefully thinking about assumptions and interactions in the system
    * Thorough testing
    * Process isolation
    * Allowing processes to crash and restart
    * Measuring, monitoring, and analyzing system behavior in production.
-#### Hardware Faults
-1. We usually think of hardware faults as being random and independent from each other, i.e. weakly correlated.
-1. Hard Disks Crash
-   * Hard disks *mean time to failure (MTTF)*: 10-50 years.
-   * On a storage with 10,000 disks, 1 disk dies per day on average.
-3. RAM Faults
-4. Power Outage
-5. Network Outage
-6. Solutions
-   * Add redundancy to the individual hardware components to reduce the failure rate of the system. 
-   * Multi-machine redundancy (for high availability): Due to large data volumes, more applications begin to use larger number of machines, there's a move toward systems that can *tolerate the loss of entire machines*, by using software fault-tolerance techniques in preference or in addition to hardware redundancy.
-      * Rolling Upgrade
-      * 
+
 #### Human Error
 1. Solutions
-   * Design systems in a way that minimizes opportunities for error. Make it easy to do “the right thing” and discourage “the wrong thing.”
+   * Design systems in a way that minimizes opportunities for error. Well-designed abstractions, APIs, admin interfaces make it easy to do “the right thing” and discourage “the wrong thing.”
    * Decouple the places where people make the most mistakes from the places where they can cause failures.
+      * Provide fully featured non-production *sandbox* environments
    * Test thoroughly at all levels, from unit tests to whole-system integration tests and manual tests
    * Allow quick and easy recovery from human errors, to minimize the impact in the case of a failure.
    * Set up detailed and clear monitoring, such as performance metrics and error rates.
    * Implement good management practices and training
-### Techniques to Increase Reliability
-1. Build Reliable Systems from Unreliable Parts
-2. 
 
 
 ## 2. Scalablility
 Measuring Load & Performance: Latency Percentiles, throughput
 
 ### Definition
-The ability of a system to deal with increased load.
+As the system *grows* (in data volume, traffic volume, or complexity), there should be reasonable ways of dealing with that growth.
 
 1. A system can become unreliable if the load increases a lot.
 1. If the system grows in a particular ways, what are our options for coping with the growth? 
 2. How can we add computing resources to handle the additional load?
 
-
 ### Describing Load
 1. We use **load parameters** to describe load
    * Requests per Second to a web server
    * The ratios of reads to writes in DB
-   * The number of  simultaneously active users in a chat room
+   * The number of simultaneously active users in a chat room
    * The hit rate on a cache
-   * 
+   * The average cases or extreme cases
+#### Example
+1. Twitter
+   * Write requests (Post Tweet): 4.6K reqs/sec on average, 12K reqs/sec on peak
+   * Read requests (Home timeline): 300K reqs/sec
+1. Twitter's scaling challenge is not primarily due to tweet volume, but due to fan-out
+   * Method 1: When a user requests their home timeline, look up all the people they follow, find all the tweets for each of those users, and merge them (sorted by time)
+   * Method 2: Maintain a cache for each user’s home timeline—like a mailbox of tweets for each recipient user.
+      * Downside: For popular user, the fan-out load is huge, 30M writes to home timelines. How to achieve this within 5 seconds ?
+      * So the distribution of followers per user is a key load parameter
+      * Hybrid of 1&2 to solve this.
+
+### Describing Performance
+1. Look in two ways
+   * When increase a load parameter and keep the system resources unchanged, how is the performance of your system affected?
+   * When increase a load parameter, how much do you need to increase the resources if you want to keep the performance unchanged? 
+
+#### Throughput
+1. The number of records we can process per second, or the total time it takes to run a job on a dataset of a certain size.
+1. In an ideal world, the running time of a batch job is the size of the dataset divided by the throughput. In practice, the running time is often longer, due to skew (data not being spread evenly across worker processes) and needing to wait for the slowest task to complete.
+2. Important for Batch processing system
+
+#### Response Time
+1. The time between a client sending a request and receiving a response
+1. Important for stream processing system
+1. Latency vs. Response Time
+   * The response time is what the client sees, besides the actual time to process the request (service time), it includes network delays and queueing delays.
+   * Latency is the duration that a request is waiting to be handled- during which it is latent, awaiting service.
+1. We often think about the distribution of response time
+   * Random additional latency could be introduced by a context switch to a backgroud process, loss of network packet and TCP retransmission, garbage collection pause, page fault forcing a read from disk, mechanical vibration in server rack
+   * Percentiles are better than average: p50 (median), p95 (95th percentile), p99, p999
+   * Tail latencies (high percentiles of response times) are important because they directly affect users’ experience of the service.
+   * Percentiles are often used in SLO (service level objectives)  and SLA
+   * Tail Latency Amplification: High percentiles become especially important in backend services that are called multiple times as part of serving a single end-user request. Even if you make the calls in parallel, the end-user request still needs to wait for the slowest of the parallel calls to complete.  Even if only a small percentage of backend calls are slow, the chance of getting a slow call increases if an end-user request requires multiple back‐ end calls, and so a higher proportion of end-user requests end up being slow.
+1. Head-of-Line Blocking
+   * Queueing delays often account for a large part of the response time at high percentiles. As a server can only process a small number of things in parallel, it only takes a small number of slow requests to hold up the processing of subsequent requests.
+   * Due to this effect, it is important to measure response times on the client side.
+#### Coping with Load
+1. (scaling out) Distributing load across multiple machines is also known as a shared-nothing architecture. 
+1. Elastic systems: they can automatically add computing resources when they detect a load increase, whereas other systems are scaled manually. 
+1. While distributing stateless services across multiple machines is fairly straightforward, taking stateful data systems from a single node to a distributed setup can intro‐ duce a lot of additional complexity.
+   * For this reason, common wisdom until recently was to keep your database on a single node (scale up) until scaling cost or high- availability requirements forced you to make it distributed.
+1. 
+
 ## 3. Maintainability
 Operability, simplicity & evolvability
+### Definition
+Over time, many different people will work on the system (engineering and operations, both maintaining current behavior and adapting the system to new use cases), and they should all be able to work on it *productively*. 
 
 ## 4. Availability
 ## 5. Efficiency
@@ -81,12 +152,6 @@ Operability, simplicity & evolvability
 # References
 1. Designing Data-Intensive Applications (DDIA), The Big Ideas Behind Reliable, Scalable, and Maintainable Systems, Martin Kleppmann, 2017.
 2. Grokking the System Design Interview
-
-# Twitter
-## Main Operations
-1. post tweet
-   * Scaling challenge not primarily due to tweet volume but due to fan-out. 
-3. home timeline
 
 # Offline Processing
 ## Message Queues
@@ -151,6 +216,32 @@ With the spider web of all the services to work with, chances of failures increa
 5. Frameworks for batch and stream processing
 6. A/B Test
 
+# Products
+## Databases
+
+### Redis
+1. They are datastores that can be used as message queues
+
+## Streaming
+## Apache Kafka
+1. They are message queues with database-like durability guarantees
+## Cache
+## Memcached
+
+## Search Index
+## Elasticsearch
+## Solr
+
+## Batch Processing Systems
+## Hadoop
+
+
+# Related Issues in Practice
+1. NFS disk usage to the limit
+2. NFS number of innodes become  very large, how do we provide reliability? 
+3. Why we choose NFS over HDFS?
+4. How does the skewness of our data affect our throughput?
+5. Scaling out vs. Scaling up decision
 
 # Resources
 1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
