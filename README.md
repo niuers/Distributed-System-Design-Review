@@ -82,8 +82,6 @@ The system should continue to work *correctly* (performing the correct function 
 
 
 ## 2. Scalablility
-Measuring Load & Performance: Latency Percentiles, throughput
-
 ### Definition
 As the system *grows* (in data volume, traffic volume, or complexity), there should be reasonable ways of dealing with that growth.
 
@@ -139,7 +137,6 @@ As the system *grows* (in data volume, traffic volume, or complexity), there sho
 1. Elastic systems: they can automatically add computing resources when they detect a load increase, whereas other systems are scaled manually. 
 1. While distributing stateless services across multiple machines is fairly straightforward, taking stateful data systems from a single node to a distributed setup can intro‐ duce a lot of additional complexity.
    * For this reason, common wisdom until recently was to keep your database on a single node (scale up) until scaling cost or high- availability requirements forced you to make it distributed.
-1. 
 
 ## 3. Maintainability
 Operability, simplicity & evolvability
