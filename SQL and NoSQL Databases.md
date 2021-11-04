@@ -1,3 +1,76 @@
+# Data Models
+1. They are perhaps the most important part on how we *think about the problem* 
+2. Most applications are built by layering one data model on top of another. For each layer, the key question is: *how is it represented in terms of the next-lower layer?* Each layer hides the complexity of the layers below it by providing a clean data model.
+   * Application layer: objects or data structures often specific to application
+   * To Store/Query those data structures: express them in general-purpose data model, e.g. JSON, XML documents, tables, graph
+   * Database(Data storage) layer: how bytes are arranged in memory, disk or on a network for query, search, processing.
+   * Hardware layer: how bytes are represented in electrical currents, pulses of light, etc.
+
+## Relational Model
+### Definition
+1. Data is organized into relations (called tables in SQL), where each relation is an unordered collection of tuples (rows in SQL)
+1. A relation (table) is simply a collection of tuples (rows), and that’s it.
+2. A key insight of the relational model was this: you only need to build a query optimizer once, and then all applications that use the database can benefit from it.
+
+### The Object-Relational Mismatch
+1. A common criticism of the SQL data model (Impedance Mismatch): if data is stored in relational tables, an awkward translation layer is required between the objects in the application code and the database model of tables, rows, and columns. 
+   * Object-Relational Mapping (ORM) framework reduces the work but not completely
+
+## Document Model
+### JSON representation
+1. Although the JSON model might reduce the impedance mismatch between the application code and the storage layer there are also problems with JSON as a data encoding format.
+1. The JSON representation has better *locality* than the multi-table schema
+1. JSON representation makes **one-to-many relationships** tree structure (e.g. user has multiple jobs) explicit. 
+1. The lack of a schema
+   * It can be advantageous for scaling
+   * This flexibility facilitates the mapping of documents to an entity or an object.
+
+### Many-to-One and Many-to-Many Relationships
+#### Many-to-One Relationship
+1. Example: Many users can live in one city
+2. It's usually better store an ID instead of a text string to avoid duplication, write overheads and risk inconsistencies 
+   * Removing such duplication is the key idea behind normalization in databases
+   * As a rule of thumb, if you’re duplicating values that could be stored in just one place, the schema is not normalized.
+1. Unfortunately, normalizing this data requires many-to-one relationships, which doesn't fit nicely with document model.
+   * In relational databases, it's normal to refer to rows in other tables by ID since joins are easy
+   * In document databases, joins are not needed for one-to-many tree structures, and support for joins is often weak.
+   * You have to emulate a join in application code
+#### Many-to-Many Relationship
+1. Data has a tendency of becoming more interconnected as features are added to applications.
+   * Example, Company name is not just a string, but a link to a company entity
+1. This requires many-to-many relationships
+
+### Document Databases
+1. A document database (also known as a document-oriented database or a document store) is a database that stores information in documents.
+1. Document databases offer a variety of advantages, including:
+   * An intuitive data model that is fast and easy for developers to work with.
+   * A flexible schema that allows for the data model to evolve as application needs change.
+   * The ability to horizontally scale out.
+1. Document databases are considered to be non-relational (or NoSQL) databases. 
+1. MongoDB
+   * MongoDB stores data records as BSON documents. BSON is a binary representation of JSON documents. The maximum BSON document size is 16 megabytes.
+   * A MongoDB collection is a grouping of MongoDB documents, it's the equivalent of an RDBMS table. A collection exists within a single database. **Collections do not enforce a schema as in SQL databases** (where you must determine and declare a table's schema before inserting data, ). Documents within a collection can have different fields. Typically, all documents in a collection have a similar or related purpose.   
+
+3. RethinkDB
+4. CouchDB
+5. Espresso
+
+## Relational Database vs. Document Database
+
+### Data Model Comparison
+1. The main arguments in favor of the document data model are 
+   * schema flexibility
+   * better performance due to locality
+      * Document databases store nested records (one-to-many relationships) within their parent record rather than in a separate table.
+   * For some applications it is closer to the data structures used by the application. 
+1. The relational model counters by providing better support for
+   * joins
+   * many-to-one and many-to-many relationships.
+      * When it comes to representing many-to-one and many-to-many relationships, relational and document databases are not fundamentally different: in both cases, the related item is referenced by a unique identifier, which is called a foreign key in the relational model and a document reference in the document model. That identifier is resolved at read time by using a join or follow-up queries.
+
+### Fault-Tolerance Properties
+### Concurrency Handling
+
 # SQL and NoSQL Databases
 ## Database Scaling
 Most web apps are majority reads, around 95% +
@@ -67,6 +140,10 @@ MongoDB or CouchDB
 1. Need use cache to improve the performance.
 1. We need to know the advantages/disadvantages of different databases, and when to use what
 
+### NoSQL: Nonrelational Model
+1. Greater scalability for very large datasets or very high write throughput
+2. Specialized query operations that are not well supported by the relational model
+3. Frustration with the restrictiveness of relational schemas
 
 ### When to Consider NoSQL
 1. If you do transactions or banking, you want consistency
