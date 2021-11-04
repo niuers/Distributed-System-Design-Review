@@ -139,16 +139,54 @@ As the system *grows* (in data volume, traffic volume, or complexity), there sho
    * For this reason, common wisdom until recently was to keep your database on a single node (scale up) until scaling cost or high- availability requirements forced you to make it distributed.
 
 ## 3. Maintainability
-Operability, simplicity & evolvability
 ### Definition
 Over time, many different people will work on the system (engineering and operations, both maintaining current behavior and adapting the system to new use cases), and they should all be able to work on it *productively*. 
+
+1. It is well known that the majority of the cost of software is not in its initial develop‐ ment, but in its ongoing maintenance
+
+### Three Design Principles for Software Systems
+#### Operability: Making Life Easy for Operations
+1. Mkae it easy for operations teams to keep the system running smoothly, such as
+   * Monitoring the health, quickly restoring service
+   * Tracking down the cause of problems
+   * Keeping software and platforms up to date, including security patches
+   * Keeping tabs on how different systems affect each other
+   * Anticipating future problems, e.g. capacity planning
+   * Establishing good practices and tools for deployment, config etc.
+   * Performing complex maintenance tasks
+   * Maintaining the security
+1. Data Systems can do following:
+   * Provide visibility into the runtime behavior and internals of the systetm, with good monitoring
+   * Provide good support for automation and integration with standard tools
+   * Avoid dependency on individual machines (Allow machines to be taken down while the system continus running uninterrupted)
+   * Provid good documentation and easy-to-understand operational model
+   * Provide good default behavior, but give freedom to overwrite defaults
+   * Self-healing where appropriate but give manual control over the system state
+   * Exhibiting predictable behavior, minimizing surprises
+
+
+#### Simplicity: Managing Complexity
+1. Make it easy for new engineers to understand the system, by removing as much complexity as possible from the system. 
+1. Complexities can be:
+   * Explosion of state space
+   * Tight coupling of modules
+   * Tangled dependencies
+   * Inconsistent naming and terminology
+   * Hacks to solve performance problems
+   * Special-casing to work around
+1. Solutions
+   * Abstraction: One of the best tools we have for removing accidental complexity is abstraction
+   * we will keep our eyes open for good abstractions that allow us to extract parts of a large system into well-defined, reusable components.
+
+#### Evolvability/Extensibility/Modifiability/Plasticity: Making Change Easy
+1. Make it easy for engineers to make changes to the system in the future, adapting it for unanticipated use cases as requirements change.
+1. Agile working patterns provide a framework for adapting to change. 
+   * TDD and refactoring
+   * 
 
 ## 4. Availability
 ## 5. Efficiency
 
-# References
-1. Designing Data-Intensive Applications (DDIA), The Big Ideas Behind Reliable, Scalable, and Maintainable Systems, Martin Kleppmann, 2017.
-2. Grokking the System Design Interview
 
 # Offline Processing
 ## Message Queues
@@ -248,8 +286,8 @@ With the spider web of all the services to work with, chances of failures increa
 5. Paxos (simpler version, not the greek parliament metaphor version): https://www.microsoft.com/en-us/research/publication/paxos-made-simple/
 6. Raft: http://thesecretlivesofdata.com/raft/ and also http://kanaka.github.io/raft.js/
 7. Dynamo: https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html
-8. DDIA - https://dataintensive.net/buy.html
-9. Grokking - https://www.educative.io/courses/grokking-the-system-design-interview
+8. Designing Data-Intensive Applications (DDIA), The Big Ideas Behind Reliable, Scalable, and Maintainable Systems, Martin Kleppmann, 2017.
+9. Grokking the System Design Interview - https://www.educative.io/courses/grokking-the-system-design-interview
 10. Nathan Bronson's Tao: https://www.usenix.org/conference/atc13/technical-sessions/presentation/bronson
 11. Nishtala's memcache: https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala
 12. Kulkarni's Facebook live: https://www.youtube.com/watch?v=IO4teCbHvZw
