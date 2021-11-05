@@ -10,14 +10,13 @@
 1. Disadvantage(s): master-slave replication
    * Additional logic is needed to promote a slave to a master.
 
-### Leader-Leader
+### Leader-Leader or Master-Master
 1. Both masters serve reads and writes and coordinate with each other on writes. If either master goes down, the system can continue to operate with both reads and writes.
-1. Multiple leaders to remove the single point of failur  from one leader (after its failure and before a follower is promoted to leader)  
+1. Multiple leaders to remove the single point of failur from one leader (after its failure and before a follower is promoted to leader)  
 2. Disadvantage(s): master-master replication
    * You'll need a load balancer or you'll need to make changes to your application logic to determine where to write.
    * Most master-master systems are either loosely consistent (violating ACID) or have increased write latency due to synchronization.
    * Conflict resolution comes more into play as more write nodes are added and as latency increases.
-
 
 ### Tree-Replication
 ### Buddy Replication
