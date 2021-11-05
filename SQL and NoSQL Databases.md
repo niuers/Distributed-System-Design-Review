@@ -250,16 +250,18 @@ Most web apps are majority reads, around 95% +
 
 ### Sharding
 1. In general if your service has lots of rapidly changing data (i.e. lots of writes) or is sporadically queried by lots of users in a way which causes your working set not to fit in memory (i.e. lots of reads leading to lots of page faults and disk seeks) then your primary bottleneck will likely be I/O. This is typically the case with social media sites like Facebook, LinkedIn
-1. Sharding distributes data across different databases such that each database can only manage a subset of the data. Taking a users database as an example, as the number of users increases, more shards are added to the cluster.
-1. Similar to the advantages of federation, sharding results in 
+2. Traditionally it hasn’t been read performance that caused people to shard anyway. It has been write performance.
+   * But with the rise of SSD, like Fusion-IO’s ioDrive that can do 120K IOPS, which improves on the writes, thus reduces the need for Sharding
+4. Sharding distributes data across different databases such that each database can only manage a subset of the data. Taking a users database as an example, as the number of users increases, more shards are added to the cluster.
+5. Similar to the advantages of federation, sharding results in 
    * Performant: 
       * less read and write traffic, 
       * less replication, and more cache hits. 
       * Index size is also reduced, which generally improves performance with faster queries. 
    * High Availability: If one shard goes down, the other shards are still operational, although you'll want to add some form of replication to avoid data loss. 
    * High Throughtput: Like federation, there is no single central master serializing writes, allowing you to write in parallel with increased throughput.
-3. Common ways to shard a table of users is either through the user's last name initial or the user's geographic location.
-1. Sharding Architecture
+6. Common ways to shard a table of users is either through the user's last name initial or the user's geographic location.
+7. Sharding Architecture
    * Data are denormalized: You store together data that are used together. Ex, the user profile data would be stored and retrieved as a whole. You just get a blob and store a blob. No joins are needed and it can be written with one disk write.
    * Data are parallelized across many physical instances: 
    * Data are kept small
@@ -388,9 +390,10 @@ MongoDB or CouchDB
 
 ## Who's ACID
 1. Relational DBs (MySQL, Orcale, Postgres)
-2. Object DBs: Gemstone, db4o
-3. Clustering Products: Coherence, Terracotta
-4. Most Caching Products: ehcache
+   * Migrating a database schema in MySQL on a huge table takes forever and a day. That’s a very real problem if you want to avoid an enterprisey schema full of kludges put in place to avoid adding, renaming, or dropping columns on big tables. Or avoid long scheduled maintenance windows.
+3. Object DBs: Gemstone, db4o
+4. Clustering Products: Coherence, Terracotta
+5. Most Caching Products: ehcache
 
 ## Who's BASE
 1. Distributed Databases: Cassandra, Riak, Dynomite, SimpleDB
