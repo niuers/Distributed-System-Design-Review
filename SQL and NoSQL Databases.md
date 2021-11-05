@@ -51,6 +51,7 @@
 1. MongoDB
    * MongoDB stores data records as BSON documents. BSON is a binary representation of JSON documents. The maximum BSON document size is 16 megabytes.
    * A MongoDB collection is a grouping of MongoDB documents, it's the equivalent of an RDBMS table. A collection exists within a single database. **Collections do not enforce a schema as in SQL databases** (where you must determine and declare a table's schema before inserting data, ). Documents within a collection can have different fields. Typically, all documents in a collection have a similar or related purpose.   
+   * 
 
 3. RethinkDB
 4. CouchDB
@@ -399,6 +400,44 @@ Optimize everything else first, and then if performance still isn’t good enoug
 
 3. Products
    * Dynamo, memcached, Redis
+#### Redis
+1. Redis is a in-memory, key-value data store.
+2. Primary memory is limited(much lesser size and expensive than secondary) therefore Redis cannot store large files or binary data. It can only store those small textual information which needs to be accessed, modified and inserted at a very fast rate. If we try to write more data than available memory then we will receive errors.
+1. Redis is an in-memory but persistent on disk database, so it represents a different trade off where very high write and read speed is achieved with the limitation of data sets that can't be larger than memory. Another advantage of in memory databases is that the memory representation of complex data structures is much simpler to manipulate compared to the same data structures on disk, so Redis can do a lot, with little internal complexity. At the same time the two on-disk storage formats (RDB and AOF) don't need to be suitable for random access, so they are compact and always generated in an append-only fashion (Even the AOF log rotation is an append-only operation, since the new version is generated from the copy of data in memory). However this design also involves different challenges compared to traditional on-disk stores. Being the main data representation on memory, Redis operations must be carefully handled to make sure there is always an updated version of the data set on disk.
+1. we are very happy if we can do one thing well: data served from memory, disk used for storage.
+1. Redis server is responsible for storing data in memory. It handles all kinds of management and forms the major part of architecture. Redis client can be Redis console client or any other programming language’s Redis API.
+
+1. As we saw that Redis stores everything in primary memory. Therefore we need a way for datastore persistance.
+   * RDB: RDB makes a copy of all the data in memory and stores them in secondary storage(permanent storage). This happens in a specified interval. So there is chance that you will loose data that are set after RDB’s last snapshot. 
+   * AOF: AOF logs all the write operations received by the server. Therefore everything is persistance. The problem with using AOF is that it writes to disk for every operation and it is a expensive task and also size of AOF file is large than RDB file.
+   * SAVE: You can force redis server to create a RDB snapshot anytime using the redis console client SAVE command.
+
+1. Backup And Recovery Of Redis DataStore: If you are using Redis in a replicated environment then there is no need for backup.
+1. Redis Replication
+   * All the slaves contain exactly same data as master. There can be as many as slaves per master server. When a new slave is inserted to the environment, the master automatically syncs all data to the slave.
+   * All the queries are redirected to master server, master server then executes the operations. When a write operation occurs, master replicates the newly written data to all slaves. When a large number sort or read operation are made, master distributes them to the slaves so that a large number of read and sort operations can be executed at a time.
+   * If a slave fails, then also the environment continues working. when the slave again starts working, the master sends updated data to the slave.
+   * If there is a crash in master server and it looses all data then you should convert a slave to master instead of bringing a new computer as a master. If we make a new computer as master then all data in the environemt will be lost because new master will have no data and will makes the slaves also to have zero data(new master does resync ).  If master fails but data is persistent(disk not crashed) then starting up the same master server again will bring up the whole environment to running mode.
+   * Replication helped us from disk failures and other kinds of hardware failures. It also helped to execute multiple read/sort queries at a time.
+1. Persistance In Redis Replication
+   * We saw how persistance can tackle unexpected failures and keep our backend strong. But one way whole data can be lost is if the whole replicated environment goes down due to power failure. This happens because all data is stored in primary memory. So we need persistance here also.
+   * We can configure master or any one slave to store data in secondary storage using any method(AOF and RDB). Now when the whole environment is again started, make the persistent server as the master server.
+   * Using persistance and replication together all our data is completely safe and protected from unexpected failures.
+1. Clustering In Redis
+   * Clustering is a technique by which data can be sharded(divided) into many computers. The main advantage is that more data can be stored in a cluster because its a combination of computers.
+   * Suppose we have one redis server with 64GB of memory i.e., we can have only 64GB of data. Now if we have 10 clustered computers with each 64GB of RAM then we can store 640GB of data.
+   * If one node fails then the whole cluster stops working.
+1. Clustering And Replication Together to tolerate node failure.
+1. Is using Redis together with an on-disk database a good idea?
+Yes, a common design pattern involves taking very write-heavy small data in Redis (and data you need the Redis data structures to model your problem in an efficient way), and big blobs of data into an SQL or eventually consistent on-disk database. Similarly sometimes Redis is used in order to take in memory another copy of a subset of the same data stored in the on-disk database. This may look similar to caching, but actually is a more advanced model since normally the Redis dataset is updated together with the on-disk DB dataset, and not refreshed on cache misses.
+
+##### What's the Redis memory footprint?
+To give you a few examples (all obtained using 64-bit instances):
+
+An empty instance uses ~ 3MB of memory.
+1 Million small Keys -> String Value pairs use ~ 85MB of memory.
+1 Million Keys -> Hash value, representing an object with 5 fields, use ~ 160 MB of memory.
+
 
 ### Document store
 1. Abstraction: key-value store with documents stored as values
@@ -407,6 +446,7 @@ Optimize everything else first, and then if performance still isn’t good enoug
 1. Some document stores like MongoDB and CouchDB also provide a SQL-like language to perform complex queries. DynamoDB supports both key-values and documents.
 1. Document stores provide high flexibility and are often used for working with occasionally changing data.
 1. Products: MongoDB, CouchDB, ElasticSearch
+
 
 ### Wide column store
 1. Abstraction: nested map ColumnFamily<RowKey, Columns<ColKey, Value, Timestamp>>
