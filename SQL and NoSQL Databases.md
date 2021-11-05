@@ -206,7 +206,7 @@ Most web apps are majority reads, around 95% +
    * Master server dedicated only to writes
    * Consistency : Have to handle making sure new data reaches replicas
    * Side effect: fault-tolerance
-1. 
+
 #### Partitioning
 1. Sharding: 
    * Horizontal partitioning
@@ -248,13 +248,67 @@ Most web apps are majority reads, around 95% +
    * Scaling reads to a RDBMS is hard
    * Scaling writes to a RDBMS is impossible
 
-### Federation
+### Sharding
+1. In general if your service has lots of rapidly changing data (i.e. lots of writes) or is sporadically queried by lots of users in a way which causes your working set not to fit in memory (i.e. lots of reads leading to lots of page faults and disk seeks) then your primary bottleneck will likely be I/O. This is typically the case with social media sites like Facebook, LinkedIn
+1. Sharding distributes data across different databases such that each database can only manage a subset of the data. Taking a users database as an example, as the number of users increases, more shards are added to the cluster.
+1. Similar to the advantages of federation, sharding results in 
+   * Performant: 
+      * less read and write traffic, 
+      * less replication, and more cache hits. 
+      * Index size is also reduced, which generally improves performance with faster queries. 
+   * High Availability: If one shard goes down, the other shards are still operational, although you'll want to add some form of replication to avoid data loss. 
+   * High Throughtput: Like federation, there is no single central master serializing writes, allowing you to write in parallel with increased throughput.
+3. Common ways to shard a table of users is either through the user's last name initial or the user's geographic location.
+1. Sharding Architecture
+   * Data are denormalized: You store together data that are used together. Ex, the user profile data would be stored and retrieved as a whole. You just get a blob and store a blob. No joins are needed and it can be written with one disk write.
+   * Data are parallelized across many physical instances: 
+   * Data are kept small
+   * Data are more highly available
+   * It doesn't use replication: Replicating data from a master server to slave servers is a traditional approach to scaling. Obviously the master becomes the write bottleneck and a single point of failure. Sharding cleanly and elegantly solves the problems with replication.
+
+3. Disadvantage(s): sharding
+   * You'll need to update your application logic to work with shards, which could result in complex SQL queries.
+   * Data distribution can become lopsided in a shard. For example, a set of power users on a shard could result in increased load to that shard compared to others.
+   * How do you partition your data in shards? What data do you put in which shard? Where do comments go? Should all user data really go together, or just their profile data? Should a user's media, IMs, friends lists, etc go somewhere else?
+   * Rebalancing adds additional complexity. A sharding function based on consistent hashing can reduce the amount of transferred data.
+      * What happens when a shard outgrows your storage and needs to be split? moving data from shard to shard required a lot of downtime.
+      * Rebalancing has to be built in from the start. Google's shards automatically rebalance. For this to work data references must go through some sort of naming service so they can be relocated.
+      * rebalance means the partitioning scheme changed AND all existing data moved to new locations. Doing this without incurring down time is extremely difficult and not supported by any off-the-shelf today.
+   * Joining data from multiple shards is more complex.
+      * it is often not feasible to perform joins that span database shards due to performance constraints since data has to be compiled from multiple servers and the additional complexity of performing such cross-server. 
+      * A common workaround is to denormalize the database so that queries that previously required joins can be performed from a single table.
+      * Of course, the service now has to deal with all the perils of denormalization such as data inconsistency
+      * Thankfully, because of caching and fast networks this process is usually fast enough that your page load times can be excellent.
+   * Sharding adds more hardware and additional complexity.
+      * The application developer has to write more code to be able to handle sharding logic (this is actually lessened with projects such as HiveDB.)
+      * Operational issues become more difficult (backing up, adding indexes, changing schema).
+   * Referential integrity – As you can imagine if there's a bad story around performing cross-shard queries it is even worse trying to enforce data integrity constraints such as foreign keys in a sharded database. Most relational database management systems do not support foreign keys across databases on different database servers. This means that applications that require referential integrity often have to enforce it in application code and run regular SQL jobs to clean up dangling references once they move to using database shards. Dealing with data inconsistency issues due to denormalization and lack of referential integrity can become a significant development cost to the service.
+   * 
+
+
+
+#### You don’t want to shard.
+Optimize everything else first, and then if performance still isn’t good enough, it’s time to take a very bitter medicine. The reason you need to shard basically comes down to one of these two reasons:
+1. Very large working set – The amount of memory you require to keep your frequently accessed data loaded exceeds what you can (economically) fit in a commodity machine. 5 years ago this was 4GB, today it is 128GB or even 256GB. Defining “working set” is always an interesting concept here, since with good schema and indexing it normally doesn’t need to be the same size as your entire database.
+1. Too many writes – Either the IO system, or a slave can’t keep up with the amount of writes being sent to the server. While the IO system can be improved with a RAID 10 controller w/battery backed write cache, the slave delay problem is actually very hard to solve. 
+
+#### Federation
+1. Another form of sharding
 1. Federation (or functional partitioning) splits up databases by function. For example, instead of a single, monolithic database, you could have three databases: forums, users, and products, resulting in less read and write traffic to each database and therefore less replication lag. Smaller databases result in more data that can fit in memory, which in turn results in more cache hits due to improved cache locality. With no single central master serializing writes you can write in parallel, increasing throughput.
-1. Disadvantage(s): federation
+2. This is usually the best way to fix any of the problems mentioned above. What you do is pick a few very busy tables, and move them onto their own MySQL server. Partition-by-function keeps the architecture still simple, and should work for most cases unless you have a single table which by itself can’t fit into the above constraints.
+3. Disadvantage(s): federation
    * Federation is not effective if your schema requires huge functions or tables.
    * You'll need to update your application logic to determine which database to read and write.
    * Joining data from two databases is more complex with a server link.
    * Federation adds more hardware and additional complexity.
+### Sharding by range
+#### Sharding by Hashing
+1. This approach should ensure a uniform allocation of data to each server. The key problem with this approach is that it effectively fixes your number of database servers since adding new servers means changing the hash function which without downtime is like being asked to change the tires on a moving car.
+#### Sharding by look-up service
+1. It’s a highly scalable architecture, and once you write scripts to be able to migrate users to/from shards you can tweak and rebalanced to make sure that all your hardware is utilized efficiently.Â  The only problem with this method is what I stated at the start: it’s complicated.
+2. It can be a single point of failure
+
+
 
 
 ### Denormalization
