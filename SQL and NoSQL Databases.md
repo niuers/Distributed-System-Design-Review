@@ -314,20 +314,115 @@ Optimize everything else first, and then if performance still isn’t good enoug
 
 
 ### Denormalization
+1. Denormalization attempts to improve read performance at the expense of some write performance. Redundant copies of the data are written in multiple tables to avoid expensive joins. Some RDBMS such as PostgreSQL and Oracle support materialized views which handle the work of storing redundant information and keeping redundant copies consistent.
+1. Once data becomes distributed with techniques such as federation and sharding, managing joins across data centers further increases complexity. Denormalization might circumvent the need for such complex joins.
+1. In most systems, reads can heavily outnumber writes 100:1 or even 1000:1. A read resulting in a complex database join can be very expensive, spending a significant amount of time on disk operations.
+
+#### Disadvantage(s): denormalization
+1. Data is duplicated.
+1. Constraints can help redundant copies of information stay in sync, which increases complexity of the database design.
+1. A denormalized database under heavy write load might perform worse than its normalized counterpart.
+
 ### SQL Tuning
+1. It's important to benchmark and profile to simulate and uncover bottlenecks.
+   * Benchmark - Simulate high-load situations with tools such as ab.      
+      * You’re going to need numbers if you want to make a good decision. What queries are the worst? Where are the bottlenecks? Under what circumstances am I generating bad queries? Benchmarking is will let you simulate high-stress situations and, with the aid of profiling tools, expose the cracks in your database configuration. 
+   * Profile - Enable tools such as the slow query log to help track performance issues.
+      * The rule in any situation where you want to opimize some code is that you first profile it and then find the bottlenecks.
+      * Profiling enables you to find the bottlenecks in your configuration, whether they be in memory, CPU, network, disk I/O, or, what is more likely, some combination of all of them.
+   * Benchmarking and profiling might point you to the following optimizations.
+
+1. Tighten up the schema
+   * MySQL dumps to disk in contiguous blocks for fast access.
+   * Use CHAR instead of VARCHAR for fixed-length fields.
+      * CHAR effectively allows for fast, random access, whereas with VARCHAR, you must find the end of a string before moving onto the next one.
+   * Use TEXT for large blocks of text such as blog posts. TEXT also allows for boolean searches. Using a TEXT field results in storing a pointer on disk that is used to locate the text block.
+   * Use INT for larger numbers up to 2^32 or 4 billion.
+   * Use DECIMAL for currency to avoid floating point representation errors.
+   * Avoid storing large BLOBS, store the location of where to get the object instead.
+   * VARCHAR(255) is the largest number of characters that can be counted in an 8 bit number, often maximizing the use of a byte in some RDBMS.
+   * Set the NOT NULL constraint where applicable to improve search performance.
+      * In Oracle, NULL values are not indexed, so if you have NULLs in the column, a select might have to do full table scan
+1. Use good indices
+   * Columns that you are querying (SELECT, GROUP BY, ORDER BY, JOIN) could be faster with indices.
+   * Indices are usually represented as self-balancing B-tree that keeps data sorted and allows searches, sequential access, insertions, and deletions in logarithmic time.
+   * Placing an index can keep the data in memory, requiring more space. Obviously each index requires space proportional to the number of rows in your table, so too many indices winds up taking more memory.
+   * Writes could also be slower since the index also needs to be updated.
+   * When loading large amounts of data, it might be faster to disable indices, load the data, then rebuild the indices.
+1. Avoid expensive joins
+   * Denormalize where performance demands it.
+1. Partition tables
+   * Break up a table by putting hot spots in a separate table to help keep it in memory.
+   * Frequently accessed data is kept in one table while infrequently accessed data is kept in another. Since the data is now partitioned the infrequently access data takes up less memory. 
+   * You can also optimize for writing: frequently changed data can be kept in one table, while infrequently changed data can be kept in another. This allows more efficient caching since MySQL no longer needs to expire the cache for data which probably hasn’t changed.
+1. Don’t Overuse Artificial Primary Keys
+   * Artificial primary keys are nice because they can make the schema less volatile.
+3. Tune the query cache
+   * In some cases, the query cache (deprecated from MySQL 8) could lead to performance issues.
+   * The query cache stores the text of a SELECT statement together with the corresponding result that was sent to the client. If an identical statement is received later, the server retrieves the results from the query cache rather than parsing and executing the statement again. The query cache is shared among sessions, so a result set generated by one client can be sent in response to the same query issued by another client.
+
 
 ## NoSQL Databases
-MongoDB or CouchDB
+1. NoSQL is a collection of data items represented in a key-value store, document store, wide column store, or a graph database. Data is denormalized, and joins are generally done in the application code. Most NoSQL stores lack true ACID transactions and favor eventual consistency.
+### BASE
+1. BASE is often used to describe the properties of NoSQL databases. In comparison with the CAP Theorem, BASE chooses availability over consistency.
+   * Basically available - the system guarantees availability.
+   * Soft state - the state of the system may change over time, even without input.
+   * Eventual consistency - the system will become consistent over a period of time, given that the system doesn't receive input during that period.
+
+#### Who's BASE
+1. Distributed Databases: Cassandra, Riak, Dynomite, SimpleDB
+
+### MongoDB or CouchDB
 1. Joins will now need to be done in your application code.
 1. Need use cache to improve the performance.
 1. We need to know the advantages/disadvantages of different databases, and when to use what
-
+ 
 ### NoSQL: Nonrelational Model
 1. Greater scalability for very large datasets or very high write throughput
 2. Specialized query operations that are not well supported by the relational model
 3. Frustration with the restrictiveness of relational schemas
 4. One thing that document and graph databases have in common is that they typically don’t enforce a schema for the data they store, which can make it easier to adapt applications to changing requirements
    * However, your application most likely still assumes that data has a certain structure; it’s just a question of whether the schema is explicit (enforced on write) or implicit (handled on read)
+
+### Key-value store
+1. Abstraction: hash table
+1. A key-value store generally allows for `O(1)` reads and writes and is often backed by memory or SSD. Data stores can maintain keys in lexicographic order, allowing efficient retrieval of key ranges. Key-value stores can allow for storing of metadata with a value.
+1. Key-value stores provide high performance and are often used for simple data models or for rapidly-changing data, such as an in-memory cache layer. Since they offer only a limited set of operations, complexity is shifted to the application layer if additional operations are needed.
+1. A key-value store is the basis for more complex systems such as a document store, and in some cases, a graph database.
+1. Disadvantages
+   * No way to make a column mandatory (equivalent of NOT NULL).
+   * No way to use SQL data types to validate entries.
+   * No way to ensure that attribute names are spelled consistently.
+   * No way to put a foreign key on the values of any given attribute, e.g. for a lookup table.
+   * Fetching results in a conventional tabular layout is complex and expensive, because to get attributes from multiple rows you need to do JOIN for each attribute.
+
+3. Products
+   * Dynamo, memcached, Redis
+
+### Document store
+1. Abstraction: key-value store with documents stored as values
+1. A document store is centered around documents (XML, JSON, binary, etc), where a document stores all information for a given object. Document stores provide APIs or a query language to query based on the internal structure of the document itself. Note, many key-value stores include features for working with a value's metadata, blurring the lines between these two storage types.
+1. Based on the underlying implementation, documents are organized by collections, tags, metadata, or directories. Although documents can be organized or grouped together, documents may have fields that are completely different from each other.
+1. Some document stores like MongoDB and CouchDB also provide a SQL-like language to perform complex queries. DynamoDB supports both key-values and documents.
+1. Document stores provide high flexibility and are often used for working with occasionally changing data.
+1. Products: MongoDB, CouchDB, ElasticSearch
+
+### Wide column store
+1. Abstraction: nested map ColumnFamily<RowKey, Columns<ColKey, Value, Timestamp>>
+1. A wide column store's basic unit of data is a column (name/value pair). A column can be grouped in column families (analogous to a SQL table). Super column families further group column families. You can access each column independently with a row key, and columns with the same row key form a row. Each value contains a timestamp for versioning and for conflict resolution.
+1. Google introduced Bigtable as the first wide column store, which influenced the open-source HBase often-used in the Hadoop ecosystem, and Cassandra from Facebook. Stores such as BigTable, HBase, and Cassandra maintain keys in lexicographic order, allowing efficient retrieval of selective key ranges.
+1. Wide column stores offer high availability and high scalability. They are often used for very large data sets.
+2. Products: BigTable, HBase, Cassandra
+
+### Graph Database
+1. Abstraction: graph
+1. In a graph database, each node is a record and each arc is a relationship between two nodes. Graph databases are optimized to represent complex relationships with many foreign keys or many-to-many relationships.
+1. Graphs databases offer high performance for data models with complex relationships, such as a social network. They are relatively new and are not yet widely-used; it might be more difficult to find development tools and resources. Many graphs can only be accessed with REST APIs.
+
+1. Products: Neo4j, FlockDB, 
+
+
 
 ### When to Consider NoSQL
 1. If you do transactions or banking, you want consistency
@@ -346,12 +441,43 @@ MongoDB or CouchDB
 6. Datastructure Databases
    * Redis
 ### Open Source NoSQL DBs
-
 1. Google: BigTable
 2. Amazon: Dynamo, SimpleDB
 3. Yahoo: HBase, a clone of BigTable
 4. Facebook: Cassandra
 5. LinkedIn: Voldemort
+
+## SQL or NoSQL
+### Reasons for SQL:
+
+1. Structured data
+1. Strict schema
+1. Relational data
+1. Need for complex joins
+1. Transactions
+1. Clear patterns for scaling
+1. More established: developers, community, code, tools, etc
+1. Lookups by index are very fast
+
+### Reasons for NoSQL:
+
+1. Semi-structured data
+1. Dynamic or flexible schema
+1. Non-relational data
+1. No need for complex joins
+1. Store many TB (or PB) of data
+1. Very data intensive workload
+1. Very high throughput for IOPS
+
+### Sample data well-suited for NoSQL:
+
+1. Rapid ingest of clickstream and log data
+1. Leaderboard or scoring data
+1. Temporary data, such as a shopping cart
+1. Frequently accessed ('hot') tables
+1. Metadata/lookup tables
+
+
 
 ### Chord & Pastry
 1. Distributed Hash Table (DHT)
@@ -366,9 +492,7 @@ MongoDB or CouchDB
 
 #### Consistency Hashing
 1. Node ring with consistency hashing: find data with `log(N)` jumps
-
-
-3. We also data into chunks (shards) or nodes.
+1. We also data into chunks (shards) or nodes.
    * Each shard is equal, no leader and followers
    * No configuration service needed, Shards talks to each other and exchange information
    * Gossip Protocol: To reduce network load, shards only talk to less than 3 other shards every second
@@ -395,8 +519,6 @@ MongoDB or CouchDB
 4. Clustering Products: Coherence, Terracotta
 5. Most Caching Products: ehcache
 
-## Who's BASE
-1. Distributed Databases: Cassandra, Riak, Dynomite, SimpleDB
 
 ## Consistency
 ### Client-Side Consistency
@@ -417,3 +539,48 @@ MongoDB or CouchDB
 3. R: The number of replicas that are contacted when a data object is accessed through a read operation
 4. W+R > N: Strong consistency
 5. W+R <=N: Eventual consistency
+
+## Consistent Hashing
+### Mechanism
+1. We select N random integers (where N is around 100 or 200) for each server and sort those values into an array of N * server.size values. To look up the server for a key, we find the closest value >= the key hash and use the associated server. The values form a virtual circle; the key hash maps to a point on that circle and then we find the server clockwise from that point.
+
+
+### Implications
+#### Easier to Avoid Hotspots
+1. When you put data on nodes based on a random result, which is what the hash function calculates, a value that’s a lot more random than the key it’s based on, it’s easier to avoid hotspots.
+2. when you determine the location in the cluster based solely on the hash of the key, chances are much higher that two keys lexicographically close to each other end up on different nodes. Thus, the load is shared more evenly. The disadvantage is that you lose the order of keys.
+3. There are partitioning schemes that can work around this, even with a range-based key location. HBase (and Google’s BigTable, for that matter) stores ranges of data in separate tablets. As tablets grow beyond their maximum size, they’re split up and the remaining parts re-distributed. The advantage of this is that the original range is kept, even as you scale up.
+#### Consistent Hashing Enables Partitioning
+1. When you have a consistent hash, everything looks like a partition. The idea is simple. Consistent hashing forms a keyspace, which is also called continuum. As a node joins the cluster, it picks a random number, and that number determines the data it’s going to be responsible for. Everything between this number and one that’s next in the ring and that has been picked by a different node previously, is now belong to this node. The resulting partition could be of any size theoretically. It could be a tiny slice, or a large one.
+2. First implementations of consistent hashing still had the problem that a node picking a random range of keys resulted in one node potentially carrying a larger keyspace than others, therefore still creating hotspots.
+3. But the improvement was as simple as it was ingenious. A hash function has a maximum result set, a SHA-1 function has a bit space of 2^160. You do the math. Instead of picking a random key, a node could choose from a fixed set of partitions, like equally size pizza slices. But instead of picking the one with the most cheese on, everyone gets an equally large slice. The number of partitions is picked up front, and practically never changes over the lifetime of the cluster.
+#### Partitioning Makes Scaling Up and Down More Predictable
+1. With a fixed number of partitions of the same size, adding new nodes becomes even less of a burden than with just consistent hashing. With the former, it was still unpredictable how much data had to be moved around to transfer ownership of all the data in the range of the new node. One thing’s for sure, it already involved a lot less work than previous methods of sharding data.
+2. With partitioning, a node simply claims partitions, and either explicitly or implicitly asks the current owners to hand off the data to them. As a partition can only contain so many keys, and randomness ensures a somewhat even spread of data, there’s a lot less unpredictability about the data that needs to be transferred.
+1. If that partitions just so happens to carry the largest object by far in you whole cluster, that’s something even consistent hashing can’t solve. It only cares for keys.
+1. Going back to HBase, it cares for keys and the size of the tablet the data is stored in, as it breaks up tablets once they reach a threshold. Breaking up and reassigning a tablet requires coordination, which is not an easy thing to do in a distributed system.
+
+#### Consistent Hashing and Partitioning Enable Replication
+1. Consistent hashing made one thing a lot easier: replicating data across several nodes. The primary means for replication is to ensure data survives single or multiple machine failures. The more replicas you have, the more likely is your data to survive one or more hardware crashes. With three replicas, you can afford to lose two nodes and still serve the data.
+1. With a fixed set of partitions, a new node can just pick the ones it’s responsible for, and another stack of partitions it’s going to be a replica for. When you really think about it, both processes are actually the same. The beauty of consistent hashing is that there doesn’t need to be master for any piece of data. Every node is simply a replica of a number of partitions.
+
+But replication has another purpose besides ensuring data availability.
+
+#### Replication Reduces Hotspots (Even More!!!)
+1. Having more than one replica of a single piece of data means you can spread out the request load even more. With three replicas of that data, residing on three different nodes, you can now load-balance between them. Neat!
+1. With that, consistent hashing enables a pretty linear increase in capacity as you add more nodes to a cluster.
+
+#### Consistent Hashing Enables Scalability and Availability
+1. Consistent hashing allows you to scale up and down easier, and makes ensuring availability easier. Easier ways to replicate data allows for better availability and fault-tolerance. Easier ways to reshuffle data when nodes come and go means simpler ways to scale up and down.
+
+1. It’s an ingenious invention, one that has had a great impact. Look at the likes of Memcached, Amazon’s Dynamo, Cassandra, or Riak. They all adopted consistent hashing in one way or the other to ensure scalability and availability.
+
+
+
+
+
+
+
+
+
+
