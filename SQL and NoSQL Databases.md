@@ -41,6 +41,7 @@
 1. This requires many-to-many relationships
 
 ### Document Databases
+1. Document databases target use cases where data comes in self-contained docu‐ ments and relationships between one document and another are rare.
 1. A document database (also known as a document-oriented database or a document store) is a database that stores information in documents.
 1. Document databases offer a variety of advantages, including:
    * An intuitive data model that is fast and easy for developers to work with.
@@ -101,6 +102,7 @@
 ## Graph-Like Data Models
 1. Natural for many-to-many relationships
 2. An equally powerful use of graphs is to provide a consis‐ tent way of storing completely different types of objects in a single datastore.
+3. Graph databases go in the opposite direction, targeting use cases where anything is potentially related to everything
 
 ### Property Graph Model
 1. You can think of a graph store as consisting of two relational tables, one for vertices and one for edges
@@ -113,6 +115,13 @@
 1. The triple-store model is mostly equivalent to the property graph model, using differ‐ ent words to describe the same ideas.
 2. In a triple-store, all information is stored in the form of very simple three-part state‐ ments: (subject, predicate, object). For
 3. Products: Datomic, AllegroGraph
+
+#### The RDF Data Model
+1. The semantic web is fundamentally a simple and reasonable idea: websites already publish information as text and pictures for humans to read, so why don’t they also publish information as machine-readable data for computers to read? 
+2. The Resource Description Framework (RDF) [41] was intended as a mechanism for different web‐ sites to publish data in a consistent format, allowing data from different websites to be automatically combined into a web of data—a kind of internet-wide “database of everything.”
+3. Triples can be a good internal data model for applications
+### Datalog's Data Model
+1. Datalog’s data model is similar to the triple-store model, generalized a bit. Instead of writing a triple as (subject, predicate, object), we write it as predicate(subject, object)
 
 # Query Languages for Data
 ## Imperative language
@@ -138,8 +147,13 @@
 2. graph data can be represented in a relational database. But if we put graph data in a relational structure, can we also query it using SQL?
    * The answer is yes, but with some difficulty. The number of joins is not fixed in advance
    * Since SQL:1999, this idea of variable-length traversal paths in a query can be expressed using something called recursive common table expressions (the WITH RECURSIVE syntax).
-####  (SPARQL, and Datalog)
+#### The SPARQL Query Language
+1. SPARQL is a query language for triple-stores using the RDF data model
 
+#### The Foundation: Datalog
+1. Datalog is a much older language than SPARQL or Cypher, it provides the foundation that later query languages build upon
+   * Cascalog is a Datalog implementation for querying large datasets in Hadoop
+1. it’s a very powerful approach, because rules can be combined and reused in different queries. It’s less convenient for simple one-off queries, but it can cope better if your data is complex.
 
 ## MapReduce Querying
 1. MapReduce is a programming model for processing large amounts of data in bulk across many machines, popularized by Google
@@ -223,6 +237,8 @@ MongoDB or CouchDB
 1. Greater scalability for very large datasets or very high write throughput
 2. Specialized query operations that are not well supported by the relational model
 3. Frustration with the restrictiveness of relational schemas
+4. One thing that document and graph databases have in common is that they typically don’t enforce a schema for the data they store, which can make it easier to adapt applications to changing requirements
+   * However, your application most likely still assumes that data has a certain structure; it’s just a question of whether the schema is explicit (enforced on write) or implicit (handled on read)
 
 ### When to Consider NoSQL
 1. If you do transactions or banking, you want consistency
