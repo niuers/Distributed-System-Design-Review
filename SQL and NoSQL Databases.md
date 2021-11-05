@@ -162,6 +162,17 @@
 1. MapReduce is a fairly low-level programming model for distributed execution on a cluster of machines. Higher-level query languages like SQL can be implemented as a pipeline of MapReduce operations. Note there is nothing in SQL that constrains it to running on a single machine, and MapReduce doesn’t have a monopoly on distributed query execution.
 1. A usability problem with MapReduce is that you have to write two carefully coordi‐ nated JavaScript functions, which is often harder than writing a single query
 
+# Data Storage and Retrieval 
+1. how we can store the data that we’re given, and how we can find it again when we’re asked for it.
+
+## Log-Structured Storage Engines
+1. Many databases internally use a log, which is an append-only data file.
+   * Concurrency control
+   * Reclaim disk space
+   * Handling errors and partially written records
+
+## Page-Oriented Storage Engines
+1. Ex. B-Trees
 
 
 # SQL and NoSQL Databases
