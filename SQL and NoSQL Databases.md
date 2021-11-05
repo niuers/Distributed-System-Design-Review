@@ -447,6 +447,49 @@ An empty instance uses ~ 3MB of memory.
 1. Document stores provide high flexibility and are often used for working with occasionally changing data.
 1. Products: MongoDB, CouchDB, ElasticSearch
 
+#### ElasticSearch
+1. inverted index
+   * The inverted index maps terms to documents (and possibly positions in the documents) containing the term. Since the terms in the dictionary are sorted, we can quickly find a term, and subsequently its occurrences in the postings-structure. This is contrary to a "forward index", which lists terms related to a specific document.
+   * Consequently, an index term is the unit of search. The terms we generate dictate what types of searches we can (and cannot) efficiently do.
+   * In terms of complexity, looking up terms by their prefix is O(log(n)), while finding terms by an arbitrary substring is O(n).
+   * we have highlighted why it is important to be meticulous about index term generation: to get searches that can be performed efficiently.
+1. Building Indexes
+   * When building inverted indexes, there's a few things we need to prioritize: search speed, index compactness, indexing speed and the time it takes for new changes to become visible.
+   * Search speed and index compactness are related: when searching over a smaller index, less data needs to be processed, and more of it will fit in memory. Both, particularly compactness, come at the cost of indexing speed, as we'll see.
+   * To minimize index sizes, various compression techniques are used. 
+   * Keeping the data structures small and compact means sacrificing the possibility to efficiently update them.
+      * The exception is deletions. When you delete a document from an index, the document is marked as such in a special deletion file, which is actually just a bitmap which is cheap to update. The index structures themselves are not updated.
+   * When new documents are added (perhaps via an update), the index changes are first buffered in memory. Eventually, the index files in their entirety, are flushed to disk. The written files make up an index segment.
+
+1. Index Segment
+   * A Lucene index is made up of one or more immutable index segments, which essentially is a "mini-index". When you do a search, Lucene does the search on every segment, filters out any deletions, and merges the results from all the segments. Obviously, this gets more and more tedious as the number of segments grows. To keep the number of segments manageable, Lucene occasionally merges segments according to some merge policy as new segments are added.
+   * Index segments are immutable. Deleted documents are marked as such.
+   * As new segments are created (either due to a flush or a merge), they also cause certain caches to be invalidated, which can negatively impact search performance. Caches like the field and filter caches are per segment. 
+   * The most common cause for flushes with Elasticsearch is probably the continuous index refreshing, which by default happens once every second. As new segments are flushed, they become available for searching, enabling (near) real-time search. While a flush is not as expensive as a commit (as it does not need to wait for a confirmed write), it does cause a new segment to be created, invalidating some caches, and possibly triggering a merge.
+   * When indexing throughput is important, e.g. when batch (re-)indexing, it is not very productive to spend a lot of time flushing and merging small segments. Therefore, in these cases it is usually a good idea to temporarily increase the refresh_interval-setting, or even disable automatic refreshing altogether. One can always refresh manually, and/or when indexing is done.
+
+1. Elasticsearch indexes
+   * An Elasticsearch index is made up of one or more shards, which can have zero or more replicas. These are all individual Lucene indexes. That is, an Elasticsearch index is made up of many Lucene indexes, which in turn is made up of index segments. 
+   * A "shard" is the basic scaling unit for Elasticsearch. As documents are added to the index, it is routed to a shard. By default, this is done in a round-robin fashion, based on the hash of the document's id.
+   * It is important to know, however, that the number of shards is specified at index creation time, and cannot be changed later on.
+   * A search is done on every segment, with the results merged.
+   * Segments are occasionally merged.
+   * Field and filter caches are per segment.
+1. Transactions
+   * Elasticsearch does not have transactions.
+   * While Lucene has a concept of transactions, Elasticsearch does not. All operations in Elasticsearch add to the same timeline, which is not necessarily entirely consistent across nodes, as the flushing is reliant on timing. 
+   * Managing the isolation and visibility of different segments, caches and so on across indexes across nodes in a distributed system is very hard. Instead of trying to do this, it prioritizes being fast.
+   * Elasticsearch has a "transaction log" where documents to be indexed are appended. Appending to a log file is a lot cheaper than building segments, so Elasticsearch can write the documents to index somewhere durable - in addition to the in-memory buffer, which is lost on crashes. You can also specify the consistency level required when you index. For example, you can require every replica to have indexed the document before the index operation returns.
+
+
+
+
+
+
+
+
+
+
 
 ### Wide column store
 1. Abstraction: nested map ColumnFamily<RowKey, Columns<ColKey, Value, Timestamp>>
