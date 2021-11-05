@@ -218,22 +218,36 @@ Most web apps are majority reads, around 95% +
    * Generally divid by functionality
    * Best when most data in row isn't need for most queries
 
-## SQL Databases
+## RDBMS (Relational Database Management System)
 1. If you denormalize your data and include no more Joins in any database query, You can stay with MySQL, and use it like a NoSQL database.
 2. Scale Out RDBMS
+   * Replication
+      * Master-Slave
+      * Master-Master
+   * Federation
+   * Denormalization
+   * SQL Tuning
    * Sharding
       * Partitioninig
       * Replication
 3. Anti-Pattern: ORM (Object–relational mapping) + Rich Domain Model
    * One attempts to read an object from DB, but results with whole database 
+
+### ACID
+1. ACID is a set of properties of relational database transactions.
+   * Atomicity - Each transaction is all or nothing
+   * Consistency - Any transaction will bring the database from one valid state to another
+   * Isolation - Executing transactions concurrently has the same results as if the transactions were executed serially
+   * Durability - Once a transaction has been committed, it will remain so
+
 4. Think about Your Data, Think again!
    * When do you need ACID
    * When is evental consistency a better fit?
    * Different kinds of data have different needs?
-
 5. When RDBMS is not Good Enough
    * Scaling reads to a RDBMS is hard
    * Scaling writes to a RDBMS is impossible
+
 
 ### Denormalization
 ### SQL Tuning
