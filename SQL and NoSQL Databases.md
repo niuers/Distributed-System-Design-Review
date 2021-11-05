@@ -68,8 +68,87 @@
    * many-to-one and many-to-many relationships.
       * When it comes to representing many-to-one and many-to-many relationships, relational and document databases are not fundamentally different: in both cases, the related item is referenced by a unique identifier, which is called a foreign key in the relational model and a document reference in the document model. That identifier is resolved at read time by using a join or follow-up queries.
 
+#### Which data model leads to simpler application code?
+1. If application has a document-like structure (a tree of one-to-many): document model
+   * Better for apps with mostly one-to-many or no relationships between records
+   * Limitation of document model: can't refer directly to a nested item within a document but need to use postion
+   * Poor support of join: may or may not be a problem, depends on whether your app use many-to-many relationships
+      * Ex. event recording doesn't need many-to-many relationships
+      * It’s possible to reduce the need for joins by denormalizing, but then the application code needs to do additional work to keep the denormalized data consistent. 
+      * Joins can be emulated in application code by making multiple requests to the database, but that also moves complexity into the application and is usually slower than a join performed by specialized code inside the database.
+   * For highly interconnected data, the document model is awkward, the relational model is accept‐ able, and graph models are the most natural.
+#### Schema flexibility
+1. Document is schema-on-read (the structure of the data is implicit, and only interpreted when the data is read), in contrast with schema-on-write (the traditional approach of relational databases, where the schema is explicit and the database ensures all written data con‐ forms to it)
+2. The difference between the approaches is particularly noticeable in situations where an application wants to change the format of its data.
+   * It usually requires Schema change on relational database, while document database just change the app code
+      * Most relational DB execute ALTER TABLE in a few milliseconds, except MySQL where it copies entire table on this
+      * UPDATE takes time as well 
+3. The schema-on-read approach is advantageous if the items in the collection don’t all have the same structure for some reason (i.e., the data is heterogeneous)
+#### Data Locality for queries
+1. A document is usually stored as a single continuous string, encoded as JSON, XML, or a binary variant thereof (such as MongoDB’s BSON). If your application often needs to access the entire document (for example, to render it on a web page), there is a performance advantage to this storage locality.
+2. The locality advantage only applies if you need large parts of the document at the same time. If only part of document is needed, it's wasteful.
+3. On updates to a document, entire needs to be rewritten
+   * So it's usually recommended to keep failry small size documents and avoid writes that increase size of a document.
+4. N.B. locality is not limited to document model, relational model can also have this (e.g. The column-family concept in Bigtable data model used in Cassandra and HBase)
+
+#### Convergence of document and relational databases
+1. Most relational DBs ahve supported XML(except MySQL) and similarly for JSON: local modification, index and query inside XML documents
+2. MongoDB performs client-side join (less optimized)
+
 ### Fault-Tolerance Properties
 ### Concurrency Handling
+
+## Graph-Like Data Models
+1. Natural for many-to-many relationships
+2. An equally powerful use of graphs is to provide a consis‐ tent way of storing completely different types of objects in a single datastore.
+
+### Property Graph Model
+1. You can think of a graph store as consisting of two relational tables, one for vertices and one for edges
+2. It has great flexibility for data modeling: 
+   * There is no schema that restricts which kinds of things can or cannot be associated
+1. Graphs are good for evolvability: as you add features to your application, a graph can easily be extended to accommodate changes in your application’s data structures.
+1. Products: Neo4j, Titan, InfiniteGraph
+
+### Triple-Store Model
+1. The triple-store model is mostly equivalent to the property graph model, using differ‐ ent words to describe the same ideas.
+2. In a triple-store, all information is stored in the form of very simple three-part state‐ ments: (subject, predicate, object). For
+3. Products: Datomic, AllegroGraph
+
+# Query Languages for Data
+## Imperative language
+   * Many programming languages are imperative
+   * An imperative language tells the computer to perform certain operations in a certain order.
+   * Hard to parallel across multi-cores, multi-machines because it specifies instructions that must be per‐ formed in a particular order. Declarative
+   * Javascript
+### imperative languages for Graph
+1. Gremlin
+
+## Declarative query language
+   * you just specify the pattern of the data you want—what conditions the results must meet, and how you want the data to be transformed (e.g., sorted, grouped, and aggregated)—but not how to achieve that goal.
+   * It is up to the database system’s query optimizer to decide which indexes and which join methods to use, and in which order to execute various parts of the query.
+   * concise, easier to work with
+   * hides implementation details so data engine can optimize performance underneath
+   * limited in functionality: 
+   * It often lend themselves to parallel execution
+   * example: SQL or relational algebra 
+   * CSS and XSL are declarative languages for specifying the style of a document
+### Declarative Languages for Graphs
+#### Cypher Query Language
+1. Cypher is a declarative query language for property graphs, created for the Neo4j graph database
+2. graph data can be represented in a relational database. But if we put graph data in a relational structure, can we also query it using SQL?
+   * The answer is yes, but with some difficulty. The number of joins is not fixed in advance
+   * Since SQL:1999, this idea of variable-length traversal paths in a query can be expressed using something called recursive common table expressions (the WITH RECURSIVE syntax).
+####  (SPARQL, and Datalog)
+
+
+## MapReduce Querying
+1. MapReduce is a programming model for processing large amounts of data in bulk across many machines, popularized by Google
+   * A limited form of MapReduce is supported by some NoSQL DBs, such as MongoDB, CouchDB to perform read-only queries across many documents
+1. MapReduce is neither a declarative query language nor a fully imperative query API, but somewhere in between: the logic of the query is expressed with snippets of code, which are called repeatedly by the processing framework. It is based on the map (also known as collect) and reduce (also known as fold or inject) functions that exist in many functional programming languages.
+1. MapReduce is a fairly low-level programming model for distributed execution on a cluster of machines. Higher-level query languages like SQL can be implemented as a pipeline of MapReduce operations. Note there is nothing in SQL that constrains it to running on a single machine, and MapReduce doesn’t have a monopoly on distributed query execution.
+1. A usability problem with MapReduce is that you have to write two carefully coordi‐ nated JavaScript functions, which is often harder than writing a single query
+
+
 
 # SQL and NoSQL Databases
 ## Database Scaling
