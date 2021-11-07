@@ -163,22 +163,22 @@
 1. MapReduce is a fairly low-level programming model for distributed execution on a cluster of machines. Higher-level query languages like SQL can be implemented as a pipeline of MapReduce operations. Note there is nothing in SQL that constrains it to running on a single machine, and MapReduce doesn’t have a monopoly on distributed query execution.
 1. A usability problem with MapReduce is that you have to write two carefully coordi‐ nated JavaScript functions, which is often harder than writing a single query
 
-# Data Storage and Retrieval 
+# Data Storage and Retrieval
 1. how we can store the data that we’re given, and how we can find it again when we’re asked for it.
-
-## Log-Structured Storage Engines
 1. Many databases internally use a log: an append-only sequence of records. You need deal with following:
    * Concurrency control
    * Reclaim disk space
    * Handling errors and partially written records
-1. The search  operation is bad though, you have to scan the entire file: O(n). We need *index*
+1. The search operation is bad though, you have to scan the entire file: O(n). We need *index*
 2. Index: The general idea behind them is to keep some additional metadata on the side, which acts as a signpost and helps you to locate the data you want. An index is an additional structure that is derived from the primary data. 
    * This is an important trade-off in storage systems: well-chosen indexes speed up read queries, but every index slows down writes
+
+## Log-Structured Storage Engines
 
 ## Indexes
 1. Key-Value Indexes
    * They like a primary key index in the relational model: unique
-   * Sequential Segment and In-Memory Hash Indexes
+   * Hash Table Indexes with Append-Only Log Records
    * SSTable and LSM-Tree Structured Segment
    * B-trees
 2. Secondary indexes
