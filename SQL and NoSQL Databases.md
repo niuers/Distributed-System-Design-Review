@@ -337,22 +337,27 @@
 4. The in-memory DBs can be faster because they can avoid the overheads of encoding in-memory data structures in a form that can be written to disk, not because they don't need to read from disk. Even a disk-based storage engine may never read from disk since OS caches recently used disk blocks in memory.
 5. In-memory DBs provide data models that are difficult to implement with disk-based indexes
    * Redis offeres priority queues and sets
-   * 
 
 ## Transaction vs. Analytics
-1. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
-2. Differences in access patterns
-   * OLTP: 
-      * Typically user-facing, meaning huge volume of requests
-      * So applications usually only touch a small number of records in each query
-      * The application requests records using some kind of key, and the storage engine uses an index to find the data for the requested key.
-      * Disk seek time is often the bottleneck here.
-   * OLAP and Data warehouses
-      * Primiarly used by business analysts.
-      * They handle a much lower volume of queries than OLTP, but each query is typically very demanding, requires many millions of records to be scanned in a short time. When your queries require sequentially scanning across a large number of rows, indexes are much less relevant. Instead it becomes important to encode data very compactly, to minimize the amount of data that the query needs to read from disk. 
-      * Disk bandwidth (not seek time) if often bottleneck
-      * Column-oriented storage is a popular solution
-3. Storage Engines on OLTP
+
+### OLTP Access Pattern
+1. A transaction needn’t necessarily have ACID properties. Transaction processing just means allowing clients to make low-latency reads and writes— as opposed to **batch processing** jobs, which only run periodically (for example, once per day). 
+1. Typically user-facing, meaning huge volume of requests
+1. So applications usually only touch a small number of records in each query
+1. The application requests records using some kind of key, and the storage engine uses an index to find the data for the requested key.
+1. Disk seek time is often the bottleneck here.
+
+### OLAP Access Pattern
+1. Primiarly used by business analysts.
+1. They handle a much lower volume of queries than OLTP, but each query is typically very demanding, requires many millions of records to be scanned in a short time, only reading a few columns per record and calculates aggregate statistics rather than returning the raw data to the user. 
+   * When your queries require sequentially scanning across a large number of rows, indexes are much less relevant. Instead it becomes important to encode data very compactly, to minimize the amount of data that the query needs to read from disk. 
+3. Disk bandwidth (not seek time) if often bottleneck
+4. Column-oriented storage is a popular solution
+
+
+3. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
+4. Differences in access patterns
+5. Storage Engines on OLTP
    * The log-structured school: SSTables, LSM-trees, Cassandra, HBase, Lucene
       * Key idea is to systematically turn random-access writes into sequential writes on disk, enable higher write throughput
    * The update-in-place, which treats the disk as a set of fixed-size pages that can be overwritten: B-trees being used in all major relational DBs and many nonrelational ones
