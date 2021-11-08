@@ -1,27 +1,68 @@
 
 # Caching
+1. Caching improves page load times and can reduce the load on your servers and databases. In this model, the dispatcher will first lookup if the request has been made before and try to find the previous result to return, in order to save the actual execution.
+1. Databases often benefit from a uniform distribution of reads and writes across its partitions. Popular items can skew the distribution, causing bottlenecks. Putting a cache in front of a database can help absorb uneven loads and spikes in traffic.
+   * DB access bottlenecks caused by too many concurrent requests
 
 1. Please never do file-based caching, it makes cloning and auto-scaling of your servers just a pain. 
-2. Improve performance: reading from memory is 50-200x faster than reading from disk
-3. save money: can serve the same amount of traffic with fewer resources
-4. Caching consists of: precalculating results (e.g. the number of visits from each referring domain for the previous day), pre-generating expensive indexes (e.g. suggested stories based on a user’s click history), and storing copies of frequently accessed data in a faster backend (e.g. Memcache instead of PostgreSQL.
-5. In practice, caching is important earlier in the development process than load-balancing, and starting with a consistent caching strategy will save you time later on. It also ensures you don’t optimize access patterns which can’t be replicated with your caching mechanism or access patterns where performance becomes unimportant after the addition of caching (I’ve found that many heavily optimized Cassandra applications are a challenge to cleanly add caching to if/when the database’s caching strategy can’t be applied to your access patterns, as the datamodel is generally inconsistent between the Cassandra and your cache).
+2. Improve performance (response time by reducing data access latency): reading from memory is 50-200x faster than reading from disk
+3. Offload persistent storages by reducing number of trips to data sources
+4. avoid the cost of repeatedly creating objects
+5. share objects between threads
+6. 
+7. save money: can serve the same amount of traffic with fewer resources
+8. Caching consists of: precalculating results (e.g. the number of visits from each referring domain for the previous day), pre-generating expensive indexes (e.g. suggested stories based on a user’s click history), and storing copies of frequently accessed data in a faster backend (e.g. Memcache instead of PostgreSQL.
+9. In practice, caching is important earlier in the development process than load-balancing, and starting with a consistent caching strategy will save you time later on. It also ensures you don’t optimize access patterns which can’t be replicated with your caching mechanism or access patterns where performance becomes unimportant after the addition of caching (I’ve found that many heavily optimized Cassandra applications are a challenge to cleanly add caching to if/when the database’s caching strategy can’t be applied to your access patterns, as the datamodel is generally inconsistent between the Cassandra and your cache).
 
 ## Types
 1. Application vs. database caching
    * There are two primary approaches to caching: application caching and database caching (most systems rely heavily on both).
 
-
-
-## Caching Layers
-### DNS
+### Client caching
+Caches can be located on the client side (OS or browser), server side, or in a distinct cache layer.
 ### CDN
+CDNs are considered a type of cache.
+
+### Web server caching
+1. Reverse proxies and caches such as Varnish can serve static and dynamic content directly. Web servers can also cache requests, returning responses without having to contact application servers.
+1. Varnish, Squid, Nginx, 
+
+### Database Cache
+Your database usually includes some level of caching in a default configuration, optimized for a generic use case. Tweaking these settings for specific usage patterns can further boost performance.
+
+
 ### APllication
-### Database
+1. In-memory caches such as Memcached and Redis are key-value stores between your application and your data storage. Since the data is held in RAM, it is much faster than typical databases where data is stored on disk. RAM is more limited than disk, so cache invalidation algorithms such as least recently used (LRU) can help invalidate 'cold' entries and keep 'hot' data in RAM.
+
+1. Redis has the following additional features:
+   * Persistence option
+   * Built-in data structures such as sorted sets and lists
+1. There are multiple levels you can cache that fall into two general categories: database queries and objects:
+   * Row level
+   * Query-level
+   * Fully-formed serializable objects
+   * Fully-rendered HTML
+Generally, you should try to avoid file-based caching, as it makes cloning and auto-scaling more difficult.
+
+#### Caching at the database query level
+1. Whenever you query the database, hash the query as a key and store the result to the cache. This approach suffers from expiration issues:
+   * Hard to delete a cached result with complex queries
+   * If one piece of data changes such as a table cell, you need to delete all cached queries that might include the changed cell
+
+#### Caching at the object level
+1. See your data as an object, similar to what you do with your application code. Have your application assemble the dataset from the database into a class instance or a data structure(s):
+   * Remove the object from cache if its underlying data has changed
+   * Allows for asynchronous processing: workers assemble objects by consuming the latest cached object
+
+1. Suggestions of what to cache:
+   * User sessions
+   * Fully rendered web pages
+   * Activity streams
+   * User graph data
+
+
 
 ## HTTP Caching
-### Reverse Proxy
-1. Varnish, Squid, Nginx, 
 ### CDN, Akamai
 
 ## Generate Static Content
@@ -51,14 +92,57 @@
   * They implement a lease a kind of backup cache that serves the old data while the new one is being updated
 
 ### Caching Strategies
-1. Cache Aside - most common
-2. Read Through
-3. Write-through  (for write heavy)
-   * Directly write to DB
-   * * Consistency vs. Performance
-4. Write-behind (for write heavy)
-   * Use even-queue to write to DB
+1. When to update the cache: since you can only store a limited amount of data in cache, you'll need to determine which cache update strategy works best for your use case.
+
+
+#### Cache Aside - most common
+1. The application is responsible for reading and writing from storage. The cache does not interact with storage directly. The application does the following:
+   * Look for entry in cache, resulting in a cache miss
+   * Load entry from the database
+   * Add entry to cache
+   * Return entry
+1. Memcached is generally used in this manner.
+1. Subsequent reads of data added to cache are fast. Cache-aside is also referred to as **lazy loading**. Only requested data is cached, which avoids filling up the cache with data that isn't requested.
+1. Disadvantage(s): cache-aside
+   * Each cache miss results in three trips, which can cause a noticeable delay.
+   * Data can become stale if it is updated in the database. This issue is mitigated by setting a **time-to-live (TTL)** which forces an update of the cache entry, or by using write-through.
+   * When a node fails, it is replaced by a new, empty node, increasing latency.
+   * It might have blocking behavior
+   * Cache-aside may be perferrable when there are multiple cache updates triggered to the same storage from different cache servers
+
+#### Read Through
+1. The application treats cache as the main data store and reads data from it
+2. 
+#### Write-through  (for write heavy)
+1. The application uses the cache as the main data store, reading and writing data to it, while the cache is responsible for reading and writing to the database:
+   * Application adds/updates entry in cache
+   * Cache synchronously writes entry to data store
+   * Return
    * Consistency vs. Performance
+1. Write-through is a slow overall operation due to the write operation, but subsequent reads of just written data are fast. Users are generally more tolerant of latency when updating data than reading data. Data in the cache is not stale.
+1. Disadvantage(s): write through
+   * When a new node is created due to failure or scaling, the new node will not cache entries until the entry is updated in the database. Cache-aside in conjunction with write through can mitigate this issue.
+   * Most data written might never be read, which can be minimized with a TTL.
+
+#### Write-behind (for write heavy)
+1. In write-behind, the application does the following:
+   * Add/update entry in cache Use event-queue to write to DB
+   * Asynchronously write entry to the data store, improving write performance
+   * Consistency vs. Performance
+1. It can deliver considerablely higher throughput and reduced latency compared to write-through
+2. Implication of write-behind is that DB updates occur outside of cache transaction
+3. Disadvantage(s): write-behind
+   * There could be data loss if the cache goes down prior to its contents hitting the data store.
+   * It is more complex to implement write-behind than it is to implement cache-aside or write-through.
+   * It can conflict with an external update
+
+#### Refresh-ahead
+1. You can configure the cache to automatically and asynchronously refresh(reload) any recently accessed cache entry from the cache loader prior to its expiration.
+2. Refresh-ahead can result in reduced latency vs read-through if the cache can accurately predict which items are likely to be needed in the future.
+1. Disadvantage(s): refresh-ahead
+   * Not accurately predicting which items are likely to be needed in the future can result in reduced performance than without refresh-ahead.
+
+
 6. Replication
 7. Peer-To-Peer P2P
    * Decentralized
@@ -84,6 +168,13 @@ Invalidation becomes meaningfully more challenging for scenarios involving fuzzy
 In those scenarios you have to consider relying fully on database caching, adding aggressive expirations to the cached data, or reworking your application’s logic to avoid the issue (e.g. instead of DELETE FROM a WHERE..., retrieve all the items which match the criteria, invalidate the corresponding cache rows and then delete the rows by their primary key explicitly).
 
 
+## Cache Disadvantages
+1. Memory size is limited and can become unacceptablely large
+1. Synchronization/Consistency: Need to maintain consistency between caches and the source of truth such as the database through cache invalidation.
+1. Durability: Cache invalidation is a difficult problem, there is additional complexity associated with when to update the cache.
+1. Need to make application changes such as adding Redis or memcached.
+2. Only work for IO bound applications ? 
+3. Scalability? 
 
 
 
