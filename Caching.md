@@ -17,7 +17,41 @@
 ## Types
 1. Application vs. database caching
    * There are two primary approaches to caching: application caching and database caching (most systems rely heavily on both).
-
+1. Local Cache
+   * Simple, performant, no serilization/deserialization overhead
+   * Not fault-tolerant
+   * Scale is difficult
+   * products: EhCache, Google Guava, 
+3. Replicated Cache
+   * Each node access data locally
+   * Best read performance, fault tolerant, linear performance scalability for reads
+   * Poor write performance, additional network load, poor and limited scalability for writes, memory consumption
+   * Products: InfiniteSpan, EhCache+Terracota, Oracle Coherence
+5. Distributed Cache
+   * A cache that partitions its data among all cluster nodes
+   * resolving  known limitations of replicated cache on write
+   * Data consistency and data loss
+   * Failover involves promoting backup data to primary storage
+   * Advantages: linear performance scalability for reads and writes; fault-tolerant
+   * Increased latency of reads (roundtrip network, serialization/deserialization overhead)
+   * Products: MongoDB, Redis, Cassandra
+7. Remote Cache
+   * A cache that is located remotely and should be accessed by a client
+   * The client-server mode from most replicated/distributed cache
+   * MemCached
+   * 
+9. Near Cache
+   * A hybrid cache, it typically fronts a distributed cache or a remote cache with a local cache
+   * It's best used for read-only data
+   * Increases memory usage since the near cache items need to be stored in the memory of the member
+   * reduces consistency
+## IMDG (In-Memory Data Grid)
+1. It is the in-memory distributed cache plus:
+   * ability to support co-location of computations of with data in a distributed context and move computations to data
+   * Distributed MPP processing based on standard SQL and/or MapReduce, that allows to effectively compute over data stored in-memory across the cluster
+1. It's developed to respond to growing complexities of data processing
+2. Adding distributed SQL and/or MapReduce type processing required a complete re-thinking of distributed caches, as the focus has shifted from pure data management to hybrid data and compute management.
+3. 
 ### Client caching
 Caches can be located on the client side (OS or browser), server side, or in a distinct cache layer.
 ### CDN
@@ -206,3 +240,8 @@ In those scenarios you have to consider relying fully on database caching, addin
 1. Redis can do several hundreds of thousands of read operations per second when being hosted on a standard server. 
 2. Also writes, especially increments, are very, very fast.
 3. Redis has extra database-features like **persistence** and the built-in data structures like lists and sets. So you can use it as a Database.
+
+### Amazon ElastiCache
+1. It is a web service that makes it easy to set up, manage, and scale a distributed in-memory data store or cache environment in the cloud
+2. Amazon ElastiCache works with both the Redis and Memcached engines
+3. 
