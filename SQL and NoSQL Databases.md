@@ -339,29 +339,89 @@
    * Redis offeres priority queues and sets
 
 ## Transaction vs. Analytics
+3. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
 
 ### OLTP Access Pattern
 1. A transaction needn’t necessarily have ACID properties. Transaction processing just means allowing clients to make low-latency reads and writes— as opposed to **batch processing** jobs, which only run periodically (for example, once per day). 
 1. Typically user-facing, meaning huge volume of requests
-1. So applications usually only touch a small number of records in each query
-1. The application requests records using some kind of key, and the storage engine uses an index to find the data for the requested key.
-1. Disk seek time is often the bottleneck here.
+1. Main read pattern: small number of records in each query, fetched by key
+1. Main write pattern: random-access, low-latency writes from user input. 
+   * Disk seek time is often the bottleneck here.
+3. The application requests records using some kind of key, and the storage engine uses an index to find the data for the requested key.
+4. Dataset size: Gigabytes to terabytes
 
 ### OLAP Access Pattern
 1. Primiarly used by business analysts.
-1. They handle a much lower volume of queries than OLTP, but each query is typically very demanding, requires many millions of records to be scanned in a short time, only reading a few columns per record and calculates aggregate statistics rather than returning the raw data to the user. 
+2. Main read pattern: They handle a much lower volume of queries than OLTP, but each query is typically very demanding, requires many millions of records to be scanned in a short time, only reading a few columns per record and calculates aggregate statistics rather than returning the raw data to the user. 
    * When your queries require sequentially scanning across a large number of rows, indexes are much less relevant. Instead it becomes important to encode data very compactly, to minimize the amount of data that the query needs to read from disk. 
-3. Disk bandwidth (not seek time) if often bottleneck
-4. Column-oriented storage is a popular solution
-
-
-3. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
-4. Differences in access patterns
+3. Main write pattern: Bulk import (ETL, Extract-Transform-Load) or event stream (from OLTP DBs)
+4. Disk bandwidth (not seek time) if often bottleneck
+6. Column-oriented storage is a popular solution
+7. Dataset size: Terabytes to petabytes
 5. Storage Engines on OLTP
    * The log-structured school: SSTables, LSM-trees, Cassandra, HBase, Lucene
       * Key idea is to systematically turn random-access writes into sequential writes on disk, enable higher write throughput
    * The update-in-place, which treats the disk as a set of fixed-size pages that can be overwritten: B-trees being used in all major relational DBs and many nonrelational ones
 
+#### Data Warehouse for OLAP
+1. A data warehouse, by contrast, is a separate database that analysts can query to their hearts’ content, without affecting OLTP operations.
+2. Products
+   * Teradata, Vertica, SAP HANA
+   * Amazon RedShift
+   * SQL-on-Hadoop: Apache Hive, Spark SQL, Cloudera Impala, FB Presto
+
+#### Storage Engines for OLAP
+1. It turns out that the indexing algorithms discussed before work well for OLTP, but are not very good at answering analytic queries
+#### Stars and Snowflakes: Schemas for Analytics
+1. Many data warehouses are used in a fairly formulaic style, known as a star schema (also known as dimensional modeling
+2. At the center of the schema is a so-called fact table. As each row in the fact table represents an event, the dimensions represent the who, what, where, when, how, and why of the event.
+3. Other columns in the fact table are foreign key references to other tables, called dimension tables
+4. A variation of this template is known as the snowflake schema, where dimensions are further broken down into subdimensions.
+5. In a typical data warehouse, **tables are often very wide**: fact tables often have over 100 columns, sometimes several hundred
+
+### Column-Oriented Storage
+1. Although fact tables are often over 100 columns wide, a typical data warehouse query only accesses 4 or 5 of them at one time. 
+2. In most OLTP databases, storage is laid out in a row-oriented fashion: all the values from one row of a table are stored next to each other. Document databases are simi‐ lar: an entire document is typically stored as one contiguous sequence of bytes.
+3. When query by a few columns (even if they are indexed), a row-oriented storage engine still needs to load all of those rows (each consisting of over 100 attributes) from disk into memory, parse them, and filter out those that don’t meet the required conditions. That can take a long time
+4. The idea behind column-oriented storage is simple: don’t store all the values from one row together, but store all the values from each column together instead. If each col‐ umn is stored in a separate file, a query only needs to read and parse those columns that are used in that query, which can save a lot of work.
+5. Column storage is easiest to understand in a relational data model, but it applies equally to nonrelational data. For example, Parquet is a columnar storage format that supports a document data model.
+6. The column-oriented storage layout relies on each column file containing the rows in the same order.
+#### Column Compression
+1. we can further reduce the demands on disk throughput by compressing data.
+2. they often look quite repetitive, which is a good sign for compression. Often, the number of distinct values in a column is small compared to the number of rows
+3. One technique that is particu‐ larly effective in data warehouses is **bitmap encoding**
+   * We can now take a column with n distinct values and turn it into n separate bitmaps: one bitmap for each distinct value, with one bit for each row. The bit is 1 if the row has that value, and 0 if not.
+   * Take a matrix of nxm, where n is the unique number of values, and m is the number of rows. So we only need n bitmaps to represent all data in this column. Each bitmap has a length of m.
+1. If n is very small (for example, a country column may have approximately 200 dis‐ tinct values), those bitmaps can be stored with one bit per row. But if n is bigger, there will be a lot of zeros in most of the bitmaps (we say that they are sparse). In that case, the bitmaps can additionally be **run-length encoded (RLE)**.
+1. Cassandra and HBase have a concept of column families, which they inherited from Bigtable. However, it is very misleading to call them column-oriented: within each column family, they store all columns from a row together, along with a row key, and they do not use column compression. Thus, the Bigtable model is still mostly row-oriented.
+
+#### Memory bandwidth and vectorized processing
+1. For data warehouse queries that need to scan over millions of rows, a big bottleneck is the bandwidth for getting data from disk into memory.
+2. Developers of analytical databases also worry about efficiently using the bandwidth from main memory into the CPU cache, avoiding branch mispredictions and bubbles in the CPU instruction processing pipeline, and making use of single-instruction-multi-data (SIMD) instructions in modern CPUs
+3. Besides reducing the volume of data that needs to be loaded from disk, column- oriented storage layouts are also good for making efficient use of CPU cycles.
+4. The query engine can take a chunk of compressed column data that fits comfortably in the CPU’s L1 cache and iterate through it in a tight loop (that is, with no function calls). A CPU can execute such a loop much faster than code that requires a lot of function calls and conditions for each record that is processed. 
+5. Column compression allows more rows from a column to fit in the same amount of L1 cache. Operators, such as the bitwise AND and OR described previously, can be designed to operate on such chunks of compressed column data directly. This technique is known as **vectorized processing**
+
+#### Sort Order in Column Storage
+1. In a column store, it doesn’t necessarily matter in which order the rows are stored. It’s easiest to store them in the order in which they were inserted, since then inserting a new row just means appending to each of the column files.
+1. Note that it wouldn’t make sense to sort each column independently, because then we would no longer know which items in the columns belong to the same row.
+2. Another advantage of sorted order is that it can help with compression of columns. A simple run-length encoding, could compress that column down to a few kilobytes—even if the table has billions of rows.
+3. Several Different Sort Orders
+   *  Having multiple sort orders in a column-oriented store is a bit similar to having mul‐ tiple secondary indexes in a row-oriented store
+   * row- oriented store keeps every row in one place (in the heap file or a clustered index), In a column store, there normally aren’t any pointers to data elsewhere, only columns containing values 
+
+#### Writing to Column-Oriented Storage
+1. Writes are difficult for Column-Oriented Storage
+2. An update-in-place approach, like B-trees use, is not possible with compressed col‐ umns. If you wanted to insert a row in the middle of a sorted table, you would most likely have to rewrite all the column files.
+3. Fortunately, we have already seen a good solution earlier: LSM-trees. All writes first go to an in-memory store, where they are added to a sorted structure and prepared for writing to disk.
+4. Queries need to examine both the column data on disk and the recent writes in mem‐ ory, and combine the two. However,
+
+#### Aggregation: Data Cubes and Materialized Views
+1. materialized aggregates: used to cache the aggregate queries
+2. The difference is that a materialized view is an actual copy of the query results, written to disk, whereas a virtual view is just a shortcut for writ‐ ing queries. 
+3. A common special case of a materialized view is known as a data cube or OLAP cube [64]. It is a grid of aggregates grouped by different dimensions.
+5. The advantage of a materialized data cube is that certain queries become very fast because they have effectively been precomputed. For
+6. The disadvantage is that a data cube doesn’t have the same flexibility as querying the raw data. For
 
 # SQL and NoSQL Databases
 ## Database Scaling
