@@ -54,7 +54,7 @@ The system should continue to work *correctly* (performing the correct function 
       * Use batteries and diesel generators for backup power
       * Until recently, It's sufficient for most applications since it makes total failure of a single machine fairly rare.
    * Multi-machine redundancy (for high availability): Due to large data volumes, increased computing demands, more applications use larger number of machines, which increases the rate of hardware faults. There's a move toward systems that can *tolerate the loss of entire machines*, by using software fault-tolerance techniques in preference or in addition to hardware redundancy.
-      * Rolling Upgrade
+      * Rolling Upgrade/Staged Rollout: deploying the new version to a few nodes at a time, checking results, and gradually working through all the nodes.
 
 #### Software Faults
 1. These are systematic errors in the system.Harder to predict, correlated across nodes. They tend to cause many more system failures than uncorrelated hardware faults.
