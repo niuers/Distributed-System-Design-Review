@@ -17,6 +17,14 @@
       * If the system grows in a particular ways, what are our options for coping with the growth? 
       * How can we add computing resources to handle the additional load?
    * What does a good API for the service look like?
+7. Why you might want to distribute a database across multiple machines?
+   * Scalability
+   * Fault Tolerance/high availability
+      * Two common ways data is distributed across multiple nodes:
+         * Replication: provides redundancy and help improve performance
+         * Partitioning: 
+   * Latency
+
 
 # Key Characteristics of Distributed Systems
 ## 1. Reliability
@@ -88,6 +96,11 @@ As the system *grows* (in data volume, traffic volume, or complexity), there sho
 1. A system can become unreliable if the load increases a lot.
 1. If the system grows in a particular ways, what are our options for coping with the growth? 
 2. How can we add computing resources to handle the additional load?
+
+* Shared-Memory Architecture: scale up
+* Shared-Disk Architecture: users several machines with independent CPUs and RAM, but stores data on an array of disks connected via a fast network (NAS or SAN). Contention and the overhead of locking limit the scalability of this approach.
+* Shared-Nothing Architecture (scaling out): 
+
 
 ### Describing Load
 1. We use **load parameters** to describe load
