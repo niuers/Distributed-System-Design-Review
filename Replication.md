@@ -131,7 +131,25 @@
 2. all-to-all topologies can have issues too: some replication messages may “overtake” others. This is a problem of causality: Simply attaching a timestamp to every write is not sufficient, because clocks cannot be trusted to be sufficiently in sync to correctly order these events at leader 2
 3. To order these events correctly, a technique called **version vectors** can be used
 
-## Leaderless Replication (Buddy Replication)
+## Leaderless Replication (Buddy Replication/Dynamo-Style)
+1. Amazon Dynamo, Riak, Cassandra, Voldemort
+1. In some leaderless implementations, the client directly sends its writes to several rep‐ licas, while in others, a coordinator node does this on behalf of the client. However, unlike a leader database, that coordinator does not enforce a particular ordering of writes (As compared with leader based configuration, A leader determines the order in which writes should be processed, and followers apply the leader’s writes in the same orde)
+
+### Writing to the Database When a Node Is Down
+1. in a leaderless configuration, failover does not exist
+2. when a client reads from the database, it doesn’t just send its request to one replica: read requests are also sent to several nodes in parallel. Version numbers are used to determine which value is newer
+#### Read Repair and Anti-Entropy
+1. The replication scheme should ensure that eventually all the data is copied to every replica. After an unavailable node comes back online, how does it catch up on the writes that it missed?
+   * Read Repair: This approach works well for values that are frequently read.
+   * Anti-Entropy: a background process that constantly looks for differences in the data between replicas and copies any missing data from one replica to another
+#### Quorums for reading and writing
+1. if there are n replicas, every write must be confirmed by w nodes to be considered successful, and we must query at least r nodes for each read.
+2. As long as w + r > n, we expect to get an up-to-date value when reading, because at least one of the r nodes we’re reading from must be up to date. Reads and writes that obey these r and w values are called **(strict) quorum reads and writes**
+3. You can think of r and w as the minimum number of votes required for the read or write to be valid
+4. A common choice is to make n an odd number (typically 3 or 5) and to set w = r = (n + 1) / 2 (rounded up).
+
+### Limitations of Quorum Consistency
+
 
 
 ## Tree-Replication
