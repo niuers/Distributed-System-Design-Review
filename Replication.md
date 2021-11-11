@@ -70,15 +70,71 @@
       * A longer timeout means a longer time to recovery in the case where the leader fails. However, if the timeout is too short, there could be unnecessary failovers, which makes the situation worse in case of high load or network problem
 
 ## Multi-Leader (Leader-Leader or Master-Master)
+1. Leader-based replication has one major downside: there is only one leader, and all writes must go through it. If the database is partitioned, each partition has one leader. Different partitions may have their leaders on different nodes, but each partition must nevertheless have one leader node.
 1. Both masters serve reads and writes and coordinate with each other on writes. If either master goes down, the system can continue to operate with both reads and writes.
-1. Multiple leaders to remove the single point of failur from one leader (after its failure and before a follower is promoted to leader)  
-2. Disadvantage(s): master-master replication
+2. In this setup, each leader simultaneously acts as a follower to the other leaders.
+3. Multiple leaders to remove the single point of failur from one leader (after its failure and before a follower is promoted to leader)  
+4. Disadvantage(s): master-master replication
    * You'll need a load balancer or you'll need to make changes to your application logic to determine where to write.
    * Most master-master systems are either loosely consistent (violating ACID) or have increased write latency due to synchronization.
    * Conflict resolution comes more into play as more write nodes are added and as latency increases.
+### Use Cases for Multi-Leader Replication
+1. It rarely makes sense to use a multi-leader setup within a single datacenter, because the benefits rarely outweigh the added complexity.
+#### Multi-datacenter Operation
+1. Within each datacenter, regular leader– follower replication is used; between datacenters, each datacenter’s leader replicates its changes to the leaders in other datacenters. 
+##### multi- datacenter deployment
+3. Performance
+   * In a multi-leader configuration, every write can be processed in the local datacenter and is replicated asynchronously to the other datacenters.
+   * Better than single-leader configuration
+4. Tolerance of datacenter outages
+   * More tolerant of the leader failure than single-leader configuration
+5. Tolerance of network problems
+   * A single-leader configu‐ ration is very sensitive to problems in this inter-datacenter link, because writes are made synchronously over this link. A multi-leader configuration with asyn‐ chronous replication can usually tolerate network problems better: a temporary network interruption does not prevent writes being processed.
+1. Big Downside of multi-leader Configuration
+   * Conflict Resolution: The same data may be concurrently modified in two different datacenters, and those write conflicts must be resolved
+1. multi-leader replication is often considered danger‐ ous territory that should be avoided if possible 
+#### Clients with offline Operation
+1. if you have an application that needs to continue to work while it is disconnected from the internet
+2. every device has a local database that acts as a leader (it accepts write requests), and there is an asynchronous multi-leader replication process (sync) between the replicas of your calendar on all of your devices. The replication lag may be hours or even days, depending on when you have internet access available.
+#### Collaborative Editing
+1. Google Doc/Wiki: When one user edits a document, the changes are instantly applied to their local replica (the state of the document in their web browser or client application) and asynchronously replicated to the server and any other users who are editing the same document.
+
+### Handling Write Conflicts
+1. A write conflict can be caused by two leaders concurrently updating the same record. This problem does not occur in a single-leader data‐ base.
+
+#### Synchronous versus asynchronous conflict detection
+1. In a multi-leader setup, both writes are successful, and the conflict is only detected asynchronously at some later point in time
+3. If you want synchronous conflict detection, you might as well just use single-leader replication.
+#### Conflict Avoidance
+1.The simplest strategy for dealing with conflicts is to avoid them: if the application can ensure that all writes for a particular record go through the same leader, then con‐ flicts cannot occur. 
+#### Converging toward a consistent state
+1. In a multi-leader configuration, there is no defined ordering of writes, so it’s not clear what the final value should be.
+2. If each replica simply applied writes in the order that it saw the writes, the database would end up in an inconsistent state
+3. the database must resolve the conflict in a *convergent* way, which means that all replicas must arrive at the same final value when all changes have been replicated.
+   * Give each write a unique ID, pick the write with the highest ID as the winner, and throw away the other writes. If a timestamp is used, this technique is known as **last write wins (LWW)**. It's prone to data loss
+   * Give each replica a unique ID, and let writes that originated at a higher- numbered replica always take precedence over writes that originated at a lower- numbered replica. This approach also implies data loss.
+   * Somehow merge the values together—e.g., order them alphabetically and then concatenate them
+   * Record the conflict in an explicit data structure that preserves all information, and write application code that resolves the conflict at some later time
+
+#### Custom conflict resolution logic
+1. Note that conflict resolution usually applies at the level of an individual row or docu‐ ment, not for an entire transaction [36].
+   * Execute On Write
+   * Execute On Read
+1. Automatic Conflict Resolution is hard
+
+### Multi-Leader Replication Topologies
+1. A replication topology describes the communication paths along which writes are propagated from one node to another.
+   * Circular Topology: MySQL
+   * Start Topology
+   * All-to-All topology
+1. A problem with circular and star topologies is that if just one node fails, it can inter‐ rupt the flow of replication messages between other nodes, causing them to be unable to communicate until the node is fixed.
+2. all-to-all topologies can have issues too: some replication messages may “overtake” others. This is a problem of causality: Simply attaching a timestamp to every write is not sufficient, because clocks cannot be trusted to be sufficiently in sync to correctly order these events at leader 2
+3. To order these events correctly, a technique called **version vectors** can be used
+
+## Leaderless Replication (Buddy Replication)
+
 
 ## Tree-Replication
-## Leaderless Replication (Buddy Replication)
 
 # Implementation of Replication Logs
 ## Statement-based Replication
