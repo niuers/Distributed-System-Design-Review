@@ -16,6 +16,9 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
 
 
 # Partitioning and Replication
+1. Partitioning is usually combined with replication so that copies of each partition are stored on multiple nodes.
+2. The choice of partitioning scheme is mostly independent of the choice of replication scheme.
+
 # Partitioning of Key-Value Data
 # Partitioning and Secondary Indexes
 # Rebalancing Partitions
