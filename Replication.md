@@ -53,7 +53,7 @@
 1. If the leader fails and is not recoverable, any writes that have not yet been replicated to followers are lost. This means that a write is not guaranteed to be durable, even if it has been confirmed to the client. However, a fully asynchronous configuration has the advantage that the leader can continue processing writes, even if all of its followers have fallen behind.
 2. Weakening durability may sound like a bad trade-off, but asynchronous replication is nevertheless widely used, especially if there are many followers or if they are geographically distributed.
 
-## How to Set Up New Followers?
+## Add New Followers
 1. Simply copying data files from one node to another is typically not sufficient: clients are constantly writing to the database. so a standard file copy would see different parts of the database at different points in time.
 2. You could make the files on disk consistent by locking the database (making it unavailable for writes), but that would go against our goal of high availability.
 3. Solution
@@ -86,7 +86,6 @@
       * Solution: Fencing or STONITH(Shoot The Other Node in the Head). But you may endup with both nodes being shut down.
    * What is the right timeout before the leader is declared dead?
       * A longer timeout means a longer time to recovery in the case where the leader fails. However, if the timeout is too short, there could be unnecessary failovers, which makes the situation worse in case of high load or network problem
-
 
 
 ## Implementation of Replication Logs
