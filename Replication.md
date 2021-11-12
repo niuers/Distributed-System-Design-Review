@@ -13,7 +13,25 @@
 ## Important Trade-Offs to Consider with Replication
 1. Synchronous or asynchronous replication?
 1. How to handle failed leader and/or replicas? 
-  * How do you ensure that the new follower has an accurate copy of the leader’s data?
+   * How do you ensure that the new follower has an accurate copy of the leader’s data?
+
+## Comparisons of Various Replications
+
+Item | Single-Leader | Multi-Leader | Leaderless
+--- | --- | --- | ---
+Stale Data | reads from followers might be stale | 1  |
+Conflict Resolution | not needed | 1 |
+Synchronous Replication | follower is guaranteed to have consistent data with leader <br /> leader has to block on write  | | 
+Asynchronous Replication | most common <br /> faster <br /> no data durability in the case of leader failure during replicating to follower| | 
+Complexity | Easiest | 3 | 4
+Add New Replica | take snapshot and use replication log to catch up | 3 | 4
+Handle  Down Follower | use replication log to catch up | 3 | 4
+Handle  Down Leader | failover (consensus): <br /> 1. May lose writes from original leader <br /> 2. Split brain <br /> 3. How to choose timeout  | 3 | 4
+Read From Asynchronous Followers | | | 
+RDBMS Products| PostgreSQL, MySQL, Oracle Data Guard, SQL Server | 2 | 3
+NoSQL Products| MongoDB, RethinkDB, Espresso | 2 | 3
+Other Products| Kfaka, RabbitMQ| 2 | 3
+
 
 ## Replication Disadvantages
 1. There is a potential for loss of data if the master fails before any newly written data can be replicated to other nodes.
@@ -24,12 +42,10 @@
 
 
 # Single-Leader (Active/Passive or Leader-follower or Master-Slave)
-1. Clients send all writes to a single node (the leader), which sends a stream of data change events to the other replicas (followers). Reads can be performed on any replica, but reads from followers might be stale.
-1. Write requests are sent to the leader, which first writes the new data to its local storage.
-2. Whenever the leader writes new data to its local storage, it also sends the data change to all of its followers as part of a *replication log or change stream*. 
-3. Each follower takes the log from the leader and updates its local copy of the database accordingly, by applying all writes in the same order as they were processed on the leader.
-4. When a client wants to read from the database, it can query either the leader or any of the followers.
-5. Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provisioned. 
+1. Clients send all writes to a single node (the leader, which first writes the new data to its local storage), which sends a stream of data change events to the other replicas (followers) as part of a *replication log or change stream*. Reads can be performed on any replica, but reads from followers might be stale.
+1. Each follower takes the log from the leader and updates its local copy of the database accordingly, by applying all writes in the same order as they were processed on the leader.
+1. When a client wants to read from the database, it can query either the leader or any of the followers.
+1. Slaves can also replicate to additional slaves in a tree-like fashion. If the master goes offline, the system can continue to operate in read-only mode until a slave is promoted to a master or a new master is provisioned. 
 1. Advantages:
    * Easy to understand
    * No conflict resolution to worry about
@@ -46,7 +62,7 @@
 1. The advantage of synchronous replication is that the follower is guaranteed to have an up-to-date copy of the data that is consistent with the leader.
 2. The disadvantage is that if the synchronous follower doesn’t respond (because it has crashed, or there is a network fault, or for any other reason), the write cannot be processed. The leader must block all writes and wait until the synchronous replica is available again.
 3. For that reason, it is impractical for all followers to be synchronous: any one node outage would cause the whole system to grind to a halt.
-4. Semi-Synchronous Configuration: In practice, if you enable syn‐ chronous replication on a database, it usually means that one of the followers is syn‐ chronous, and the others are asynchronous. If the synchronous follower becomes unavailable or slow, one of the asynchronous followers is made synchronous. This guarantees that you have an up-to-date copy of the data on at least two nodes: the leader and one synchronous follower.
+4. Semi-Synchronous Configuration: In practice, if you enable synchronous replication on a database, it usually means that one of the followers is synchronous, and the others are asynchronous. If the synchronous follower becomes unavailable or slow, one of the asynchronous followers is made synchronous. This guarantees that you have an up-to-date copy of the data on at least two nodes: the leader and one synchronous follower.
 
 ### Asynchronous Replication
 1. Often, leader-based replication is configured to be completely asynchronous.
@@ -57,7 +73,7 @@
 1. Simply copying data files from one node to another is typically not sufficient: clients are constantly writing to the database. so a standard file copy would see different parts of the database at different points in time.
 2. You could make the files on disk consistent by locking the database (making it unavailable for writes), but that would go against our goal of high availability.
 3. Solution
-   * Take a consistent snapshot of the leader’s database at some point in time—if pos‐ sible, without taking a lock on the entire database.
+   * Take a consistent snapshot of the leader’s database at some point in time—if possible, without taking a lock on the entire database.
    * Copy the snapshot to the new follower node.
    * The follower connects to the leader and requests all the data changes that have happened since the snapshot was taken. This requires that the snapshot is associated with an exact position in the leader’s replication log.
       * log sequence number in PostgreSQL
@@ -67,11 +83,11 @@
 ## Handling Node Outages
 ### Follower Failure: Catch-up Recovery
 1. On its local disk, each follower keeps a log of the data changes it has received from the leader.
-2. from its log, it knows the last transaction that was processed before the fault occur‐ red. Thus, the follower can connect to the leader and request all the data changes that occurred during the time when the follower was disconnected.
+2. From its log, it knows the last transaction that was processed before the fault occurred. Thus, the follower can connect to the leader and request all the data changes that occurred during the time when the follower was disconnected.
 
 ### Leader Failure: Failover
 1. Failover Process: one of the followers needs to be promoted to be the new leader, clients need to be reconfigured to send their writes to the new leader, and the other followers need to start consuming data changes from the new leader. 
-2. Failover Process Steps
+1. Failover Process Steps
    * Determining that the leader has failed: 
       * Most systems use a timeout
    * Choosing a new leader (consensus problem)
