@@ -4,12 +4,11 @@
 
 1. Scalability: a large dataset can be distributed across many disks, and the query load can be distributed across many processors
    * Our goal with partitioning is to spread the data and the query load evenly across nodes.
-3. 
 
 ## Problems to Consider
 1. How do you decide which records to store on which nodes?
 1. How to route requests to the right partitions and execute queries?
-1. 1. How to rebalance data when add or remove nodes?
+1. How to rebalance data when add or remove nodes?
 
 ## Comparison
 Markdown | Less | Pretty
