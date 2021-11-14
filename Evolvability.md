@@ -1,10 +1,12 @@
+# Overview
+
 1. In large application, code change can't happen instanenously, that means old and new versions of the code, and old and new data formats, may potentially all coexist in the system at the same time. 
 2. We need maintain compatibility in both directions
    * Backward compatibility: newer code can read data that was written by older code
    * Forward compatibility: older code can read data that was written by newer code
 1. The details of these encodings affect not onlytheir  efficiency,  but  more  importantly  also  the  architecture  of  applications  and  your options for deploying them
 2. In particular, many services need to support rolling upgrades, where a new version ofa  service  is  gradually  deployed  to  a  few  nodes  at  a  time,  rather  than  deploying  to  allnodes simultaneously. These properties are hugely benefi‐cial for evolvability, the ease of making changes to an application.
-3. During rolling upgrades, or for various other reasons, we must assume that differentnodes are running the different versions of our application’s code. It is impor‐tant that all data flowing around the system is encoded in a way that provides back‐ward compatibility (new code can read old data) and forward compatibility (old codecan read new data).
+3. During rolling upgrades, or for various other reasons, we must assume that different nodes are running the different versions of our application’s code. It is impor‐tant that all data flowing around the system is encoded in a way that provides back‐ward compatibility (new code can read old data) and forward compatibility (old codecan read new data).
 
 # Formats for Encoding Data
 1. Programs usually work with data in (at least) two different representations:
