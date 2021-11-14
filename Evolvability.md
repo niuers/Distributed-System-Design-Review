@@ -37,7 +37,7 @@
 2. JSON/XML support Unicode character strings but don't support binary strings (sequences of bytes without a character encoding) 
 1. There's only optial schema support for XML/JSON.
 3. CSV doesn't have any schema. 
-4. their compatibil‐ity depends on how you use them. 
+4. their compatibility depends on how you use them. 
 
 ### Binary Encoding
 1. Binary encodings for JSON, XML. 
