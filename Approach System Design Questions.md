@@ -411,6 +411,12 @@ Use back of the envelope calculations
 Powers of two table
 Latency numbers every programmer should know
 
+# Cluster Resources
+1. DEV
+   * 28 Machines: 16 cores/ 94GB RAM/ 2GB Swap/, Total cores: 448, with 2 Data centers
+3. PROD
+   * 188 Machines: 16 cores/ 94GB RAM/ 2GB Swap/, Total cores:3008, with 2 Data centers
+
 
 # References
 1. [How to approach a system design interview question](https://github.com/donnemartin/system-design-primer#how-to-approach-a-system-design-interview-question)
