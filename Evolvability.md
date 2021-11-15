@@ -4,8 +4,8 @@
 2. We need maintain compatibility in both directions
    * Backward compatibility: newer code can read data that was written by older code
    * Forward compatibility: older code can read data that was written by newer code
-1. The details of these encodings affect not onlytheir  efficiency,  but  more  importantly  also  the  architecture  of  applications  and  your options for deploying them
-2. In particular, many services need to support rolling upgrades, where a new version ofa  service  is  gradually  deployed  to  a  few  nodes  at  a  time,  rather  than  deploying  to  allnodes simultaneously. These properties are hugely benefi‐cial for evolvability, the ease of making changes to an application.
+1. The details of these encodings affect not only their  efficiency,  but  more  importantly  also  the  architecture  of  applications  and  your options for deploying them
+2. In particular, many services need to support rolling upgrades, where a new version ofa  service  is  gradually  deployed  to  a  few  nodes  at  a  time,  rather  than  deploying  to  allnodes simultaneously. These properties are hugely beneficial for evolvability, the ease of making changes to an application.
 3. During rolling upgrades, or for various other reasons, we must assume that different nodes are running the different versions of our application’s code. It is impor‐tant that all data flowing around the system is encoded in a way that provides back‐ward compatibility (new code can read old data) and forward compatibility (old codecan read new data).
 
 # Formats for Encoding Data
@@ -92,6 +92,13 @@
 2. The  schema  is  a  valuable  form  of  documentation,  and  because  the  schema  is required  for  decoding,  you  can  be  sure  that  it  is  up  to  date  (whereas  manually maintained documentation may easily diverge from reality).
 3. Keeping a database of schemas allows you to check forward and backward com‐patibility of schema changes, before anything is deployed.
 4. For users of statically typed programming languages, the ability to generate codefrom the schema is useful, since it enables type checking at compile time
+
+#### Base64 Encoding
+1. [Base64 is a way to encode binary data into an ASCII character set](https://stackoverflow.com/questions/10315757/what-is-the-real-purpose-of-base64-encoding) known to pretty much every computer system, in order to transmit the data without loss or modification of the contents itself. For example, mail systems cannot deal with binary data because they expect ASCII (textual) data. So if you want to transfer an image or another file, it will get corrupted because of the way it deals with the data.
+1. Note: base64 encoding is NOT a way of encrypting, nor a way of compacting data. In fact a base64 encoded piece of data is 1.333… times bigger than the original datapiece. It is only a way to be sure that no data is lost or modified during the transfer.
+2. The need for Base64 arose from the need to attach binary content to emails like images, videos or arbitrary binary content . Since SMTP [RFC 5321] only allowed 7-bit US-ASCII characters within the messages, there was a need to represent these binary octet streams using the seven bit ASCII characters.
+1. We call base64 as a radix-64 representation. Base64 uses only 6-bits(2⁶ = 64 characters, 0-9,a-z, A-Z, +/-) to ensure the printable data is human readable. 
+2. Using base64 encoding, a 6 letters long key would result in 64^6 = ~68.7 billion possible strings.
 
 ## Modes of Dataflow
 1. some of the most common ways how data flows between processes:
