@@ -417,6 +417,9 @@ Latency numbers every programmer should know
 3. PROD
    * 188 Machines: 16 cores/ 94GB RAM/ 2GB Swap/, Total cores:3008, with 2 Data centers
 
+# Product Problems
+1. When there are hundreds of or thousands of machines, machine failures are common
+2. RPC can be used in MapReduce where a reduce worker reads the local data from a map worker using RPC
 
 # References
 1. [How to approach a system design interview question](https://github.com/donnemartin/system-design-primer#how-to-approach-a-system-design-interview-question)
