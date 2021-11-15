@@ -422,6 +422,7 @@ Latency numbers every programmer should know
 2. RPC can be used in MapReduce where a reduce worker reads the local data from a map worker using RPC
 
 # MapReduce
+1.  it hides the details of parallelization, fault-tolerance, locality optimization, and load balancing
 1. Master-Worker
 2. Fault tolerance
    * Worker failure: retry on other worker 
@@ -431,7 +432,15 @@ Latency numbers every programmer should know
 2. Task Granuity
    * There are practical bounds on how large M and R can be in our implementation, since the master must make O(M + R) scheduling decisions and keeps O(M ∗ R) state in memory as described above.
 3. Handle long run tail task
-   * 
+   * When a MapReduce operation is close to completion, the master schedules backup executions of the remaining in-progress tasks. The task is marked as completed whenever either the primary or the backup execution completes.
+1. Network bandwidth is a scarce resource. A number of optimizations in our system are therefore targeted at reducing the amount of data sent across the network: the locality optimization allows us to read data from local disks, and writing a single copy of the intermediate data to local disk saves network bandwidth.
+   * The MapReduce master takes the location information of the input files into account and attempts to schedule a map task on a machine that contains a replica of the corresponding input data. Failing that, it attempts to schedule a map task near a replica of that task’s input data (e.g., on a worker machine that is on the same network switch as the machine containing the data)
+   * A network switch is a device that operates at the Data Link layer of the OSI model—Layer 2. It takes in packets being sent by devices that are connected to its physical ports and sends them out again, but only through the ports that lead to the devices the packets are intended to reach. They can also operate at the network layer--Layer 3 where routing occurs. witches are a common component of networks based on ethernet, Fibre Channel, Asynchronous Transfer Mode (ATM), and InfiniBand, among others. In general, though, most switches today use ethernet.
+   * Once a device is connected to a switch, the switch notes its media access control (MAC) address, a code that’s baked into the device’s network-interface card (NIC) that attaches to an ethernet cable that attaches to the switch. The switch uses the MAC address to identify which attached device outgoing packets are being sent from and where to deliver incoming packets.So the MAC address identifies the physical device as opposed to the network layer (Layer 3) IP address, which can be assigned dynamically to a device and change over time. 
+   * When a device sends a packet to another device, it enters the switch and the switch reads its header to determine what to do with it. It matches the destination address or addresses and sends the packet out through the appropriate ports that leads to the destination devices.
+
+
+
 
 
 
