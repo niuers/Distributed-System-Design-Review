@@ -421,6 +421,20 @@ Latency numbers every programmer should know
 1. When there are hundreds of or thousands of machines, machine failures are common
 2. RPC can be used in MapReduce where a reduce worker reads the local data from a map worker using RPC
 
+# MapReduce
+1. Master-Worker
+2. Fault tolerance
+   * Worker failure: retry on other worker 
+   * Master failure:
+3. We rely on atomic commits of map and reduce task outputs to achieve this property.
+1. If the same reduce task is executed on multiple machines, multiple rename calls will be executed for the same final output file. We rely on the atomic rename operation provided by the underlying file system to guarantee that the final file system state contains just the data produced by one execution of the reduce task.
+2. Task Granuity
+   * There are practical bounds on how large M and R can be in our implementation, since the master must make O(M + R) scheduling decisions and keeps O(M ∗ R) state in memory as described above.
+3. Handle long run tail task
+   * 
+
+
+
 # References
 1. [How to approach a system design interview question](https://github.com/donnemartin/system-design-primer#how-to-approach-a-system-design-interview-question)
 2. [System Design Interview – Step By Step Guide](https://youtu.be/bUHFg8CZFws)
