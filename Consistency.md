@@ -1,4 +1,10 @@
-# Consistency
+# Overview
+1. The word consistency is terribly overloaded: 
+   * replica consistency and the issue of eventual consistency that arises in asynchronously replicated systems (see “Problems with Repli‐ cation Lag” on page 161).
+   * Consistent hashing is an approach to partitioning that some systems use for reba‐ lancing (see “Consistent Hashing” on page 204).
+   * In the CAP theorem (see Chapter 9), the word consistency is used to mean linearizability (see “Linearizability” on page 324).
+   * In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
+
 ## Consistency Patterns
 
 ### Weak consistency
