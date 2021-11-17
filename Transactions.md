@@ -182,8 +182,13 @@
 4. A serializable isolation level is much preferable in most cases.
 
 # Serializability
-
+1. Serializable isolation is usually regarded as the strongest isolation level. It guarantees that even though transactions may execute in parallel, the end result is the same as if they had executed one at a time, serially, without any concurrency.
+2. Most databases that provide serializability today use one of three techniques
+   * Literally executing transactions in a serial order
+   * Two-Phase Locking which for sev‐ eral decades was the only viable option
+   * Optimistic concurrency control techniques such as serializable snapshot isolation
 ## Actual Serial Execution
+
 ## Two-Phase Locking (2PL)
 ## Serializable Snapshot Isolation (SSI)
 
