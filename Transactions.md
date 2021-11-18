@@ -188,7 +188,34 @@
    * Two-Phase Locking which for sev‐ eral decades was the only viable option
    * Optimistic concurrency control techniques such as serializable snapshot isolation
 ## Actual Serial Execution
+1. The simplest way of avoiding concurrency problems is to remove the concurrency entirely: to execute only one transaction at a time, in serial order, on a single thread. This is possible because:
+   * RAM became cheap enough that for many use cases is now feasible to keep the entire active dataset in memory
+   * Database designers realized that OLTP transactions are usually short and only make a small number of reads and writes. By contrast, long-running analytic queries are typically read- only, so they can be run on a consistent snapshot (using snapshot isolation) outside of the serial execution loop.
+1. VoltDB/H-Store, Redis, Datomic
+2. However, its throughput is limited to that of a single CPU core. In order to make the most of that single thread, transactions need to be structured differently from their traditional form
+### Encapsulating transactions in stored procedures
+1. almost all OLTP applications keep transac‐ tions short by avoiding interactively waiting for a user within a transaction.
+2. this means that a transaction is committed within the same HTTP request—a transaction does not span multiple requests. A new HTTP request starts a new trans‐ action.
+3. transactions have continued to be executed in an interactive client/server style, one statement at a time.
+4. For this reason, systems with single-threaded serial transaction processing don’t allow interactive multi-statement transactions. Instead, the application must submit the entire transaction code to the database ahead of time, as a stored procedure. 
+5. Provided that all data required by a transaction is in memory, the stored procedure can execute very fast, without waiting for any network or disk I/O
+#### Pros and cons of stored procedures
+1. Each database vendor has its own language for stored procedures
+2. Code running in a database is difficult to manage
+3. A database is often much more performance-sensitive than an application server, because a single database instance is often shared by many application servers. A badly written stored procedure (e.g., using a lot of memory or CPU time) in a database can cause much more trouble.
+4. With stored procedures and in-memory data, executing all transactions on a single thread becomes feasible. As they don’t need to wait for I/O and they avoid the over‐ head of other concurrency control mechanisms, they can achieve quite good throughput on a single thread.
+#### Partitioning
+1. Read-only transactions may execute elsewhere, using snapshot isola‐ tion, but for applications with high write throughput, the single-threaded transaction processor can become a serious bottleneck.
+2. In order to scale to multiple CPU cores, and multiple nodes, you can potentially par‐ tition your data (see Chapter 6), which is supported in VoltDB.
+   * but data with multiple secondary indexes is likely to require a lot of cross- partition coordination
+#### Summary of Serial Execution Constraints
+1. Every transaction must be small and fast, because it takes only one slow transac‐ tion to stall all transaction processing.
+1. It is limited to use cases where the active dataset can fit in memory. Rarely accessed data could potentially be moved to disk, but if it needed to be accessed in a single-threaded transaction, the system would get very slow.
+1. Write throughput must be low enough to be handled on a single CPU core, or else transactions need to be partitioned without requiring cross-partition coordi‐ nation.
+1. Cross-partition transactions are possible, but there is a hard limit to the extent to which they can be used.
 
 ## Two-Phase Locking (2PL)
+
 ## Serializable Snapshot Isolation (SSI)
+
 
