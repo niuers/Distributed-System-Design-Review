@@ -14,7 +14,25 @@
    * whole-DC backbone failures, 
    * whole-DC power failures, and 
    * DC’s HVAC [heating, ven‐ tilation, and air conditioning] system
+
 ## Cloud Computing and Supercomputing
+1. spectrum of philosophies on how to build large-scale computing systems
+   * At one end of the scale is the field of high-performance computing (HPC)
+      * Thus, a supercomputer is more like a single-node computer than a distributed system. it deals with partial failure by letting it escalate into total failure—if any part of the system fails, just let everything crash (like a kernel panic on a single machine)
+   * At the other extreme is cloud computing
+      * Many internet-related applications are online: low latency and availability
+      * nodes in cloud services have higher failure rates
+      * Large datacenter networks are often based on IP and Ethernet, arranged in Clos topologies to provide high bisection bandwidth
+      * The bigger a system gets, the more likely it is that one of its components is bro‐ ken. In a system with thousands of nodes, it is reasonable to assume that something is always broken
+      * If the system can tolerate failed nodes and still keep working as a whole, that is a very useful feature for operations and maintenance
+      * In a geographically distributed deployment (keeping data geographically close to your users to reduce access latency), communication most likely goes over the internet, which is slow and unreliable compared to local networks.
+
+1. we need to build a reliable system from unreliable components
+   * IP (the Internet Protocol) is unreliable: it may drop, delay, duplicate, or reorder packets. TCP (the Transmission Control Protocol) provides a more reliable transport layer on top of IP: it ensures that missing packets are retransmitted, duplicates are eliminated, and packets are reassembled into the order in which they were sent.
+   * Although the system can be more reliable than its underlying parts, there is always a limit to how much more reliable it can be.
+      * TCP can hide packet loss, duplication, and reordering from you, but it cannot magically remove delays in the network.
+3. The fault han‐ dling must be part of the software design, and you (as operator of the software) need to know what behavior to expect from the software in the case of a fault. In distributed systems, suspicion, pessimism, and paranoia pay off.
+4. 
 
 # Unreliable Networks
 ## Network Faults in Practice
