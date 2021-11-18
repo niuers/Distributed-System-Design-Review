@@ -326,7 +326,7 @@
 1. All above indexes don't allow search for *similar keys*, e.g. misspelled words, called *fuzzy*  querying
 2. Levenshtein automaton
 #### Keeping Everything in Memory
-1. The data structures discussed so far in this chapter have all been answers to the limi‐ tations of disks.
+1. The data structures discussed so far in this chapter have all been answers to the limitations of disks.
    * Disks are durable and lower cost per GB than RAM
 3. In-memory Databases
    * Memcached are intended for caching only, data is lost if a machine restarted
@@ -337,7 +337,8 @@
 4. The in-memory DBs can be faster because they can avoid the overheads of encoding in-memory data structures in a form that can be written to disk, not because they don't need to read from disk. Even a disk-based storage engine may never read from disk since OS caches recently used disk blocks in memory.
 5. In-memory DBs provide data models that are difficult to implement with disk-based indexes
    * Redis offeres priority queues and sets
-
+1. The so-called anti-caching approach works by evicting the least recently used data from memory to disk when there is not enough memory, and loading it back into memory when it is accessed again in the future. This is similar to what operating systems do with virtual memory and swap files, but the database can manage memory more efficiently than the OS, as it can work at the granularity of individual records rather than entire memory pages
+2. 
 ## Transaction vs. Analytics
 3. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
 
