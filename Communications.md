@@ -9,11 +9,11 @@ The Secure Sockets Layer (SSL) protocol is primarily used to encrypt confidentia
 
 
 # Hypertext transfer protocol (HTTP)
-      * HTTP is a method for encoding and transporting data between a client (browser) and a server. It is a request/response protocol: clients issue requests and servers issue responses with relevant content and completion status info about the request. HTTP is self-contained, allowing requests and responses to flow through many intermediate routers and servers that perform load balancing, caching, encryption, and compression. This self‑contained design allows for the distributed nature of the Internet, where a request or response might pass through many intermediate routers and proxy servers.
-      * Information is exchanged between clients and servers in the form of Hypertext documents (HTML). 
-      * A basic HTTP request consists of a verb (method) and a resource (endpoint). Below are common HTTP verbs: GET, POST, PUT
-      * HTTP is an application layer protocol relying on lower-level protocols such as TCP and UDP.
-      * HTTP resources such as web servers are identified across the Internet using unique identifiers known as Uniform Resource Locators (URLs).
+1. HTTP is a method for encoding and transporting data between a client (browser) and a server. It is a request/response protocol: clients issue requests and servers issue responses with relevant content and completion status info about the request. HTTP is self-contained, allowing requests and responses to flow through many intermediate routers and servers that perform load balancing, caching, encryption, and compression. This self‑contained design allows for the distributed nature of the Internet, where a request or response might pass through many intermediate routers and proxy servers.
+1. Information is exchanged between clients and servers in the form of Hypertext documents (HTML). 
+1. A basic HTTP request consists of a verb (method) and a resource (endpoint). Below are common HTTP verbs: GET, POST, PUT
+1. HTTP is an application layer protocol relying on lower-level protocols such as TCP and UDP.
+1. HTTP resources such as web servers are identified across the Internet using unique identifiers known as Uniform Resource Locators (URLs).
 
 # Transmission control protocol (TCP)
 1. TCP is a connection-oriented protocol over an IP network. Connection is established and terminated using a handshake. All packets sent are guaranteed to reach the destination in the original order and without corruption through:
@@ -36,7 +36,7 @@ The Secure Sockets Layer (SSL) protocol is primarily used to encrypt confidentia
          * You need all of the data to arrive intact
          * You want to automatically make a best estimate use of the network throughput
 6. Data is read as a “stream,” with nothing distinguishing where one packet ends and another begins. There may be multiple packets per read call.
-7. 
+
 #### Examples
 Examples: World Wide Web (Apache TCP port 80), e-mail (SMTP TCP port 25 Postfix MTA), File Transfer Protocol (FTP port 21) and Secure Shell (OpenSSH port 22) etc.	
 
@@ -65,24 +65,25 @@ Examples: World Wide Web (Apache TCP port 80), e-mail (SMTP TCP port 25 Postfix 
 Examples: Domain Name System (DNS UDP port 53), streaming media applications such as IPTV or movies, Voice over IP (VoIP), Trivial File Transfer Protocol (TFTP) and online multiplayer games etc
 
 ## TCP vs. UDP
-Lets look at the properties of each:
 
 ### TCP:
-
-Connection based
-Guaranteed reliable and ordered
-Automatically breaks up your data into packets for you
-Makes sure it doesn't send data too fast for the internet connection to handle (flow control)
-Easy to use, you just read and write data like its a file
+1. Connection based
+1. Guaranteed reliable and ordered
+1. Automatically breaks up your data into packets for you
+1. Makes sure it doesn't send data too fast for the internet connection to handle (flow control)
+1. Easy to use, you just read and write data like its a file
 
 ### UDP:
 
-No concept of connection, you have to code this yourself
-No guarantee of reliability or ordering of packets, they may arrive out of order, be duplicated, or not arrive at all!
-You have to manually break your data up into packets and send them
-You have to make sure you don't send data too fast for your internet connection to handle
-If a packet is lost, you need to devise some way to detect this, and resend that data if necessary
-You can't even rely on the UDP checksum so you must add your own
+1. No concept of connection, you have to code this yourself
+1. No guarantee of reliability or ordering of packets, they may arrive out of order, be duplicated, or not arrive at all!
+1. You have to manually break your data up into packets and send them
+1. You have to make sure you don't send data too fast for your internet connection to handle
+1. If a packet is lost, you need to devise some way to detect this, and resend that data if necessary
+1. You can't even rely on the UDP checksum so you must add your own
+2. Some latency-sensitive applications such as videoconferencing and Voice over IP use UDP
+   * UDP does not perform flow control and does not retransmit lost packets, it avoids some of the reasons for variable network delays (although it is still suscepti‐ ble to switch queues and scheduling delays)
+   * UDP is a good choice in situations where delayed data is worthless.
 
 ###
 1. Using TCP is the worst possible mistake you can make when developing a multiplayer game! 
