@@ -113,6 +113,7 @@
 1. Snapshot isolation is the most common solution to this problem. The idea is that each transaction reads from a consistent snapshot of the database—that is, the transaction sees all the data that was committed in the database at the start of the transaction. Even if the data is subsequently changed by another transaction, each transaction sees only the old data from that particular point in time
 2. Snapshot isolation is a boon for long-running, read-only queries such as backups and analytics.
 3. it is supported by PostgreSQL, MySQL with the InnoDB storage engine, Oracle, SQL Server, and others
+4. snapshot isolation is a very useful feature in databases that need to support both small, fast read-write transactions and large, long-running read-only transactions (e.g., for backups or analytics). It allows read-only transactions to see the database in a consistent state at a particular point in time, without locking and interfering with read-write transactions.
 
 ### Implementing snapshot isolation
 1. snapshot isolation typically use write locks to prevent dirty writes
