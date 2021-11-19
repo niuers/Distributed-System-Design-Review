@@ -5,6 +5,23 @@
    * In the CAP theorem (see Chapter 9), the word consistency is used to mean linearizability (see “Linearizability” on page 324).
    * In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
 
+# Consistency Guarantees
+# Linearizability
+## What Makes a System Linearizable?
+## Relying on Linearizability
+## Implementing Linearizable Systems
+## The Cost of Linearizability
+
+# Ordering Guarantees
+## Ordering and Causality
+## Sequence Number Ordering
+## Total Order Broadcast
+# Distributed Transactions and Consensus
+## Atomic Commit and Two-Phase Commit (2PC)
+## Distributed Transactions in Practice
+## Fault-Tolerant Consensus
+## Membership and Coordination Services
+
 ## Consistency Patterns
 
 ### Weak consistency
