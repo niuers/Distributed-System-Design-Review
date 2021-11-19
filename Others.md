@@ -3,7 +3,7 @@
 
 
 # BigTable
-1. Bigtable: A Distributed Storage System for Structured Data
+1. Bigtable: Bigtable is a distributed storage system for managing structured data that is designed to scale to a very large size
 2. 
 
 # ZooKeeper
