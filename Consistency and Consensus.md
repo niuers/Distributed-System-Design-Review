@@ -4,7 +4,9 @@
    * Consistent hashing is an approach to partitioning that some systems use for reba‐ lancing (see “Consistent Hashing” on page 204).
    * In the CAP theorem (see Chapter 9), the word consistency is used to mean linearizability (see “Linearizability” on page 324).
    * In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
-
+1. The best way of building fault-tolerant systems is to find some general-purpose abstractions with useful guarantees, implement them once, and then let applications rely on those guarantees. This is the same approach as we used with transactions: by using a transaction, the application can pretend that there are no crashes (atomicity), that nobody else is concurrently accessing the database (isola‐ tion), and that storage devices are perfectly reliable (durability).
+2. one of the most important abstractions for distributed systems is consensus: that is, getting all of the nodes to agree on something
+3. 
 # Consistency Guarantees
 # Linearizability
 ## What Makes a System Linearizable?
