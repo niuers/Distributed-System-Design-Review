@@ -181,7 +181,7 @@ Other Products| Kfaka, RabbitMQ| 2 | 3
    * You'll need a load balancer or you'll need to make changes to your application logic to determine where to write.
    * Most master-master systems provide either very weak  consistent (violating ACID) or have increased write latency due to synchronization.
    * Conflict resolution comes more into play as more write nodes are added and as latency increases.
-
+1. Multi-leader replication is often a good choice for multi- datacenter replication
 ## Use Cases for Multi-Leader Replication
 1. It rarely makes sense to use a multi-leader setup within a single datacenter, because the benefits rarely outweigh the added complexity.
 ### Multi-datacenter Operation
