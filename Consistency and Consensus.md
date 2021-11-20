@@ -63,9 +63,21 @@ This problem arises because there are two different communication channels betwe
 4. In summary, it is safest to assume that a leaderless system with Dynamo-style replica‐ tion does not provide linearizability
 
 ## The Cost of Linearizability
-1. 
-
-
+1. With a multi-leader database, each datacenter can continue operating normally: since writes from one datacenter are asynchronously replicated to the other, the writes are simply queued up and exchanged when network connectivity is restored.
+2. If the network between datacenters is interrupted in a single-leader setup, clients con‐ nected to follower datacenters cannot contact the leader, so they cannot make any writes to the database, nor any linearizable reads. They can still make reads from the follower, but they might be stale (nonlinearizable). If the application requires linear‐ izable reads and writes, the network interruption causes the application to become unavailable in the datacenters that cannot contact the leader.
+3. any linearizable database has this problem, no matter how it is implemented. The
+### The CAP Theorem
+1. The trade-off is as follows
+2. If your application requires linearizability, and some replicas are disconnected from the other replicas due to a network problem, then some replicas cannot process requests while they are disconnected: they must either wait until the network problem is fixed, or return an error (either way, they become unavailable).
+3. If your application does not require linearizability, then it can be written in a way that each replica can process requests independently, even if it is disconnected from other replicas (e.g., multi-leader). In this case, the application can remain available in the face of a network problem, but its behavior is not linearizable
+4. Thus, applications that don’t require linearizability can be more tolerant of network problems. This insight is popularly known as the CAP theorem
+### The Unhelpful CAP Theorem
+1. CAP is sometimes presented as Consistency, Availability, Partition tolerance: pick 2 out of 3. Unfortunately, putting it this way is misleading [32] because network parti‐ tions are a kind of fault, so they aren’t something about which you have a choice: they will happen whether you like it or not
+2. Thus, a better way of phras‐ ing CAP would be either Consistent or Available when Partitioned
+3. The CAP theorem as formally defined [30] is of very narrow scope: it only considers one consistency model (namely linearizability) and one kind of fault (network parti‐ tions, or nodes that are alive but disconnected from each other). It doesn’t say any‐thing about network delays, dead nodes, or other trade-offs.
+### Linearizability and network delays
+1. The same is true of many distributed databases that choose not to provide lineariza‐ ble guarantees: they do so primarily to increase performance, not so much for fault tolerance. Linearizability is slow—and this is true all the time, not only during a network fault
+2. 
 # Ordering Guarantees
 ## Ordering and Causality
 ## Sequence Number Ordering
