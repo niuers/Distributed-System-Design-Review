@@ -104,13 +104,136 @@
 1. we will first look at a problem that arises in heterogeneous data sys‐ tems, and then explore how we can solve it by bringing ideas from event streams to databases.
 
 ## Keeping Systems in Sync
-1. 
+1. As the same or related data appears in several different places, they need to be kept in sync with one another: if an item is updated in the database, it also needs to be upda‐ ted in the cache, search indexes, and data warehouse.
+2. If periodic full database dumps are too slow, an alternative that is sometimes used is dual writes, in which the application code explicitly writes to each of the systems when data changes
+3. dual writes have some serious problems, one of which is a race condition
+4. Another problem with dual writes is that one of the writes may fail while the other succeeds. This is a fault-tolerance problem rather than a concurrency problem. Ensur‐ ing that they either both succeed or both fail is a case of the atomic commit problem, which is expensive to solve (2PC)
 ## Change Data Capture
+1. For decades, many databases simply did not have a documented way of getting the log of changes written to them. For this reason it was difficult to take all the changes made in a database and replicate them to a different storage technology such as a search index, cache, or data warehouse.
+2. More recently, there has been growing interest in change data capture (CDC), which is the process of observing all data changes written to a database and extracting them in a form in which they can be replicated to other systems. CDC is especially interest‐ ing if changes are made available as a stream, immediately as they are written.
+### Implementing change data capture
+1. Essentially, change data capture makes one database the leader (the one from which the changes are captured), and turns the others into followers. A log-based message broker is well suited for transporting the change events from the source database, since it preserves the ordering of messages
+2. Parsing the replication log can be a more robust approach, although it also comes with challenges, such as handling schema changes.
+3. LinkedIn Databus, FB Wormhole, Yahoo Sherpa
+4. Like message brokers, change data capture is usually asynchronous: the system of record database does not wait for the change to be applied to consumers before com‐ mitting it. This design has the operational advantage that adding a slow consumer does not affect the system of record too much, but it has the downside that all the issues of replication lag apply
+
+### Initial Snapshot
+1. However, in many cases, keeping all changes forever would require too much disk space, and replaying it would take too long, so the log needs to be truncated. So we need a snapshot
+### Log compaction
+1. If the CDC system is set up such that every change has a primary key, and every update for a key replaces the previous value for that key, then it’s sufficient to keep just the most recent write for a particular key.
+2. This log compaction feature is supported by Apache Kafka. As we shall see later in this chapter, it allows the message broker to be used for durable storage, not just for transient messaging.
+
+### API support for change streams
+
 ## Event Sourcing
+1. event sourcing, a technique that was developed in the domain-driven design (DDD) community
+2. event sourcing involves storing all changes to the application state as a log of change events. The biggest difference is that event sourc‐ ing applies the idea at a different level of abstraction:
+   * In change data capture, the application uses the database in a mutable way, updating and deleting records at will. The application writing to the database does not need to be aware that CDC is occurring.
+   * In event sourcing, the application logic is explicitly built on the basis of immuta‐ ble events that are written to an event log. In this case, the event store is append- only, and updates or deletes are discouraged or prohibited. Events are designed to reflect things that happened at the application level, rather than low-level state changes.
+
+1. from an application point of view it is more meaningful to record the user’s actions as immutable events, rather than recording the effect of those actions on a mutable database.
+2. Event sourcing is similar to the chronicle data model [45], and there are also similari‐ ties between an event log and the fact table that you find in a star schema
+### Deriving current state from the event log
+1. replaying the event log allows you to reconstruct the current state of the system. However, log compaction needs to be handled differently:
+   * an event typically expresses the intent of a user action, not the mechanics of the state update that occurred as a result of the action. In this case, later events typically do not override prior events, and so you need the full history of events to recon‐ struct the final state. Log compaction is not possible in the same way.
+### Commands and events
+1. The event sourcing philosophy is careful to distinguish between events and com‐ mands
+2. When a request from a user first arrives, it is initially a command. If the validation is successful and the command is accepted, it becomes an event, which is durable and immutable.
+3. A consumer of the event stream is not allowed to reject an event: by the time the con‐ sumer sees the event, it is already an immutable part of the log, and it may have already been seen by other consumers.
+4. Thus, any validation of a command needs to happen synchronously, before it becomes an event
+
 ## State, Streams, and Immutability
+1. This principle of immutability is also what makes event sourcing and change data capture so powerful.
+2. . The key idea is that mutable state and an append-only log of immut‐ able events do not contradict each other: they are two sides of the same coin. The log of all changes, the changelog, represents the evolution of state over time
+
+### Advantages of immutable events
+### Deriving several views from the same event log
+1. Having an explicit translation step from an event log to a database makes it easier to evolve your application over time
+2. you gain a lot of flexibility by sepa‐ rating the form in which data is written from the form it is read, and by allowing sev‐ eral different read views. This idea is sometimes known as command query responsibility segregation (CQRS)
+3. The traditional approach to database and schema design is based on the fallacy that data must be written in the same form as it will be queried. 
+### Concurrency control
+1. The biggest downside of event sourcing and change data capture is that the consum‐ ers of the event log are usually asynchronous, so there is a possibility that a user may make a write to the log, then read from a log-derived view and find that their write has not yet been reflected in the read view
+2. On the other hand, deriving the current state from an event log also simplifies some aspects of concurrency control. 
+### Limitations of immutability
+1. To what extent is it feasible to keep an immutable history of all changes forever? The answer depends on the amount of churn in the dataset. Some workloads mostly add data and rarely update or delete; they are easy to make immutable. Other workloads have a high rate of updates and deletes on a comparatively small dataset; in these cases, the immutable history may grow prohibitively large, fragmentation may become an issue, and the performance of compaction and garbage collection becomes crucial for operational robustness
+2. there may also be circumstances in which you need data to be deleted for administrative reasons, in spite of all immutability
+3. In these circumstances, it’s not sufficient to just append another event to the log to indicate that the prior data should be considered deleted—you actually want to rewrite history and pretend that the data was never written in the first place.
+4. Truly deleting data is surprisingly hard [64], since copies can live in many places
 # Processing Streams
+1. you can process events. Broadly, there are three options:
+   * You can take the data in the events and write it to a database, cache, search index, or similar storage system, from where it can then be queried by other clients. 
+   * You can push the events to users in some way, for example by sending email alerts or push notifications, or by streaming the events to a real-time dashboard where they are visualized.
+   * You can process one or more input streams to produce one or more output streams. A piece of code that processes streams like this is known as an operator or a job: a stream processor consumes input streams in a read-only fashion and writes its output to a different location in an append-only fashion. 
+1. The one crucial difference to batch jobs is that a stream never ends.
+   * sorting does not make sense with an unbounded dataset, and so sort-merge joins cannot be used. 
+   * Fault-tolerance mechanisms must also change: with a batch job that has been running for a few minutes, a failed task can simply be restarted from the beginning, but with a stream job that has been running for several years, restarting from the beginning after a crash may not be a viable option.
+
 ## Uses of Stream Processing
+### Complex event processing (CEP)
+1. geared toward the kind of application that requires search‐ ing for certain event patterns. CEP allows you to specify rules to search for certain patterns of events in a stream
+2. In these systems, the relationship between queries and data is reversed compared to normal databases.
+
+### Stream analytics
+1. analytics tends to be less interested in finding specific event sequences and is more oriented toward aggregations and statistical metrics over a large number of events
+2. Stream analytics systems sometimes use probabilistic algorithms, 
+   * such as Bloom filters (which we encountered in “Performance optimizations” on page 79) for set membership, 
+   * HyperLogLog [72] for cardinality estimation, and various percentile estimation algorithms
+1. Many open source distributed stream processing frameworks are designed with ana‐ lytics in mind: for example, Apache Storm, Spark Streaming, Flink, Concord, Samza, and Kafka Streams
+
+### Maintaining materialized views
+1. materialized views (see “Aggregation: Data Cubes and Materialized Views” on page 101): deriving an alternative view onto some dataset so that you can query it efficiently, and updating that view whenever the underlying data changes
+   * caches, search indexes, and data warehouses
+   * application state
+### Search on streams
+### Message passing and RPC
+1. Although message-passing systems systems (e.g. actor model) are also based on messages and events, we normally don’t think of them as stream processors:
+   * Actor frameworks are primarily a mechanism for managing concurrency and distributed execution of communicating modules, whereas stream processing is primarily a data management technique
+   * Communication between actors is often ephemeral and one-to-one, whereas event logs are durable and multi-subscriber.
+   * Actors can communicate in arbitrary ways (including cyclic request/response patterns), but stream processors are usually set up in acyclic pipelines where every stream is the output of one particular job, and derived from a well-defined set of input streams
+
+1. there is some crossover area between RPC-like systems and stream pro‐ cessing.
+   * Apache Storm has a feature called distributed RPC, which allows user queries to be farmed out to a set of nodes that also process event streams;
+1. It is also possible to process streams using actor frameworks. However, many such frameworks do not guarantee message delivery in the case of crashes, so the process‐ ing is not fault-tolerant unless you implement additional retry logic
+
+
 ## Reasoning About Time
+1. many stream processing frameworks use the local system clock on the processing machine (the processing time) to determine windowing
+1. This approach has the advantage of being simple, and it is reasonable if the delay between event creation and event processing is negligibly short. 
+2. However, it breaks down if there is any significant processing lag—i.e., if the processing may happen noticeably later than the time at which the event actually occurred.
+### Event time versus processing time
+1. message delays can also lead to unpredictable ordering of messages
+2. Confusing event time and processing time leads to bad data
+### Knowing when you’re ready
+1. A tricky problem when defining windows in terms of event time is that you can never be sure when you have received all of the events for a particular window, or whether there are some events still to come
+2. You need to be able to handle such straggler events that arrive after the window has already been declared complete. Broadly, you have two options
+   * Ignore the straggler events, as they are probably a small percentage of events in normal circumstances.
+   * Publish a correction, an updated value for the window with stragglers included
+### Whose clock are you using, anyway?
+1. Assigning timestamps to events is even more difficult when events can be buffered at several points in the system.
+2. the clock on a user-controlled device often cannot be trusted, as it may be accidentally or deliberately set to the wrong time. one approach is to log three timestamps
+   * The time at which the event occurred, according to the device clock
+   * The time at which the event was sent to the server, according to the device clock
+   * The time at which the event was received by the server, according to the server clock
+### Types of windows
+1. the next step is to decide how windows over time periods should be defined
+2. Tumbling window: A tumbling window has a fixed length, and every event belongs to exactly one window. For
+3. Hopping window: A hopping window also has a fixed length, but allows windows to overlap in order to provide some smoothing.
+4. Sliding window: A sliding window contains all the events that occur within some interval of each other.
+5. Session window: Unlike the other window types, a session window has no fixed duration. Instead, it is defined by grouping together all events for the same user that occur closely together in time, and the window ends when the user has been inactive for some time (for example, if there have been no events for 30 minutes). Sessionization is a common requirement for website analytics
+
 ## Stream Joins
+1. the fact that new events can appear anytime on a stream makes joins on streams more challenging than in batch jobs.
+### Stream-stream join (window join)
+1. To implement this type of join, a stream processor needs to maintain state
+### Stream-table join (stream enrichment)
+1. A stream-table join is actually very similar to a stream-stream join; the biggest differ‐ ence is that for the table changelog stream, the join uses a window that reaches back to the “beginning of time” (a conceptually infinite window), with newer versions of records overwriting older ones. For the stream input, the join might not maintain a window at all.
+### Table-table join (materialized view maintenance)
+### Time-dependence of joins
+1. The three types of joins described here (stream-stream, stream-table, and table-table) have a lot in common: they all require the stream processor to maintain some state (search and click events, user profiles, or follower list) based on one join input, and query that state on messages from the other join input.
+2. The order of the events that maintain the state is important (it matters whether you first follow and then unfollow, or the other way round). In
+3. but there is typically no ordering guarantee across different streams or partitions
+4. This raises a question: if events on different streams happen around a similar time, in which order are they processed?
+5. Put another way: if state changes over time, and you join with some state, what point in time do you use for the join
+6. In data warehouses, this issue is known as a slowly changing dimension (SCD), and it is often addressed by using a unique identifier for a particular version of the joined record:
 ## Fault Tolerance
 
