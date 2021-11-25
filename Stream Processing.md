@@ -1,14 +1,17 @@
 # Overview
 1. The problem with daily batch processes is that changes in the input are only reflected in the output a day later, which is too slow for many impatient users.
 2. we will look at event streams as a data management mechanism: the unbounded, incrementally processed counterpart to the batch data we saw in the last chapter
+3. stream processing is very much like the batch processing, but done continuously on unbounded (never- ending) streams rather than on a fixed-size input. From this perspective, message brokers and event logs serve as the streaming equivalent of a filesystem
+4. 
 
 # Transmitting Event Stream
 1. When the input is a file (a sequence of bytes), the first processing step is usually to parse it into a sequence of records. In a stream processing context, a record is more commonly known as an event, but it is essentially the same thing: a small, self- contained, immutable object containing the details of something that happened at some point in time.
-2. in streaming terminology, an event is generated once by a producer (also known as a publisher or sender), and then potentially processed by multiple con‐ sumers (subscribers or recipients
-3. In a filesystem, a filename identifies a set of  related records; in a streaming system, related events are usually grouped together into a topic or stream.
-4. in principle, a file or database is sufficient to connect producers and consumers: a producer writes every event that it generates to the datastore, and each consumer periodically polls the datastore to check for events that have appeared since it last ran.
-5. However, when moving toward continual processing with low delays, polling becomes expensive if the datastore is not designed for this kind of usage. The more often you poll, the lower the percentage of requests that return new events, and thus the higher the overheads become. Instead, it is better for consumers to be notified when new events appear.
-6. 
+2. 
+3. in streaming terminology, an event is generated once by a producer (also known as a publisher or sender), and then potentially processed by multiple con‐ sumers (subscribers or recipients
+4. In a filesystem, a filename identifies a set of  related records; in a streaming system, related events are usually grouped together into a topic or stream.
+5. in principle, a file or database is sufficient to connect producers and consumers: a producer writes every event that it generates to the datastore, and each consumer periodically polls the datastore to check for events that have appeared since it last ran.
+6. However, when moving toward continual processing with low delays, polling becomes expensive if the datastore is not designed for this kind of usage. The more often you poll, the lower the percentage of requests that return new events, and thus the higher the overheads become. Instead, it is better for consumers to be notified when new events appear.
+7. 
 ## Messaging Systems
 1. A common approach for notifying consumers about new events is to use a messaging system: a producer sends a message containing the event, which is then pushed to consumers.
 2. A direct communication channel like a Unix pipe or TCP connection between pro‐ ducer and consumer would be a simple way of implementing a messaging system
@@ -28,10 +31,11 @@
 2. If a consumer is offline, it may miss messages that were sent while it is unreachable
 
 ### Message Brokers/Message Queue
-1. is essentially a kind of database that is optimized for handling message streams [13]. It runs as a server, with producers and consumers connecting to it as clients. Producers write messages to the broker, and consumers receive them by reading them from the broker
+1. It is essentially a kind of database that is optimized for handling message streams [13]. It runs as a server, with producers and consumers connecting to it as clients. Producers write messages to the broker, and consumers receive them by reading them from the broker
 2. By centralizing the data in the broker, these systems can more easily tolerate clients that come and go (connect, disconnect, and crash), and the question of durability is moved to the broker instead
 3. Faced with slow consumers, they generally allow unboun‐ ded queueing (as opposed to dropping messages or backpressure), although this choice may also depend on the configuration.
 4. A consequence of queueing is also that consumers are generally asynchronous: when a producer sends a message, it normally only waits for the broker to confirm that it has buffered the message and does not wait for the message to be processed by con‐ sumers. The delivery to consumers will happen at some undetermined future point in time—often within a fraction of a second, but sometimes significantly later if there is a queue backlog.
+1. The broker assigns individual messages to consumers, and consumers acknowl‐ edge individual messages when they have been successfully processed.Messages are deleted from the broker once they have been acknowledged. This approach is appropriate as an asynchronous form of RPC. for example in a task queue, where the exact order of mes‐ sage processing is not important and where there is no need to go back and read old messages again after they have been processed
 
 #### Message brokers compared to databases
 1. Databases usually keep data until it is explicitly deleted, whereas most message brokers automatically delete a message when it has been successfully delivered to its consumers. Such message brokers are not suitable for long-term data storage.
@@ -59,6 +63,8 @@
 3. receiving a message is destructive if the acknowledgment causes it to be deleted from the broker, so you cannot run the same consumer again and expect to get the same result
 4. If you add a new consumer to a messaging system, it typically only starts receiving messages sent after the time it was registered; any prior messages are already gone and cannot be recovered.
 5. Why can we not have a hybrid, combining the durable storage approach of databases with the low-latency notification facilities of messaging? This is the idea behind log- based message brokers
+6. Log-based message broker: The broker assigns all messages in a partition to the same consumer node, and always delivers messages in the same order. Parallelism is achieved through partitioning, and consumers track their progress by checkpointing the offset of the last message they have processed. The broker retains messages on disk, so it is possible to jump back and reread old messages if necessary.
+7. We saw that this approach is especially appropriate for stream processing systems that consume input streams and generate derived state or derived output streams
 
 ### Using logs for message storage
 1. A log is simply an append-only sequence of records on disk
@@ -108,6 +114,7 @@
 2. If periodic full database dumps are too slow, an alternative that is sometimes used is dual writes, in which the application code explicitly writes to each of the systems when data changes
 3. dual writes have some serious problems, one of which is a race condition
 4. Another problem with dual writes is that one of the writes may fail while the other succeeds. This is a fault-tolerance problem rather than a concurrency problem. Ensur‐ ing that they either both succeed or both fail is a case of the atomic commit problem, which is expensive to solve (2PC)
+5. Representing databases as streams opens up powerful opportunities for integrating systems. You can keep derived data systems such as search indexes, caches, and ana‐ lytics systems continually up to date by consuming the log of changes and applying them to the derived system. You can even build fresh views onto existing data by starting from scratch and consuming the log of changes from the beginning all the way to the present.
 ## Change Data Capture
 1. For decades, many databases simply did not have a documented way of getting the log of changes written to them. For this reason it was difficult to take all the changes made in a database and replicate them to a different storage technology such as a search index, cache, or data warehouse.
 2. More recently, there has been growing interest in change data capture (CDC), which is the process of observing all data changes written to a database and extracting them in a form in which they can be replicated to other systems. CDC is especially interest‐ ing if changes are made available as a stream, immediately as they are written.
@@ -160,6 +167,7 @@
 3. In these circumstances, it’s not sufficient to just append another event to the log to indicate that the prior data should be considered deleted—you actually want to rewrite history and pretend that the data was never written in the first place.
 4. Truly deleting data is surprisingly hard [64], since copies can live in many places
 # Processing Streams
+1. The facilities for maintaining state as streams and replaying messages are also the basis for the techniques that enable stream joins and fault tolerance in various stream processing frameworks. 
 1. you can process events. Broadly, there are three options:
    * You can take the data in the events and write it to a database, cache, search index, or similar storage system, from where it can then be queried by other clients. 
    * You can push the events to users in some way, for example by sending email alerts or push notifications, or by streaming the events to a real-time dashboard where they are visualized.
@@ -224,10 +232,13 @@
 ## Stream Joins
 1. the fact that new events can appear anytime on a stream makes joins on streams more challenging than in batch jobs.
 ### Stream-stream join (window join)
+1. Both input streams consist of activity events, and the join operator searches for related events that occur within some window of time. For
 1. To implement this type of join, a stream processor needs to maintain state
 ### Stream-table join (stream enrichment)
+1. One input stream consists of activity events, while the other is a database change‐ log. The changelog keeps a local copy of the database up to date. For each activity event, the join operator queries the database and outputs an enriched activity event.
 1. A stream-table join is actually very similar to a stream-stream join; the biggest differ‐ ence is that for the table changelog stream, the join uses a window that reaches back to the “beginning of time” (a conceptually infinite window), with newer versions of records overwriting older ones. For the stream input, the join might not maintain a window at all.
 ### Table-table join (materialized view maintenance)
+1. Both input streams are database changelogs. In this case, every change on one side is joined with the latest state of the other side. The result is a stream of changes to the materialized view of the join between the two tables.
 ### Time-dependence of joins
 1. The three types of joins described here (stream-stream, stream-table, and table-table) have a lot in common: they all require the stream processor to maintain some state (search and click events, user profiles, or follower list) based on one join input, and query that state on messages from the other join input.
 2. The order of the events that maintain the state is important (it matters whether you first follow and then unfollow, or the other way round). In
@@ -236,4 +247,29 @@
 5. Put another way: if state changes over time, and you join with some state, what point in time do you use for the join
 6. In data warehouses, this issue is known as a slowly changing dimension (SCD), and it is often addressed by using a unique identifier for a particular version of the joined record:
 ## Fault Tolerance
+1. The same issue of fault tolerance arises in stream processing, but it is less straightfor‐ ward to handle: waiting until a task is finished before making its output visible is not an option, because a stream is infinite and so you can never finish processing it.
+1. In particular, the batch approach to fault tolerance ensures that the output of the batch job is the same as if nothing had gone wrong, even if in fact some tasks did fail. It appears as though every input record was processed exactly once—no records are skipped, and none are processed twice. Although restarting tasks means that records may in fact be processed multiple times, the visible effect in the output is as if they had only been processed once. This principle is known as exactly-once semantics, although effectively-once would be a more descriptive term
+
+
+### Microbatching and checkpointing
+1. One solution is to break the stream into small blocks, and treat each block like a min‐ iature batch process. This approach is called microbatching, and it is used in Spark Streaming
+2. Microbatching also implicitly provides a tumbling window equal to the batch size (windowed by processing time, not event timestamps); any jobs that require larger windows need to explicitly carry over state from one microbatch to the next.
+3. A variant approach, used in Apache Flink, is to periodically generate rolling check‐ points of state and write them to durable storage
+4. The checkpoints are triggered by bar‐ riers in the message stream, similar to the boundaries between microbatches, but without forcing a particular window size.
+5. as soon as output leaves the stream processor (for example, by writing to a database, sending messages to an external message broker, or sending emails), the framework is no longer able to discard the output of a failed batch. In this case, restarting a failed task causes the external side effect to happen twice, and micro‐ batching or checkpointing alone is not sufficient to prevent this problem.
+
+### Transactions: Atomic commit revisited
+1. In order to give the appearance of exactly-once processing in the presence of faults, we need to ensure that all outputs and side effects of processing an event take effect if and only if the processing is successful. 
+### Idempotence
+1. Our goal is to discard the partial output of any failed tasks so that they can be safely retried without taking effect twice. Distributed transactions are one way of achieving that goal, but another way is to rely on idempotence
+2. An idempotent operation is one that you can perform multiple times, and it has the same effect as if you performed it only once.
+3. Relying on idempotence implies several assumptions: restarting a failed task must replay the same messages in the same order (a log-based message broker does this), the process‐ ing must be deterministic, and no other node may concurrently update the same value [98, 99].
+4. When failing over from one processing node to another, fencing may be required (see “The leader and the lock” on page 301) to prevent interference from a node that is thought to be dead but is actually alive. Despite all those caveats, idempotent opera‐ tions can be an effective way of achieving exactly-once semantics with only a small overhead
+
+### Rebuilding state after a failure
+1. Any stream process that requires state—for example, any windowed aggregations (such as counters, averages, and histograms) and any tables and indexes used for joins—must ensure that this state can be recovered after a failure.
+2. One option is to keep the state in a remote datastore and replicate it, although having to query a remote database for each individual message can be slow
+3. An alternative is to keep state local to the stream processor, and replicate it periodically
+4. Samza and Kafka Streams replicate state changes by sending them to a dedicated Kafka topic with log compaction, similar to change data capture
+5. 
 
