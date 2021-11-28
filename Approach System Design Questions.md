@@ -2,6 +2,12 @@
 1. Interviewee should drive the conversation and move forward
 3. We should always know about the trade offs of our options. 
 
+# 4S Analysis System
+1. Scenario
+2. Service
+3. Storage
+4. Scale
+
 # Step 1: Outline use cases, constraints, and assumptions
 1. Gather requirements and scope the problem. Ask questions to clarify use cases and constraints. Discuss assumptions.
 2. Think about data, what data, how it's get in and how it's get out of the system. Don't worry about time too much.
