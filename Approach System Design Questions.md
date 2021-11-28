@@ -340,7 +340,7 @@
 ### Data Roll Up 
 1. Minutes level data rolled up to hours level data
 2. Older data dont' have to be in DB (hot storage, frequently used data that must be accessed fast)
-   * Object Storage, AWS S3  (cold storage, archived and infrequently accessed data)
+   * Object Storage, AWS S3  (A cloud Distributed File System, archived and infrequently accessed data)
 ### Data Query Service
 1. Data Federation
    * Retrieve data from several data storage and combine the data together
