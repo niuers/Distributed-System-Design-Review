@@ -21,8 +21,8 @@
    * What does the system do?
    * What are the inputs and outputs of the system?
 2. Scale (Read and Write):
-   * How many users are there?
-   * How many read requests per second do we expect?
+   * How many daily active users (DAU) are there?
+   * How many read requests per second (QPS) do we expect?
    * How much data is queried per request?
    * What is the expected read to write ratio?
    * How many videos view are processed per second?
@@ -41,7 +41,6 @@
       * Consider public cloud service
 
 ## Write Down Functional and Non-Functional Requirements
-
 ### Functional Requirements: System behaviors or APIs
 1. Write down a sentence for each functional requirement
 2. Write down an API by following the sentence
