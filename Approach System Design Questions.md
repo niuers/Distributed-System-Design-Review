@@ -454,7 +454,8 @@ Latency numbers every programmer should know
    * Once a device is connected to a switch, the switch notes its media access control (MAC) address, a code that’s baked into the device’s network-interface card (NIC) that attaches to an ethernet cable that attaches to the switch. The switch uses the MAC address to identify which attached device outgoing packets are being sent from and where to deliver incoming packets.So the MAC address identifies the physical device as opposed to the network layer (Layer 3) IP address, which can be assigned dynamically to a device and change over time. 
    * When a device sends a packet to another device, it enters the switch and the switch reads its header to determine what to do with it. It matches the destination address or addresses and sends the packet out through the appropriate ports that leads to the destination devices.
 
-
+# Pull Model
+1. 
 
 
 
