@@ -23,6 +23,13 @@
 2. Scale (Read and Write):
    * How many daily active users (DAU) are there?
    * How many read requests per second (QPS) do we expect?
+      *  QPS = 100: personal desktop
+      *  QPS = 1K: A good web server is fine (logic, DB access etc.), consider single point of failure
+      *  QPS = 1m: Need a cluster of 1000 servers, maintenance
+      *  A single web server may take up to 1K QPS (consider cache)
+      *  A SQL Database may take up to 1K QPS (less if there are more JOIN and INDEX query)
+      *  A NoSQL Database (Cassandra) may take up to 10K QPS
+      *  A NoSQL Database (Memcached) may take up to 1M QPS
    * How much data is queried per request?
    * What is the expected read to write ratio?
    * How many videos view are processed per second?
@@ -75,7 +82,7 @@
 3. Justify your ideas
 
 ## Process
-1. Start with a Database to store the data
+1. Start with a Database to store the data for each service
 2. Have a web service to get input data from outside
 3. Have a web service to output data to outside
 4. We start with something simple and construct the frame with the outside pieces, i.e. define data model
@@ -103,8 +110,11 @@
             * Price: The system becomes more complex and more expensive
 6. Where to store the data?
    * The interviewer wants to know the name of the database and why we make the choice? 
-      * Both SQL and NoSQL databases can scale and perform well
+      * Both SQL and NoSQL (Tweets, social graph etc.) databases can scale and perform well
       * Evaluate database against the non-functional requirements we wrote down before
+      * File System (medias)
+         * 数据库在读取上不一定比文件系统更高效：如果只是简单数据，通过文件系统读取比数据库要高效。数据库每一步操作都需要log、备份、事务提交等等，比修改文件麻烦多了
+      * Cache
    * How to scale reads?
    * How to scale writes?
    * How to make both reads and writes fast?
