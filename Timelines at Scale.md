@@ -18,7 +18,8 @@
    * Mobile PUSH (SMS, etc.)
 1. Queried
    * Track/Follow Streams
-
+1. Can use async DB writes
+2. 
 ### Fan-Out
 1. The biggest problem for twitter when fan-out famous person
    * It causes race condition
