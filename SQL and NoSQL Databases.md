@@ -51,7 +51,7 @@
 1. MongoDB
    * MongoDB stores data records as BSON documents. BSON is a binary representation of JSON documents. The maximum BSON document size is 16 megabytes.
    * A MongoDB collection is a grouping of MongoDB documents, it's the equivalent of an RDBMS table. A collection exists within a single database. **Collections do not enforce a schema as in SQL databases** (where you must determine and declare a table's schema before inserting data, ). Documents within a collection can have different fields. Typically, all documents in a collection have a similar or related purpose.   
-   * 
+   * Good for write oriented applications
 
 3. RethinkDB
 4. CouchDB
@@ -329,7 +329,7 @@
 1. The data structures discussed so far in this chapter have all been answers to the limitations of disks.
    * Disks are durable and lower cost per GB than RAM
 3. In-memory Databases
-   * Memcached are intended for caching only, data is lost if a machine restarted
+   * Memcached are intended for caching only, data is lost if a machine restarted (Not persistent)
    * Other in-memory DBs aim for durability with battery-powered RAM) by writing a log of changes to disk, periodic snapshots to disk, replicating in-memory state to other machines
       * VoltDB, MemSQL, Oracle TimesTen
       * Redis, Couchbase: provide weak durability by writing to disk asynchronously
@@ -425,6 +425,7 @@
 6. The disadvantage is that a data cube doesn’t have the same flexibility as querying the raw data. For
 
 # SQL and NoSQL Databases
+1. Many NoSQL DBs are optimized for write. 
 ## Database Scaling
 Most web apps are majority reads, around 95% +
 ### Basic Scaling Techniques
@@ -648,6 +649,14 @@ Optimize everything else first, and then if performance still isn’t good enoug
 
 3. Products
    * Dynamo, memcached, Redis
+   * Memcached: 
+      * set/list not supported in value
+      * both key and values are strings
+      * cache单机的，单机的内存有限制，并且只能本机访问，memcache是一个cache db，可以由多台机器组成，并且可以多个server同时访问
+   * Redis
+      * support set/list in value, can add/append to value
+      * a bit lower in performance than Memcached, but still in the order of memory
+      * Can be used in cache/message queue/DB
 #### Redis
 1. Redis is a in-memory, key-value data store.
 2. Primary memory is limited(much lesser size and expensive than secondary) therefore Redis cannot store large files or binary data. It can only store those small textual information which needs to be accessed, modified and inserted at a very fast rate. If we try to write more data than available memory then we will receive errors.
@@ -745,6 +754,9 @@ An empty instance uses ~ 3MB of memory.
 1. Google introduced Bigtable as the first wide column store, which influenced the open-source HBase often-used in the Hadoop ecosystem, and Cassandra from Facebook. Stores such as BigTable, HBase, and Cassandra maintain keys in lexicographic order, allowing efficient retrieval of selective key ranges.
 1. Wide column stores offer high availability and high scalability. They are often used for very large data sets.
 2. Products: BigTable, HBase, Cassandra
+3. Cassandra
+   * Simple query, not complex data structure
+   * 
 
 ### Graph Database
 1. Abstraction: graph
@@ -1135,7 +1147,10 @@ Don’t freak out about losing a little data. They keep user data in memory and 
 
 
 
-
+# RocksDB
+1. Key-Value NoSQL DB
+2. set/list not supported in value
+3. Many companies use it as the bottom layer of the key-value store
 
 
 
