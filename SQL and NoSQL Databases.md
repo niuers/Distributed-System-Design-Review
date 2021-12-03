@@ -655,7 +655,7 @@ Optimize everything else first, and then if performance still isn’t good enoug
       * cache单机的，单机的内存有限制，并且只能本机访问，memcache是一个cache db，可以由多台机器组成，并且可以多个server同时访问
    * Redis
       * support set/list in value, can add/append to value
-      * a bit lower in performance than Memcached, but still in the order of memory
+      * a bit lower in performance than Memcached, but still in the order of memory (是CPU高速缓存，分为L1、L2、L3三个等级)
       * Can be used in cache/message queue/DB
 #### Redis
 1. Redis is a in-memory, key-value data store.
