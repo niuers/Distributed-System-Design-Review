@@ -116,6 +116,88 @@
    * HDFS is prefereable for offline batch processing,	HBase is preferable for real time processing
    * HDFS provides high latency for access operations.	HBase provides low latency access to small amount of data
 
+# Cassandra
+1. Definition: Apache Cassandra is an open source, distributed, decentralized, elastically scalable, highly available, fault-tolerant, tuneably consistent, column-oriented key-value database that bases its distribution design on Amazon’s Dynamo and its data model on Google’s Bigtable. Created at Facebook, it is now used at some of the most popular sites on the Web
+## Features
+1. Distributed and Decentralized 
+   * Distributed: Capable of running on multiple machines
+   * Decentralized: No single point of failure: No master-slave issues due to peer-to-peer architecture (protocol "gossip") 
+   * Single Cassandra cluster may run across geographically dispersed data centers: Read- and write requests to any node
+1. Elastic Scalability
+   * Cassandra scales horizontally, adding more machines that have all or some of the data on 
+   * Adding of nodes increase performance throughput linearly 
+   * De-/ and increasing the nodecount happen seamlessly: Linearly scales to terabytes and petabytes of data
+1. High Availability and Fault Tolerance
+   * High Availability? 
+      * Multiple networked computers operating in a cluster 
+      * Facility for recognizing node failures 
+      * Forward failing over requests to another part of the system 
+   * Cassandra has High Availability No single point of failure due to the peer-to-peer architecture
+1. Tunable Consistency 
+   * Choose between strong and eventual consistency 
+   * Adjustable for read-and write operations separately 
+   * Conflicts are solved during reads, as focus lies on write-performance 
+   * Use case dependent level of consistency
 
-# ZooKeeper
+1. When do we have strong consistency? 
+   * Simple Formula: (nodes_written + nodes_read) > replication_factor 
+   * Ensures that a read always reflects the most recent write 
+   * If not: Weak consistency
+      * Eventually consistent
+
+1. Column-oriented Key-Value Store 
+   * Data is stored in sparse multidimensional hash tables 
+   * A row can have multiple columns – not necessarily the same amount of columns for each row 
+   * Each row has a unique key, which also determines partitioning 
+   * No relations! Stored sorted by row key 
+   * Stored sorted by column key/value Map<RowKey, SortedMap<ColumnKey, ColumnValue>> 
+   * Row keys (partition keys) should be hashed, in order to distribute data across the cluster evenly
+
+1. CQL – An SQL-like query interface
+   * “CQL 3 is the default and primary interface into the Cassandra DBMS” 
+   * Familiar SQL-like syntax that maps to Cassandras storage engine and simplifies data modelling
+   * “SQL-like” but NOT relational SQL
+
+1. High Performance 
+   * Optimized from the ground up for high throughput 
+   * All disk writes are sequential, append only operations 
+   * No reading before writing 
+   * Cassandra`s threading-concept is optimized for running on multiprocessor/ multicore machines 
+   * Optimized for writing, but fast reads are possible as well
+
+# MongoDB
+1. An open source,  high performance,   document oriented  database
+2. NoSQL:
+   * no  joins + no  complex  transactions:
+      *  Horizontally Scalable Architectures
+      *  New data models
+1. Data Models
+   * Key  /  Value: memcached,  Dynamo 
+   * Tabular: BigTable 
+   * Document  Oriented: MongoDB,  CouchDB,  JSON  stores
+## Features
+1. JSON style documents represented as BSON
+2. Flexible schema
+3. Dynamic queries
+4. Atomic Update modifiers
+5. Focus on Performance
+6. Replication
+7. Auto-sharding: 
+8. Best Use Case: scaling out, caching, high volume
+9. Less good at: 
+   * highly transactional
+   * ad-hoc  business  intelligence 
+   * problems  that  require  SQL
+## Special Key
+1. A Quick Aside _id special  key present  in  all  documents unique  across  a  Collection any  type  you  want
+2. In MongoDB, each document stored in a collection requires a unique _id field that acts as a primary key. If an inserted document omits the _id field, the MongoDB driver automatically generates an ObjectId for the _id field.
+
+This also applies to documents inserted through update operations with upsert: true.
+
+The _id field has the following behavior and constraints:
+
+By default, MongoDB creates a unique index on the _id field during the creation of a collection.
+The _id field is always the first field in the documents. If the server receives a document that does not have the _id field first, then the server will move the field to the beginning.
+
+# Memcached
 1. 
