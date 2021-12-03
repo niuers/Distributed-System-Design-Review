@@ -200,4 +200,111 @@ By default, MongoDB creates a unique index on the _id field during the creation 
 The _id field is always the first field in the documents. If the server receives a document that does not have the _id field first, then the server will move the field to the beginning.
 
 # Memcached
-1. 
+## Normal Cache
+1. The anatomy
+   * simple key/value storage
+   * simple operations: save/ get/ delete
+
+1. Terminology 
+   * storage cost
+   * retrieval cost (network load / algorithm load)
+   * invalidation (keeping data up to date / removing irrelevant data)
+   * replacement policy (FIFO/LFU/LRU/MRU/RANDOM vs. Belady’s algorithm)
+   * cold cache / warm cache
+   * cache hit and cache miss
+   * typical stats:
+      * hit ratio (hits / hits + misses)
+      * miss ratio (1 - hit ratio) 
+      * 45 cache hits and 10 cache misses: 45/(45+10) = 82% hit ratio, 18% miss ratio
+1. When to cache?
+   * caches are only efficient when the beneﬁts of faster access outweigh the overhead of checking and keeping your cache up to date
+   * more cache hits than cache misses
+3. Caches in the web stack
+   * Browser cache
+   * DNS cache
+   * Content Delivery Networks (CDN)
+   * Proxy servers
+   * Application level
+      * full output caching plugin) (eg. Wordpress WP-Cache • ...
+      * opcode cache (APC)
+      * query cache (MySQL)
+      * storing denormalized results in the database
+      * object cache
+      * storing values in php objects/classes
+1. Efficiency of caching?
+   * the earlier in the process, the closer to the original request(er), the faster
+      * browser cache will be faster then cache on a proxy 
+   * but probably also the harder to get it right: the closer to the requester the more parameters the cache depends on
+1. What to cache on the server-side? As PHP backend developer, what to cache?
+   * expensive operations: operations that work with slower resources • database access • reading ﬁles(in fact, any ﬁlesystem access) • API calls • Heavy computations • XML
+1. Where to cache on the server-side? As PHP backend developer, where to store cache results? 
+   * in database (computed values, generated html) 
+      * you’ll still need to access your database
+   * in static ﬁles (generated html or serialized php values) 
+      * you’ll still need to access your ﬁle system
+   * in memory
+## About Memcached
+1. About memcached 
+    * Free & open source, high-performance, distributed memory object caching system 
+    * Generic in nature, intended for use in speeding up dynamic web applications by alleviating database load. 
+    * key/value dictionary
+1. Technically
+   * It’s a server 
+   * Client access over TCP or UDP 
+   * Servers can run in pools
+      * eg. 3 servers with 64GB mem each give you a single pool of 192GB storage for caching 
+      * Servers are independent, clients manage the pool
+1. What to store in memcache? 
+   * high demand (used often) 
+   * expensive (hard to compute) 
+   * common (shared accross users) 
+   * Best? All three
+1. Typically stored in memcache
+   * user sessions (often) 
+   * user data (often, shared) 
+   * homepage data (eg. often, shared, expensive)
+### Memcached principles
+1. Fast network access (memcached servers close to other application servers) 
+2. No persistency (if you server goes down, data in memcached is gone)
+3. No redundancy / fail-over
+4. No replication (single item in cache lives on one server only) 
+5. No authentication (not in shared environments)
+1. 1 key is maximum 1MB 
+2. keys are strings of 250 characters (in application typically MD5 of user readable string) 
+3. No enumeration of keys (thus no list of valid keys in cache at certain moment, list of keys beginnen with “user_”, ...) 
+4. No active clean-up (only clean up when more space needed, LRU)
+
+### Output Caching vs. Data Caching
+1. Output caching 
+   * Pages with high load / expensive to generate 
+   * Very easy 
+   * Very fast 
+   * But: all the dependencies ... • language, css, template, logged in user’s details
+
+1. Data caching 
+   * on a lower level 
+   * easier to ﬁnd all dependencies 
+   * ideal solution for offloading database queries 
+   * the database is almost always the biggest bottleneck in backend performance problems
+
+1. “There are only two hard things in Computer Science: cache invalidation and naming things.” Phil Karlton
+
+### Cache Invalidation
+1. Caching for a certain amount of time 
+   * eg. 10 minutes 
+   * don’t delete caches 
+   * thus: You can’t trust that data coming from cache is correct
+   * Use: Great for summaries 
+      * Overview 
+      * Pages where it’s not that big a problem if data is a little bit out of date (eg. search results) 
+   * Good for quick and dirty optimizations
+1. Store forever, and expire on certain events 
+   * the userdata example 
+      * store userdata for ever 
+      * when user changes any of his preferences, throw cache away
+   * Use: 
+      * data that is fetched more then it’s updated 
+      * where it’s critical the data is correct 
+      * Improvement: instead of delete on event, update cache on event. (Mind: race conditions. Cache invalidation always as close to original change as possible!)
+1. Query Caching (cont’d) • queries with JOIN and WHERE statements are harder to cache • often not easy to ﬁnd the cache key on update/change events • solution: JOIN in PHP
+54. Query Caching (cont’d) • queries with JOIN and WHERE statements are harder to cache • often not easy to ﬁnd the cache key on update/change events • solution: JOIN in PHP • In following example: what if nickname of user changes?
