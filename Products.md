@@ -117,4 +117,5 @@
    * HDFS provides high latency for access operations.	HBase provides low latency access to small amount of data
 
 
-
+# ZooKeeper
+1. 
