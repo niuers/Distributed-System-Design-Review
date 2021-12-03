@@ -372,6 +372,19 @@ Dive into details for each core component. For example, if you were asked to des
   * API and object-oriented design
 
 # Step 4: Scale the design
+## Step 1: Optimize
+1. Solve Problems
+   * Pull vs Push
+   * Memcached QPS vs. MySQL: about 100~1000 times faster
+1. More Features
+   * Like, Follow & Unfollow, Ads
+1. Special Cases
+
+## Step 2: Maintenance
+1. Robust
+   * Fail of server, DB
+1. Scalability
+   * How to expand the system and handle jump of QPS
 ## Identify and address bottlenecks, given the constraints. 
 1. For example, do you need the following to address scalability issues?
   Load balancer
@@ -425,6 +438,7 @@ You might be asked to do some estimates by hand. Refer to the Appendix for the f
 Use back of the envelope calculations
 Powers of two table
 Latency numbers every programmer should know
+
 
 # Cluster Resources
 1. DEV
