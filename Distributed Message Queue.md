@@ -140,3 +140,5 @@
    * Monitor frontend, metadata, backend services
    * Provide visibility into customers' experience
    * 
+# RabbitMQ
+1. 
