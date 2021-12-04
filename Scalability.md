@@ -14,6 +14,7 @@
 2. Constrained by real-world limits, diminishing returns, limits to scalibility
 3. Single point of failure
 4. Latency issue for users far away from server
+5. A major downside of vertical scaling is availability risk. 
 
 ### Horizontal Scaling
 1. Increase the number of servers, each may still has a unique IP address
@@ -27,6 +28,29 @@
    * Redundancy built in
    * Need load balancer to distribute traffic
    * Cloud providers make this easier
+1. If you need to run the code in a distributed environment, it needs to be stateless. There should be no state in the code.
+
+
+### Primary Bottlenecks That Hurt the Scalability of our Application
+1. Database: Make wise use of database partitioning, sharding, and multiple database servers to make the module efficient
+2. Application architecture: A poorly designed application’s architecture can become a major bottleneck as a whole. A common architectural mistake is not using asynchronous processes and modules whereever required rather all the processes are scheduled sequentially.
+3. Not using caching in the application wisely
+4. Inefficient configuration and setup of load balancers: Load balancers are the gateway to our application. Using too many or too few of them impacts the latency of our application.
+5. Adding business logic to the database
+6. Not picking the right database
+7. At the code level
+### Tuning the performance of the application – Enabling it to scale better
+1. Profiling
+2. Caching
+3. CDN
+4. Data compression
+5. Compress data. Use apt compression algorithms to compress data, and store data in the compressed form. As compressed data consumes less bandwidth, consequently, the download speed of the data on the client will be faster.
+6. Avoid unnecessary client server requests
+7. 
+
+
+5. 
+
 
 ## Rules for Scalibility
 1. The first golden rule for scalability: Every server contains exactly the same codebase and does not store any user-related data, like sessions or profile pictures, on local disc or memory. 
@@ -244,6 +268,13 @@
    * FLP permits the possibility of one 'failed' node which is totally partitioned from the network and does not have to respond to requests.
    * Otherwise, FLP does not allow message loss; the network is only asynchronous but not lossy.
    * FLP deals with consensus, which is a similar but different problem to atomic storage.
+
+# Cloud Elasticity
+1. The biggest reason why cloud computing become so popular in the industry is the ability to scale up and down dynamically. The ability to use and pay only for the resources required by the website became a trend for obvious reasons.
+
+If the site has a heavy traffic influx more server nodes get added and when it doesn’t, the dynamically added nodes are removed.
+
+This approach is known as cloud elasticity and saves businesses lots of money every single day. It indicates the stretching and returning to the original infrastructural computational capacity.
 
 
 
