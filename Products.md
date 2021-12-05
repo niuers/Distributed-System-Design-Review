@@ -306,5 +306,34 @@ The _id field is always the first field in the documents. If the server receives
       * data that is fetched more then it’s updated 
       * where it’s critical the data is correct 
       * Improvement: instead of delete on event, update cache on event. (Mind: race conditions. Cache invalidation always as close to original change as possible!)
-1. Query Caching (cont’d) • queries with JOIN and WHERE statements are harder to cache • often not easy to ﬁnd the cache key on update/change events • solution: JOIN in PHP
-54. Query Caching (cont’d) • queries with JOIN and WHERE statements are harder to cache • often not easy to ﬁnd the cache key on update/change events • solution: JOIN in PHP • In following example: what if nickname of user changes?
+1. Query Caching
+   * queries with JOIN and WHERE statements are harder to cache 
+      * often not easy to ﬁnd the cache key on update/change events 
+      * solution: JOIN in PHP
+### Multi-Get Optimisations 
+1. We reduced database access 
+2. Memcached is faster, but access to memcache still has it’s price 
+3. Solution: multiget 
+   * fetch multiple keys from memcached in one single call 
+   * result is array of items
+
+### Consistent Hashing 
+1. client is responsible for managing pool 
+   * hashes a certain key to a certain server 
+3. clients can be naïve: distribute keys on size of pool 
+   * if one server goes down, all keys will now be queried on other servers > cold cache 
+   * use a client with consistent hashing algorithms, so if server goes down, only data on that server gets lost
+### memcached isn’t the only caching solution 
+1. memcachedb (persistent memcached) 
+2. opcode caching 
+  3. APC (php compiled code cache, usable for other purposes too) 
+  4. xCache 
+  5. eAccelerator 
+  6. Zend optimizer
+
+### Last thought
+1. main bottleneck in php backends is database 
+   * adding php servers is easier then scaling databases 
+3. A complete caching layer before your database layer solves a lot of performance and scalability issues 
+   * But being able to scale takes more then memcached 
+   * performance tuning, beginning with identifying the slowest and most used parts
