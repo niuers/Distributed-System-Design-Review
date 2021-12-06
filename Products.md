@@ -15,7 +15,50 @@
    * Synchronization
 
 1. Zookeeper allows distributed processes to coordinate with each other to through a shared hierarchial namespace of data registers.
-2. 
+2. ZooKeeper is much more than a distributed lock server
+3. ZooKeeper is an open source, high-performance coordination service for distributed applications. 
+4. Exposes common services in simple interface: 
+   * naming 
+   * configuration management 
+   * locks & synchronization 
+   * group services
+
+## Use Cases
+1. Configuration Management 
+   * Cluster member nodes bootstrapping configuration from a centralized source in unattended way 
+   * Easier, simpler deployment/provisioning 
+1. Distributed Cluster Management 
+   * Node join / leave 
+   * Node statuses in real time 
+1. Naming service – e.g. DNS 
+2. Distributed synchronization - locks, barriers, queues 
+3. Leader election in a distributed system. 
+4. Centralized and highly reliable (simple) data registry
+## ZooKeeper Service
+1. ZooKeeper Service is replicated over a set of machines 
+2. All machines store a copy of the data (in memory) 
+3. A leader is elected on service startup 
+4. Clients only connect to a single ZooKeeper server & maintains a TCP connection. 
+5. Client can read from any Zookeeper server, writes go through the leader & needs majority consensus
+
+## Data Model
+1. ZooKeeper has a hierarchal name space. 
+2. Each node in the namespace is called as a ZNode. 
+3. Every ZNode has data (given as byte[]) and can optionally have children. 
+5. ZNode paths: 
+   * canonical, absolute, slash-separated 
+   * no relative references. 
+   * names can have Unicode characters
+7. Znode
+   * Maintain a stat structure with version numbers for data changes, ACL (access control list) changes and timestamps. 
+   * Version numbers increases with changes 
+   * Data is read and written in its entirety
+## Persistent Node
+1. Persistent Nodes exists till explicitly deleted 
+2. Ephemeral Nodes exists as long as the session is active, they can’t have children 
+3. Sequence Nodes (Unique Naming) 
+   * append a monotonically increasing counter to the end of path 
+   * applies to both persistent & ephemeral nodes
 
 # HBase
 1. Non-relational distributed column-oriented database modeled after BigTable
@@ -425,4 +468,6 @@ The _id field is always the first field in the documents. If the server receives
    * emory fragmentation can be a problem with some usage patterns. Alternative allocators (jemalloc, tcmalloc) ease that. 
    * 64 bit instances consume much much more RAM. 
    * Master/Slave sync far from perfect
+
+# HDFS
 
