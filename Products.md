@@ -337,3 +337,91 @@ The _id field is always the first field in the documents. If the server receives
 3. A complete caching layer before your database layer solves a lot of performance and scalability issues 
    * But being able to scale takes more then memcached 
    * performance tuning, beginning with identifying the slowest and most used parts
+# Redis
+1. Redis is: 
+   * Memcache-ish in-memory key/value store, 
+   * But it's also persistent! 
+   * And it also has very cool value types: 
+   * ○ lists ○ sets ○ sorted sets ○ hash tables ○ appendable buffers
+
+## Key Features
+1. All data is in memory (almost) 
+2. All data is eventually persistent (But can be immediately) 
+3. Handles huge workloads easily 
+4. Mostly O(1) behavior 
+5. Ideal for write-heavy workloads 
+6. Support for atomic operations 
+7. Supports for transactions 
+8. Has pub/sub functionality 
+9. Tons of client libraries for all major languages 
+10. Single threaded, uses aync. IO 
+11. Internal scripting with LUA
+
+## Scaling it up 
+1. Master-slave replication out of the box 
+2. Slaves can be made masters on the fly 
+3. Currently does not support "real" clustered mode.... 
+4. ... But Redis-Cluster to be released soon 
+5. You can manually shard it client side 
+6. Single threaded - run num_cores/2 instances on the same machine
+
+## Persistence 
+1. All data is synchronized to disk - eventually or immediately 
+2. Pick your risk level Vs. performance 
+3. Data is either dumped in a forked process, or written as a append-only change-log (AOF) 
+4. Append-only mode supports transactional disk writes so you can lose no data (cost: 99% speed loss :) ) 
+5. AOF files get huge, but redis can minimize them on the fly. 
+6. You can save the state explicitly, background or blocking 
+7. Default configuration: 
+   * Save after 900 sec (15 min) if at least 1 key changed 
+   * Save after 300 sec (5 min) if at least 10 keys changed 
+   * Save after 60 sec if at least 10000 keys changed
+
+## Virtual Memory 
+1. If your database is too big - redis can handle swapping on its own. 
+2. Keys remain in memory and least used values are swapped to disk. 
+3. Swapping IO happens in separate threads 
+4. But if you need this - don't use redis, or get a bigger machine
+
+## Features
+1. Get/Set/Incr - strings/numbers
+   * Keys are strings, anything goes - just quote spaces
+   * You can atomically increment numbers
+   * Keys are lazily expired: Be careful with EXPIRE - re-setting a value without re-expiring it will remove the expiration
+1. Atomic Operations
+   * Atomic Operations GETSET puts a different value inside a key, retriving the old one
+   * SETNX sets a value only if it does not exist
+   * SETNX + Timestamp => Named Locks
+3. Lists 
+   * Lists are your ordinary linked lists. 
+   * You can push and pop at both sides, extract range, resize, etc. 
+   * Random access and ranges at O(N)
+   * BLPOP: Blocking POP - wait until a list has elements and pop them. Useful for realtime stuff.
+5. Sets
+   * sets of unique values w/ push, pop, etc. 
+   * Sets can be intersected/diffed /union'ed server side. 
+   * Can be useful as keys when building complex schemata
+7. Sorted Sets
+   * Same as sets, but with score per element 
+   * Ranked ranges, aggregation of scores on INTERSECT 
+   * Can be used as ordered keys in complex schemata 
+   * Think timestamps, inverted index, geohashing, ip ranges
+9. Hash Tables 
+   * Hash tables as values 
+   * Think of an object store with atomic access to object members
+11. PubSub
+   * Clients can subscribe to channels or patterns and receive notifications when messages are sent to channels. 
+   * Subscribing is O(1), posting messages is O(n) 
+   * Think chats, Comet applications: real-time analytics, twitter 
+13. SORT 
+   * Keep in mind that it's blocking and redis is single threaded. Maybe put a slave aside if you have big SORTs
+15. Transactions 
+   * MULTI, ...., EXEC: Easy because of the single thread. 
+   * All commands are executed after EXEC, block and return values for the commands as a list. 
+   * Transactions can be discarded with DISCARD. 
+   * WATCH allows you to lock keys while you are queuing your transaction, and avoid race conditions
+1. Lessons Learned 
+   * emory fragmentation can be a problem with some usage patterns. Alternative allocators (jemalloc, tcmalloc) ease that. 
+   * 64 bit instances consume much much more RAM. 
+   * Master/Slave sync far from perfect
+
