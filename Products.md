@@ -392,6 +392,7 @@ The _id field is always the first field in the documents. If the server receives
    * Atomic Operations GETSET puts a different value inside a key, retriving the old one
    * SETNX sets a value only if it does not exist
    * SETNX + Timestamp => Named Locks
+1. Binary-safe strings means that values are essentially byte strings, and can contain any byte (including the null byte). This is possible because the Redis protocol uses pascal-style strings, prefixing any string with its length in bytes.
 3. Lists 
    * Lists are your ordinary linked lists. 
    * You can push and pop at both sides, extract range, resize, etc. 
