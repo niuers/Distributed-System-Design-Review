@@ -60,6 +60,61 @@
    * append a monotonically increasing counter to the end of path 
    * applies to both persistent & ephemeral nodes
 
+1. Clients can set watches on znodes
+   * NodeChildrenChanged
+   * NodeCreated
+   * NodeDataChanged 
+   * Node Deleted 
+1. Changes to a znode trigger the watch and ZooKeeper sends the client a notification. 
+2. Watches are one time triggers. 
+3. Watches are always ordered. 
+4. Client sees watched event before new znode data. 
+5. Client should handle cases of latency between getting the event and sending a new request to get a watch
+6. API methods are sync as well as async Sync
+
+## Read/Write
+1. Read requests are processed locally at the ZooKeeper server to which the client is currently connected 
+2. Write requests are forwarded to the leader and go through majority consensus before a response is generated
+
+## Consistency
+1. Sequential Consistency: Updates are applied in order 
+2. Atomicity: Updates either succeed or fail 
+3. Single System Image: A client sees the same view of the service regardless of the ZK server it connects to. 
+4. Reliability: Updates persists once applied, till overwritten by some clients. 
+5. Timeliness: The clients’ view of the system is guaranteed to be up-to-date within a certain time bound. (Eventual Consistency)
+
+## Applications
+### Cluster Management
+1. Each Client Host i, i:=1 .. N 
+   * Watch on /members 
+   * Create /members/host-${i} as ephemeral nodes 
+   * Node Join/Leave generates alert 
+   * Keep updating /members/host-${i} periodically for node status changes (load, memory, CPU etc.)
+### Leader Election
+1. A znode, say “/svc/election-path" 
+1. All participants of the election process create an ephemeral-sequential node on the same election path. 
+2. The node with the smallest sequence number is the leader. 
+3. Each “follower” node listens to the node with the next lower seq. number 
+4. Upon leader removal go to election-path and find a new leader, or become the leader if it has the lowest sequence number. 
+5. Upon session expiration check the election state and go to election if needed 
+6. http://techblog.outbrain.com/2011/07/leader-election-with-zookeeper/
+
+### Distributed Exclusive Lock
+1. Assuming there are N clients trying to acquire a lock 
+2. Clients creates an ephemeral, sequential znode under the path /Cluster/_locknode_ 
+3. Clients requests a list of children for the lock znode (i.e. _locknode_)  
+4. The client with the least ID according to natural ordering will hold the lock. 
+5. Other clients sets watches on the znode with id immediately preceding  its own id 
+6. Periodically checks for the lock in case of notification. 
+7. The client wishing to release a lock deletes the node, which triggering the next client in line to acquire the lock
+## Lesson Learned
+1. Watches are one time triggers 
+2. Continuous watching on znodes requires reset of watches after every events / triggers 
+3. Too many watches on a single znode creates the “herd effect” - causing bursts of traffic and limiting scalability 
+4. If a znode changes multiple times between getting the event and setting the watch again, carefully handle it!
+5. Keep session time-outs long enough to handle long garbage-collection pauses in applications. 
+6. Set Java max heap size correctly to avoid swapping. Dedicated disk for ZooKeeper transaction log
+
 # HBase
 1. Non-relational distributed column-oriented database modeled after BigTable
 2. Think of it as a sparse, consistent, distributed, multi-dimensional, sorted map
