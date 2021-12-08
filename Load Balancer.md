@@ -4,6 +4,8 @@
 1. Load balancer distribute incoming data traffic among computing resources such as application servers and databases. 
 2. Load balancers are effective at:
    * (Reliability) Preventing requests from going to unhealthy servers
+      * To ensure that the user request is always routed to the machine that is up and running, load balancers regularly perform health checks on the machines in the cluster.
+      * Ideally, a load balancer maintains a list of machines that are up and running in the cluster in real-time, and the user requests are forwarded to only those machines that are in service.
    * (Scalability) Preventing overloading resources
    * Helping to eliminate a single point of failure
    * SSL Termination
