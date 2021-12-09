@@ -4,7 +4,7 @@
 2. DNS is hierarchical, with a few *authoritative servers* at the top level. Your router or ISP provides information about which DNS server(s) to contact when doing a lookup. Lower level DNS servers cache mappings, which could become stale due to DNS propagation delays. DNS results can also be cached by your browser or OS for a certain period of time, determined by the time to live (TTL).
 1. Services such as CloudFlare and Route 53 provide managed DNS services.
 
-# DNS Servers
+# DNS Resolving Process
 1. When users type domain names such as ‘google.com’ or ‘nytimes.com’ into web browsers, DNS is responsible for finding the correct IP address for those sites. Browsers then use those addresses to communicate with origin servers or CDN edge servers to access website information. This all happens thanks to DNS servers: machines dedicated to answering DNS queries.
 2. In a typical DNS query without any caching, there are four servers that work together to deliver an IP address to the client: 
    * Recursive resolvers, 
