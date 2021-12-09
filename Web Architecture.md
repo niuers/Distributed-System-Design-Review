@@ -150,7 +150,11 @@
 5. Client-side rendering works best for modern dynamic AJAX-based websites.
 
 
-
+# Microservices
+1. Remember the Single Responsibility and the Separation of Concerns principles? Both principles are applied in a microservices architecture.
+2. Every component interacts with each other via a REST API Gateway interface.
+3. No strong consistency: Strong consistency is hard to guarantee in a distributed environment. Things are eventually consistent across the nodes, and this limitation is due to the distributed design.
+4. 
 
 
 
