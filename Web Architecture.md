@@ -137,12 +137,14 @@
    * Networking and the UI backend
    * Data storage etc.
 1. The rendering engine constructs the DOM tree and renders and paints the construction. Naturally, all this activity needs a bit of time.
-## Server-side rendering#
+## Server-side Rendering
 1. To avoid all this rendering time on the client, developers often render the UI on the server, generate HTML there and directly send the HTML page to the UI.
-1. This technique is known as the server-side rendering. It ensures faster rendering of the UI, averting the UI loading time in the browser window because the page is already created and the browser doesn’t have to do much assembling or rendering work.
-2. Static content can be rendered on the server in comparatively less time as opposed to being rendered on the client. It can also be cached for future requests.
+3. This technique is known as the server-side rendering. It ensures faster rendering of the UI, averting the UI loading time in the browser window because the page is already created and the browser doesn’t have to do much assembling or rendering work.
+4. Static content can be rendered on the server in comparatively less time as opposed to being rendered on the client. It can also be cached for future requests.
+5. 2. Server Side Includes SSI is a server-side scripting language used for clubbing the content of multiple web pages on the web server.
 
-### Use cases for server-side & client-side rendering#
+
+### Use cases for server-side & client-side rendering
 1. The server-side rendering approach is perfect for delivering static content, such as WordPress blogs. It’s also good for SEO because the crawlers can easily read the generated content.
 2. However, modern websites are highly dependent on AJAX. On such websites, content for a particular module or a section of a page has to be fetched and rendered on the fly.
 3. Therefore, server-side rendering doesn’t help much.
