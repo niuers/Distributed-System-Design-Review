@@ -86,13 +86,37 @@ Some load balancers can be configured to provide Layer 4 or Layer 7 load balanci
 #### LVS (Linux Virtual Server) 
 
 #### Reverse Proxy
-1. 
+1. [A reverse proxy server](https://www.imperva.com/learn/performance/reverse-proxy/) is an intermediate connection point positioned at a network’s edge. It receives initial HTTP connection requests, acting like the actual endpoint.
+2. Essentially your network’s traffic cop, the reverse proxy serves as a gateway between users and your application origin server. In so doing it handles all policy management and traffic routing.
+3. A reverse proxy operates by:
+   * Receiving a user connection request
+   * Completing a TCP three-way handshake, terminating the initial connection
+   * Connecting with the origin server and forwarding the original request
+
 1. HAProxy (High Availability Proxy, open source)
 1. Nginx
 1. Apache mod_proxy
 1. A reverse proxy accepts a request from a client, forwards it to a server that can fulfill it, and returns the server’s response to the client.
    * Whereas deploying a load balancer makes sense only when you have multiple servers, it often makes sense to deploy a reverse proxy even with just one web server or application server. You can think of the reverse proxy as a website’s “public face.” Its address is the one advertised for the website, and it sits at the edge of the site’s network to accept requests from web browsers and mobile apps for the content hosted at the website. The benefits are two-fold:
    * Increased security and Increased scalability and flexibility
+
+1. Advantages of Reverse Proxy
+   * Content caching (CDN uses reverse proxy technology)
+   * Traffic scrubbing
+      * DDos (Distributed denial of service) Mitigation
+      * Web application security
+   * IP masking
+   * Load Balancing
+
+
+
+1. In contrast, a forward proxy server is also positioned at your network’s edge, but regulates outbound traffic according to preset policies in shared networks. Additionally, it disguises a client’s IP address and blocks malicious incoming traffic.
+2. Forward proxies are typically used internally by large organizations, such as universities and enterprises, to:
+   * Block employees from visiting certain websites
+   * Monitor employee online activity
+   * Block malicious traffic from reaching an origin server
+   * Improve the user experience by caching external site content
+
 
 
 ### Hardware Load Balancer
