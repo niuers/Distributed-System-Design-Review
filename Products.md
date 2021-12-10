@@ -526,3 +526,139 @@ The _id field is always the first field in the documents. If the server receives
 
 # HDFS
 
+# Apache Kafka
+1. Apache Kafka is publish-subscribe messaging rethought as a distributed commit log
+   * Kafka is a persistent, distributed, replicated pub/sub messaging system. 
+   * Publishers send messages to a cluster of brokers. 
+   * The brokers persist the messages to disk. 
+   * Consumers then request a range of messages using an (offset, length) style API. 
+   * Use of NIO (Java New IO) FileChannel allows for very fast transfer of data in and out of the system.
+## Features
+1. Use ZooKeeper for Broker coordination 
+2. Configurable Producer acks 
+3. Consumer Groups 
+4. TTL persistence 
+5. Sync/Async producer API 
+6. Durable 
+7. Scalable 
+8. Fast
+
+## Motivation
+1. Activity stream processing (user interactions) 
+2. Batch latency was too high 
+3. Existing queues handle large volumes of (unconsumed) data poorly - durability is expensive 
+4. Need something fast and durable
+
+## Key design choices 
+1. Pub/sub messaging pattern 
+2. Messages are persistent 
+3. Everything is distributed - producers, brokers, consumers, the queue itself 
+4. Consumers maintain their own state (i.e., "dumb" brokers) 
+5. Throughput is key
+
+## Architecture
+### Brokers 
+1. Receive messages from Producers (push), deliver messages to Consumers (pull) 
+2. Responsible for persisting the messages for some time 
+3. Relatively lightweight - mostly just handling TCP connections and keeping open file handles to the queue files
+
+### Log-based queue 
+1. Messages are persisted to append-only log files by the broker. 
+2. Producers are appending to these log files (sequential write), and consumers are reading a range of these files (sequential reads).
+
+### Topics 
+1. Topics are queues. 
+2. They are logical collections of partitions (the physical files). A broker contains some of the partitions for a topic
+
+### Replication 
+1. Partitions of a topic are replicated. 
+2. One broker is the "leader" of a partition. 
+3. All writes and reads must go to the leader. 
+4. Replicas exist for fault-tolerance, not scalability. 
+5. When writing, messages can be synchronously written to N replicas (depending on the producer's ACKiness)
+
+### Producers 
+1. Producers are responsible for load balancing messages to the various brokers. 
+2. They can discover all brokers from any one broker. 
+1. In 0.8, there are 3 ack levels: 
+   * No ack (0) 
+   * Ack from N replicas (1..N) 
+   * Ack from all replicas (-1)
+1. Message routing 
+   * Producers can be configured with a custom routing function (implementing the Partitioner interface) 
+   * Default is hash-mod 
+   * One side effect of routing is that there is no total ordering for a topic, but there is within a partition (this is actually really useful)
+1. (Partially) Ordered Messages Consider a system that is processing updates. If you partition the messages based on the primary key you guarantee all messages for a given key end up in the same partition. Since Kafka guarantees ordering of the messages at the partition level, your updates will be processed in the correct sequence.
+
+### Consumers 
+1. Consumers request a range of messages from a Broker. 
+2. They are responsible for their own state 
+3. Default implementation uses ZooKeeper to manage state. 
+4. In 0.8.1, Brokers will expose an API for offset management to remove direct communication between consumers and ZooKeeper (a good thing).
+5. [Zero-copy ](https://medium.com/swlh/linux-zero-copy-using-sendfile-75d2eb56b39b)
+   * Reading data out of Kafka is super fast thanks to java.nio.channels.FileChannel#transferTo. 
+   * This method uses the "sendfile" system call which allows for very efficient transfer of data from a file to another file (including sockets). 
+      * sendfile() claims to make data transfer happening under kernel space only — i.e data transferred from kernel system cache to NIC buffer (or traversed through kernel system cache if local copy), thus doesnt require context switches as in read+write combination. sendfile() has now been widely used as a supported data transfering technique especially under nginx and kafka.
+   * This optimization is what allows us to pull ~100MB/s out of a single broker
+   * KafkaStream is an iterable 
+   * Blocking or non-blocking behavior 
+   * Auto-commit offset, or manual commit 
+   * Participate in a "consumer group"
+1. Consumer Groups 
+   * Multiple high-level consumers can participate in a single "consumer group". A consumer group is coordinated using ZooKeeper, so it can span multiple machines. In a group, each partition will be consumed by exactly one consumer (i. e., KafkaStream). 
+   * This allows for broadcast or pub/sub type of messaging pattern
+
+
+### Result? 
+1. Brokers keep very little state, mostly just open file pointers and connections 
+2. Can scale to thousands of producers and consumers* 
+3. Stable performance, good scalability 
+4. In 0.7, 50MB/s producer throughput, 100MB/s consumer throughput
+
+### High-Level API
+1. The Producer class determines where a message is sent based on the routing key. If a null key is given, the message is sent to a random partition
+  
+### Persistent Messages 
+1. MessageSets received by the broker and flushed to append-only log files 
+   * To maximize throughput, the same binary format for messages is used throughout the system (producer API, consumer API, and log file format) 
+   * Broker only decodes far enough to read the checksum and validate it, then writes it to the disk
+   * Compressed message sets or, message batching 
+   * The value of a Message can be a compressed 
+   * Useful for increasing throughput (especially if you are buffering messages in the producer) 
+   * Can also be used as a way to atomically write multiple messages
+3. Simple log format 
+4. Zero-copy (i.e., sendfile) for file to socket transfer 
+5. Log files are not kept forever
+
+## Caveats 
+1. Not designed for large payloads. 
+2. Decoding is done for a whole message (no streaming decoding). 
+3. Rebalancing can screw things up if you're doing any aggregation in the consumer by the partition key 
+4. Number of partitions cannot be easily changed (chose wisely) 
+5. Lots of topics can hurt I/O performance
+
+## Hadoop InputFormat 
+1. InputFormat/OutputFormat implementations 
+2. Uses low-level consumer, no offsets in ZK (they are stored on HDFS instead) 
+3. Useful for long term storage of messages 
+
+## Applications
+1. Log Aggregation 
+   * Many applications running on many machines. You want centralized logging, but don't want to install an agent (Flume, etc). 
+   * Kafka includes a log4j appender
+
+1. Notifications 
+   * Store data into data store A, need to sync it to data store B. 
+   * Suppose you can send a message to Kafka when an update happens in A 
+
+1. Stream Processing 
+   * Using a stream processing tool like Storm or Apache Camel, Kafka provides an excellent backbone
+
+## Stats Data
+1. LinkedIn stats
+   * Peak writes per second: 460k 
+   * Average writes per day: 28 billion (324K per second)
+   * Average reads per second: 2.3 million 
+   * ~700 topics 
+   * Thousands of producers 
+   * ~1000 consumers
