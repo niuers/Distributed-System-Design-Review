@@ -604,9 +604,14 @@ The _id field is always the first field in the documents. If the server receives
    * Blocking or non-blocking behavior 
    * Auto-commit offset, or manual commit 
    * Participate in a "consumer group"
+
 1. Consumer Groups 
    * Multiple high-level consumers can participate in a single "consumer group". A consumer group is coordinated using ZooKeeper, so it can span multiple machines. In a group, each partition will be consumed by exactly one consumer (i. e., KafkaStream). 
    * This allows for broadcast or pub/sub type of messaging pattern
+
+#### Zero Copy
+1. [IBM Zero Copy](https://developer.ibm.com/articles/j-zerocopy/?mhsrc=ibmsearch_a&mhq=zero%20copy)
+2. 
 
 
 ### Result? 
