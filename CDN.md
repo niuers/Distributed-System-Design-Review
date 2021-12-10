@@ -1,6 +1,10 @@
-# CDN
+# Overview of Content delivery networks (CDN)
 
-1. CDN can be very important to improve the performance by pushing the popular videos (youtube) to CDN, and reduce latency.
+1. [CDN are used to solve the latency issue](https://www.imperva.com/learn/performance/what-is-cdn-how-it-works)
+   * In all cases however, the delay duration is impacted by the physical distance between you and that website’s hosting server.
+   * A CDN’s mission is to virtually shorten that physical distance, the goal being to improve site rendering speed and performance.
+   * To minimize the distance between the visitors and your website’s server, a CDN stores a cached version of its content in multiple geographical locations (a.k.a., **points of presence**, or PoPs). Each PoP contains a number of caching servers responsible for content delivery to visitors within its proximity.
+3. It can be very important to improve the performance by pushing the popular videos (youtube) to CDN, and reduce latency.
    * Flash crowd problem for popular websites, request load overwhelms some aspect of the site’s infrastructure, such as the frontend Web server, network equipment, or bandwidth, or (in more advanced sites) the back-end transaction-processing infrastructure.
    * By caching content at the Internet’s edge, we reduce demand on the site’s infrastructure and provide faster service for users, whose content comes from nearby servers.
    * 
@@ -10,6 +14,36 @@
 1. Serving content from CDNs can significantly improve performance in two ways:
    * Users receive content from data centers close to them
    * Your servers do not have to serve requests that the CDN fulfills
+## Modern CDNs can handle numerous IT tasks, helping you to:
+1. Improve page load speed
+1. Handle high traffic loads
+1. Block spammers, scrapers and other bad bots
+1. Localize coverage without the cost
+1. Reduce bandwidth consumption
+1. Load balance between multiple servers
+1. Protect your website from DDoS attacks
+1. Secure your application
+
+## Make CDN Work
+1. For a CDN to work, it needs to be the default inbound gateway for all incoming traffic. To make this happen, you’ll need to modify your root domain DNS configurations (e.g., domain.com) and those of your subdomains (e.g., www.domain.com, img.domain.com).
+2. For your root domain, you’ll change its A record to point to one of the CDN’s IP ranges. For each subdomain, modify its CNAME record to point to a CDN-provided subdomain address (e.g., ns1.cdn.com). In both cases, this results in the DNS routing all visitors to your CDN instead of being directed to your original server.
+
+## Caching Method
+1. Caching method: Most are origin pull ?
+
+
+
+## Main Components
+1. PoPs (Points of Presence)
+   * CDN PoPs (Points of Presence) are strategically located data centers responsible for communicating with users in their geographic vicinity. Their main function is to reduce round trip time by bringing the content closer to the website’s visitor. Each CDN PoP typically contains numerous caching servers.
+1. Caching servers: Caching servers are responsible for the storage and delivery of cached files. Their main function is to accelerate website load times and reduce bandwidth consumption. Each CDN caching server typically holds multiple storage drives and high amounts of RAM resources.
+2. SSD/HDD + RAM: Inside CDN caching servers, cached files are stored on solid-state and hard-disk drives (SSD and HDD) or in random-access memory (RAM), with the more commonly-used files hosted on the more speedy mediums. Being the fastest of the three, RAM is typically used to store the most frequently-accessed items.
+
+
+
+
+
+
 
 ## Potential Problems
 1. Operating servers in many locations poses many technical challenges, including: 
