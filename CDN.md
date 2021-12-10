@@ -31,8 +31,15 @@
 4. This position, on the edge of your network perimeter, offers several key advantages beyond a CDN’s innate ability to accelerate content delivery.
    * Website Security: The on-edge position also makes a CDN ideal for blocking DDoS floods, which need to be mitigated outside of your core network infrastructure.
    * Load Balancing: 
+1. Round-trip time (RTT) is the number of milliseconds (ms) it takes for a browser to send a request and receive a response back from a server. RTT is not influenced by file size or the speed of your Internet connection. Instead, it’s affected by:
 
+Physical Distances
+Number of Intermediate Nodes
+Amount of Traffic
+Transmission Mediums
+RTT is where the battle for speed is typically won and lost, since no rendering in the user’s browser can begin before the initial outgoing request for the HTML file is returned
 
+1. 
 
 ## Caching Method
 1. Caching method: Most are origin pull ?
