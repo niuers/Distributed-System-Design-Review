@@ -713,3 +713,93 @@ The _id field is always the first field in the documents. If the server receives
    * ~700 topics 
    * Thousands of producers 
    * ~1000 consumers
+
+# Google File System (GFS)
+1. a scalable distributed file system for large distributed data-intensive applications
+2. It provides fault tolerance while running on inexpensive commodity hardware, and it delivers high aggregate performance to a large number of clients
+## Their Design Requirements
+1. First, component failures are the norm rather than the exception.  Therefore, constant monitoring, error detection, fault tolerance, and automatic recovery must be integral to the system.
+2. Second, files are huge by traditional standards. it is unwieldy to manage billions of approximately KB-sized files even when the file system could support it. As a result, design assumptions and parameters such as I/O operation and blocksizes have to be revisited.
+3. Third, most files are mutated by appending new data rather than overwriting existing data. Random writes within a file are practically non-existent.  Once written, the files are only read, and often only sequentially. Given this access pattern on huge files, appending becomes the focus of performance optimization and atomicity guarantees, while caching data blocks in the client loses its appeal.
+4. Fourth, co-designing the applications and the file system API benefits the overall system by increasing our flexibility.
+## DESIGN OVERVIEW
+### Assumptions
+1. The system is built from many inexpensive commodity components that often fail. It must constantly monitor itself and detect, tolerate, and recover promptly from component failures on a routine basis.
+2. The system stores a modest number of large files. We expect a few million files, each typically 100 MB or larger in size. Multi-GB files are the common case and should be managed efficiently. Small files must be supported, but we need not optimize for them.
+3. The workloads primarily consist of two kinds of reads: large streaming reads and small random reads. 
+   * In large streaming reads, individual operations typically read hundreds of KBs, more commonly 1 MB or more. Successive operations from the same client often read through a contiguous region of a file. 
+   * A small random read typically reads a few KBs at some arbitrary offset. Performance-conscious applications often batch and sort their small reads to advance steadily through the file rather than go backand forth.
+1. The workloads also have many large, sequential writes that append data to files. Typical operation sizes are similar to those for reads. Once written, files are seldom modified again. Small writes at arbitrary positions in a file are supported but do not have to be efficient. 
+1. The system must efficiently implement well-defined semantics for multiple clients that concurrently append to the same file. Our files are often used as producer consumer queues or for many-way merging. Hundreds of producers, running one per machine, will concurrently append to a file. Atomicity with minimal synchronization overhead is essential. The file may be read later, or a consumer may be reading through the file simultaneously.
+1. High sustained bandwidth is more important than low latency. Most of our target applications place a premium on processing data in bulkat a high rate, while few have stringent response time requirements for an individual read or write.
+
+### Interfaces
+1. We support the usual operations to create, delete, open, close, read, and write files. 
+2. Moreover, GFS has snapshot and record append operations.
+3. Record append allows multiple clients to append data to the same file concurrently while guaranteeing the atomicity of each individual client’s append. It is useful for implementing multi-way merge results and producerconsumer queues that many clients can simultaneously append to without additional locking.
+
+### Architecture
+1. A GFS cluster consists of a single master and multiple chunkservers and is accessed by multiple clients
+2. Files are divided into fixed-size chunks. Each chunkis identified by an immutable and globally unique 64 bit chunk handle assigned by the master at the time of chunkcreation.
+3. Chunkservers store chunks on local disks as Linux files and read or write chunkdata specified by a chunkhandle and byte range. 
+4. For reliability, each chunk is replicated on multiple chunkservers. By default, we store three replicas, though users can designate different replication levels for different regions of the file namespace.
+5. The master maintains all file system metadata. 
+   * This includes the namespace, access control information, the mapping from files to chunks, and the current locations of chunks. 
+   * It also controls system-wide activities such as chunk lease management, garbage collection of orphaned chunks, and chunk migration between chunkservers. 
+   * The master periodically communicates with each chunkserver in HeartBeat messages to give it instructions and collect its state
+1. Clients interact with the master for metadata operations, but all data-bearing communication goes directly to the chunkservers.
+2. Neither the client nor the chunkserver caches file data. Client caches offer little benefit because most applications stream through huge files or have working sets too large  to be cached. Not having them simplifies the client and the overall system by eliminating cache coherence issues. (Clients do cache metadata, however.)    
+3. Chunkservers need not cache file data because chunks are stored as local files and so Linux’s buffer cache already keeps frequently accessed data in memory
+
+### Single Master
+1. Having a single master vastly simplifies our design and enables the master to make sophisticated chunk placement and replication decisions using global knowledge
+3. However, we must minimize its involvement in reads and writes so that it does not become a bottleneck.
+   * Clients never read and write file data through the master. Instead, a client asks the master which chunkservers it should contact. It caches this information for a limited time and interacts with the chunkservers directly for many subsequent operations.
+
+### Chunk Size
+1. We have chosen 64 MB, which is much larger than typical file system blocksizes. 
+2. Each chunk replica is stored as a plain Linux file on a chunkserver and is extended only as needed.
+3. Lazy space allocation avoids wasting space due to internal fragmentation, perhaps the greatest objection against such a large chunksize
+4. A large chunksize offers several important advantages.
+   *  it reduces clients’ need to interact with the master because reads and writes on the same chunkrequire only one initial request to the master for chunklocation information.
+   *   since on a large chunk, a client is more likely to perform many operations on a given chunk, it can reduce network overhead by keeping a persistent TCP connection to the chunkserver over an extended period of time. 
+   *   Third, it reduces the size of the metadata stored on the master. This allows us to keep the metadata in memory, which in turn brings other advantages
+
+1. Disadvantages. 
+   * A small file consists of a small number of chunks, perhaps just one. 
+   * The chunkservers storing those chunks may become hot spots if many clients are accessing the same file. 
+
+### Meta Data
+1. The types: the file and chunknamespaces, the mapping from files to chunks, and the locations of each chunk’s replicas. 
+2. All metadata is kept in the master’s memory. The first two types (namespaces and file-to-chunkmapping) are also kept persistent by logging mutations to an operation log stored on the master’s local disk and replicated on remote machines
+3. The master does not store chunklocation information persistently. Instead, it asks each chunkserver about its chunks at master startup and whenever a chunkserver joins the cluster.
+
+#### In-Memory Data Structures
+1. Since metadata is stored in memory, master operations are fast. 
+2. Furthermore, it is easy and efficient for the master to periodically scan through its entire state in the background. This periodic scanning is used to implement 
+   * chunkgarbage collection, 
+   * re-replication in the presence of chunkserver failures, and 
+   * chunkmigration to balance load and diskspace usage across chunkservers
+1. One potential concern for this memory-only approach is that the number of chunks and hence the capacity of the whole system is limited by how much memory the master
+has. 
+   * This is not a serious limitation in practice. The master maintains less than 64 bytes of metadata for each 64 MB chunk. 
+   * Most chunks are full because most files contain many chunks, only the last of which may be partially filled. 
+   * Similarly, the file namespace data typically requires less then 64 bytes per file because it stores file names compactly using prefix compression.
+#### Chunk Locations
+1. We initially attempted to keep chunk location information persistently at the master, but we decided that it was much simpler to request the data from chunkservers at startup, and periodically thereafter. This eliminated the problem of keeping the master and chunkservers in sync as chunkservers join and leave the cluster, change names, fail, restart, and so on. In a cluster with hundreds of servers, these events happen all too often.
+2. Another way to understand this design decision is to realize that a chunkserver has the final word over what chunks it does or does not have on its own disks. There is no point in trying to maintain a consistent view of this information on the master because errors on a chunkserver may cause chunks to vanish spontaneously (e.g., a disk may go bad and be disabled) or an operator may rename a chunkserver.
+#### Operation Log
+1. The operation log contains a historical record of critical metadata changes. It is central to GFS. Not only is it the only persistent record of metadata, but it also serves as a logical time line that defines the order of concurrent operations. 
+2. Files and chunks, as well as their versions, are all uniquely and eternally identified by the logical times at which they were created.
+3. Since the operation log is critical, we must store it reliably and not make changes visible to clients until metadata changes are made persistent. Otherwise, we effectively lose the whole file system or recent client operations even if the chunks themselves survive. 
+4. Therefore, we replicate it on multiple remote machines and respond to a client operation only after flushing the corresponding log record to disk both locally and remotely.
+5. The master batches several log records together before flushing thereby reducing the impact of flushing and replication on overall system throughput.
+6. The master recovers its file system state by replaying the operation log. To minimize startup time, we must keep the log small. The master checkpoints its state whenever the log grows beyond a certain size so that it can recover by loading the latest checkpoint from local disk and replaying only the limited number of log records after that. The checkpoint is in a compact B-tree like form that can be directly mapped into memory and used for namespace lookup without extra parsing. This further speeds up recovery and improves availability
+7. Because building a checkpoint can take a while, the master’s internal state is structured in such a way that a new checkpoint can be created without delaying incoming mutations. The master switches to a new log file and creates the new checkpoint in a separate thread. The new checkpoint includes all mutations before the switch. It can be created in a minute or so for a cluster with a few million files. When completed, it is written to diskboth locally and remotely.
+8. Recovery needs only the latest complete checkpoint and subsequent log files. Older checkpoints and log files can be freely deleted, though we keep a few around to guard
+against catastrophes. A failure during checkpointing does not affect correctness because the recovery code detects and skips incomplete checkpoints.
+
+
+
+
+
