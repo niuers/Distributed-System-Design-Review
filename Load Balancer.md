@@ -82,15 +82,17 @@ Some load balancers can be configured to provide Layer 4 or Layer 7 load balanci
 ## Types of Load Balancer
 
 ### Software Load Balancer
-1. AWS ELB (Elastic Load Balancer)
-3. LVS (Linux Virtual Server) 
-1. Reverse Proxy
-   * HAProxy (High Availability Proxy, open source)
-   * Nginx
-   * Apache mod_proxy
-   * A reverse proxy accepts a request from a client, forwards it to a server that can fulfill it, and returns the server’s response to the client.
-       * Whereas deploying a load balancer makes sense only when you have multiple servers, it often makes sense to deploy a reverse proxy even with just one web server or application server. You can think of the reverse proxy as a website’s “public face.” Its address is the one advertised for the website, and it sits at the edge of the site’s network to accept requests from web browsers and mobile apps for the content hosted at the website. The benefits are two-fold:
-       * Increased security and Increased scalability and flexibility
+#### AWS ELB (Elastic Load Balancer)
+#### LVS (Linux Virtual Server) 
+
+#### Reverse Proxy
+1. 
+1. HAProxy (High Availability Proxy, open source)
+1. Nginx
+1. Apache mod_proxy
+1. A reverse proxy accepts a request from a client, forwards it to a server that can fulfill it, and returns the server’s response to the client.
+   * Whereas deploying a load balancer makes sense only when you have multiple servers, it often makes sense to deploy a reverse proxy even with just one web server or application server. You can think of the reverse proxy as a website’s “public face.” Its address is the one advertised for the website, and it sits at the edge of the site’s network to accept requests from web browsers and mobile apps for the content hosted at the website. The benefits are two-fold:
+   * Increased security and Increased scalability and flexibility
 
 
 ### Hardware Load Balancer
