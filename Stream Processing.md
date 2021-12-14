@@ -273,3 +273,15 @@
 4. Samza and Kafka Streams replicate state changes by sending them to a dedicated Kafka topic with log compaction, similar to change data capture
 5. 
 
+## Lambda Architecture
+1. Lambda is a distributed data processing architecture that leverages both the batch and the real-time streaming data processing approaches to tackle the latency issues that arise out of the batch processing approach. It joins the results from both approaches before presenting them to the end-user.
+2. The architecture has typically three layers:
+
+Batch layer
+Speed layer
+Serving layer
+
+## Kappa Architecture
+1. In Kappa architecture, all the data flows through a single data streaming pipeline as opposed to the Lambda architecture, which has different data streaming layers that converge into one.
+2. Kappa contains only two layers: Speed, which is the streaming processing layer, and serving, which is the final layer.
+
