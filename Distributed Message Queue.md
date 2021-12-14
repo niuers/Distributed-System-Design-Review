@@ -1,4 +1,19 @@
 # Distributed Message Queue
+1. A publish-subscribe(pub-sub) model is the model where multiple consumers receive the same message sent from a single or multiple producers.
+   * To implement the pub-sub pattern, message queues have exchanges that further push messages to the queues based on the exchange type and the set rules. Exchanges are just like telephone exchanges, which route messages from sender to the receiver through the infrastructure based on a certain logic.
+   * The relationship between exchange and the queue is known as binding.
+1. Point-to-Point Model: 
+   * The use case for * Point-to-point* communication is pretty simple. It’s where the message from the producer is consumed by only one consumer.
+3. Payload means the content of the message posted by the user.
+
+
+## Handling Concurrent Requests With Message Queues
+1. 
+## Types of Exchanges
+1. Direct, topic, headers, and fanout
+## Message Protocols
+1. AMQP Advanced Message Queue Protocol 
+2. STOMP Simple or Streaming Text Oriented Message Protocol
 
 ## Communications between Producer and Consumer
 
