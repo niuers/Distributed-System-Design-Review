@@ -288,6 +288,8 @@
 1. Generally, LSM-trees are typicall faster for writes whereas B-trees are thought to be faster for reads.Because LSM have to check several different data structures and SSTables at different stages of compaction.
 #### Advantages of LSM-Trees
 1. Write Amplification
+   * Write amplification (WA) is an undesirable phenomenon associated with flash memory and solid-state drives (SSDs) where the actual amount of information physically written to the storage media is a multiple of the logical amount intended to be written.
+   * Because flash memory must be erased before it can be rewritten, with much coarser granularity of the erase operation when compared to the write operation,[a] the process to perform these operations results in moving (or rewriting) user data and metadata more than once. Thus, rewriting some data requires an already-used-portion of flash to be read, updated, and written to a new location, together with initially erasing the new location if it was previously used at some point in time. Due to the way flash works, much larger portions of flash must be erased and rewritten than actually required by the amount of new data. This multiplying effect increases the number of writes required over the life of the SSD, which shortens the time it can operate reliably.
    * A B-tree index must write every data at least twice: once to WAL, once to the tree page itself. There's overhead from having to write an entire page at a time. 
    * Log-Structured indexes also rewrite data multiple times (compaction, merging of SSTables). 
    * Write amplification is of particular concern of SSDs, which can only overwrite blocks a limited number of times before wearing out.
