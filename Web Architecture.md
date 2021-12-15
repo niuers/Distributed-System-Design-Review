@@ -158,12 +158,51 @@
 3. No strong consistency: Strong consistency is hard to guarantee in a distributed environment. Things are eventually consistent across the nodes, and this limitation is due to the distributed design.
 4. 
 
+# Event-Driven Architecture
+1. There are generally two kinds of processes in applications: CPU intensive and IO intensive. In the context of web applications, IO means events. 
+2. Non-blocking architecture is also known as reactive or event-driven architecture. 
+3. Technologies like NodeJS, frameworks in the Java ecosystem like Play, and Akka.io are non-blocking in nature and are built for modern high IO scalable applications.
+
+## Webhooks
+1. Webhooks are more like call-backs. It’s like, “I will call you when new information is available. You carry on with your work.”
+2. Webhooks enable communication between two services without the middleware. They have an event-based mechanism.
+3. To use the Webhooks, consumers register an HTTP endpoint with the service with a unique API Key. It’s like a phone number. Call me on this number, when an event occurs. I won’t call you anymore.
+4. Whenever new information is available on the backend, the server fires an HTTP event to all the registered endpoints of the consumers, notifying them of the new update.
+5. Browser notifications are a good example of Webhooks. Instead of visiting the websites every now and then for new info, the websites notify us when they publish new content.
+
+# hexagonal architecture?#
+1. The architecture consists of three components:
+   * Ports
+   * Adapters
+   * Domain
+
+1. The architectural pattern holds the domain at its core, meaning the business logic. On the outside, the outer layer has ports and adapters. Ports act like an API as an interface. All the input to the app goes through the interface.
+2. 
+
+# Peer-to-Peer Architecture
+1. A P2P network is a network in which computers, also known as nodes, can communicate with each other without a central server. The absence of a central server rules out the possibility of a single point of failure. All the computers in the network have equal rights. A node acts as a seeder and a leecher at the same time. So, even if some of the computers/nodes go down, the network and the communication is still up.
+2. A seeder is a node that hosts the data on its system and provides bandwidth to upload the data to the network, and a leecher is a node that downloads the data from the network.
+3. The data is exchanged over TCP IP just like it happens over the HTTP protocol in a client-server model. The P2P design has an overlay network over TCP IP, which enables the users to connect directly. 
+## Types of P2P networks
+1. structured: In an unstructured network nodes/peers keep connecting with each other randomly. So, there is no structure, no rule. Just simply connect and grow the network.
+   * In this architectural design, there is no indexing of the nodes. To search the data, we have to scan through each and every node in the network. This is O(n) in complexity where n is the number of nodes in the network. This is very resource-intensive.
+   * Some of the unstructured network’s protocols are Gossip, Kazaa, and Gnutella.
+3. unstructured
+   * a structured P2P network holds the proper node indexing, or the topology. This makes it easier to search for specific data.This kind of network implements a distributed hash table to index the nodes.
+   * BitTorrent
+5. or a hybrid model
+   * It is a network, involving both a peer to peer and a client-server model.
+   * A P2P network offers more availability. 
+
+### Decentralized social networks
+1. They have servers, spread out across the globe, and hosted by individuals like you and me. Nobody has autonomous control over the network, and everybody has an equal say.
 
 
 
-
-
-
+# federated network
+1. a federated network has entities called servers or pods. A large number of nodes subscribe to the pods. There are several pods in the network that are linked to each other and share information with each other.
+2. Pods facilitate node discovery. In a peer-to-peer network, there is no way of discovering other nodes, and we would just sit in the dark if it weren’t for a centralized node registry or something. The other way is to run a scan through the network to try to discover other nodes. This is a really time-consuming and tedious task. 
+3. A pod in a federated architecture acts like a server to which a large number of nodes are subscribed.
 
 
 
