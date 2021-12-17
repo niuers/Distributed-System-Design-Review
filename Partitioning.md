@@ -29,7 +29,7 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
 # Partitioning of Key-Value Data
 1. The presence of skew makes partitioning much less effective. A partition with disproportionately high load is called a **hot spot**
 2. Avoid hot spot
-   * Assign records to nodes randomly. Bt has a big disadvantage: when you’re trying to read a particular item, you have no way of knowing which node it is on, so you have to query all nodes in parallel.
+   * Assign records to nodes randomly. But this has a big disadvantage: when you’re trying to read a particular item, you have no way of knowing which node it is on, so you have to query all nodes in parallel.
    * Assume Key-Value data model
       * Partitioning by Key Range: 
       * 
