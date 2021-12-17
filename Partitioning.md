@@ -79,7 +79,7 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
 ### Partitioning Secondary Indexes by Document
 1. A document-partitioned index is also known as a *local index*
    * In this indexing approach, each partition is completely separate: each partition maintains its own secondary indexes, covering only the documents in that partition. It doesn’t care what data is stored in other partitions. Whenever you need to write to the database—to add, remove, or update a document—you only need to deal with the partition that contains the document ID that you are writing.
-   * Expensive scatter/gather read: reading from a document-partitioned index requires care: you need to send the query to all partitions, and combine all the results you get back
+   * Expensive scatter/gather read: reading from a document-partitioned index requires care: you need to send the query to all partitions if the partition cannot be determined, and combine all the results you get back
       * Prone to tail latency amplification
       * MongoDB, Riak, Cassandra, Elasticsearch, SolrCloud, and VoltDB all use document-partitioned secondary indexes
 
