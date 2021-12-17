@@ -21,7 +21,7 @@
 1. Can use async DB writes
 2. 
 ### Fan-Out
-1. The biggest problem for twitter when fan-out famous person
+1. The biggest problem for twitter when fan-out (write) for famous person
    * In transaction processing systems, we use it to describe the number of requests to other services that we need to make in order to serve one incoming request.
    * It causes race condition
 1. 400 million tweets per day, 4600 tweets per second, 7000/sec peak time, 12K/sec in large events
