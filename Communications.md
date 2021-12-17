@@ -322,6 +322,21 @@ But after reading HTTP RFCs, I do not agree with this argument (maybe I missed s
 1. The above three items often occur when you are looking to build one component of a larger system. In my experience, these components are often ones where their subsystems need to be able to fail independently and not cause the total failure of other subsystems or the entire component. Many systems are written in Erlang to accomplish these goals as well, and in some cases Erlang may be a better choice than writing a system in another language and using RPC just to gain these benefits.
 
 
+# Gossip Protocol
+1. Gossip protocol is a communication protocol that allows state sharing in distributed systems. Most modern systems use this peer-to-peer protocol to disseminate information to all the members in a network or cluster.
+2. This protocol is used in a decentralized system that does not have any central node to keep track of all nodes and know if a node is down or not. what key ranges they are responsible for, and so on (this is basically a copy of the hash ring).
+## how does a node know every other node’s current state in a decentralized distributed system?
+3. The simplest way to do this is to have every node maintain heartbeats with every other node.
+4. O(N^2) messages get sent to every tick (N being the number of nodes), which is an expensive operation in any sizable cluster.
+5. Each node initiates a gossip round every second to exchange state information about itself and other nodes with one other random node. This means that any new event eventually propagates through the system, and all nodes quickly learn about all other nodes in a cluster.
+
+## Seed Node
+1. The gossip protocol can result in a logical partition of the cluster in a particular scenario.
+2. An administrator joins node A to the ring and then joins node B to the ring. Nodes A and B consider themselves part of the ring, yet neither would be immediately aware of each other. To prevent these logical partitions, some distributed systems use the concept of seed nodes. Seed nodes are fully functional nodes and can be obtained either from a static configuration or a configuration service. This way, all nodes are aware of seed nodes. Each node communicates with seed nodes through gossip protocol to reconcile membership changes. Therefore, logical partitions are highly unlikely.
+
+
+
+
 
 
 
