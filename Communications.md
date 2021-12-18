@@ -323,7 +323,7 @@ But after reading HTTP RFCs, I do not agree with this argument (maybe I missed s
 
 
 # Gossip Protocol
-1. Gossip protocol is a communication protocol that allows state sharing in distributed systems. Most modern systems use this peer-to-peer protocol to disseminate information to all the members in a network or cluster.
+1. Gossip protocol is a message protocol that allows state sharing in distributed systems. Most modern systems use this peer-to-peer protocol to disseminate information to all the members in a network or cluster.
 2. This protocol is used in a decentralized system that does not have any central node to keep track of all nodes and know if a node is down or not. what key ranges they are responsible for, and so on (this is basically a copy of the hash ring).
 3. Not synchronous
 ## how does a node know every other node’s current state in a decentralized distributed system?
@@ -331,14 +331,15 @@ But after reading HTTP RFCs, I do not agree with this argument (maybe I missed s
 4. O(N^2) messages get sent to every tick (N being the number of nodes), which is an expensive operation in any sizable cluster.
 5. (Cassandra) Each node initiates a gossip round every second to exchange state information about itself and other nodes with one other random nodes (e.g. 3 nodes in Cassandra). This means that any new event eventually propagates through the system, and all nodes quickly learn about all other nodes in a cluster.
 6. Meta data of the state of cluster
+   * IP Address of the node
    * Heartbeat state: 
-      * When the node started
-      * timestamp of current gossip session
+      * When the node started (generation in Cassandra)
+      * timestamp of current gossip session (version in Cassandra)
    * Application state
       * Current status of node: normal, leaving, joining the cluster
-      * data used by the snitch, i.e. what data center this node is in
-      * what rack
-      * schema of table
+      * what data center this node is in
+      * what rack this node is in
+      * schema number changes when schema changes
       * load information of current node
       * Severity: I/O pressure of current node
 7. In a gossip session, a node will send:
@@ -346,6 +347,11 @@ But after reading HTTP RFCs, I do not agree with this argument (maybe I missed s
    * Heartbeat state
    * Application state
    * If a node sees newer information, it sends it back
+1. Constant rate of network traffic
+2. Minimal compared to data streaming, hints
+3. doesn't cause network spike
+
+
 ## Seed Node
 1. The gossip protocol can result in a logical partition of the cluster in a particular scenario.
 2. An administrator joins node A to the ring and then joins node B to the ring. Nodes A and B consider themselves part of the ring, yet neither would be immediately aware of each other. To prevent these logical partitions, some distributed systems use the concept of seed nodes. Seed nodes are fully functional nodes and can be obtained either from a static configuration or a configuration service. This way, all nodes are aware of seed nodes. Each node communicates with seed nodes through gossip protocol to reconcile membership changes. Therefore, logical partitions are highly unlikely.
