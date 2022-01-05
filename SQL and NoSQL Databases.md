@@ -164,18 +164,24 @@
 1. A usability problem with MapReduce is that you have to write two carefully coordi‐ nated JavaScript functions, which is often harder than writing a single query
 
 # Data Storage and Retrieval
-1. how we can store the data that we’re given, and how we can find it again when we’re asked for it.
+1. How we can store the data that we’re given, and how we can find it again when we’re asked for it?
+
+## Log-Structured Storage Engines
 1. Many databases internally use a log: an append-only sequence of records. You need deal with following:
    * Concurrency control
    * Reclaim disk space
    * Handling errors and partially written records
-1. The search operation is bad though, you have to scan the entire file: O(n). We need *index*
-2. Index: The general idea behind them is to keep some additional metadata on the side, which acts as a signpost and helps you to locate the data you want. An index is an additional structure that is derived from the primary data. 
+1. The search operation is bad though, you have to scan the entire file: O(n). We need **index**
+
+### Advantages of Append-Only Log
+1. Appending and segment merging are sequential write operations, which are much faster than random writes, especially on magnetic spinning-disk hard drives. To some extent sequential writes are also preferable on flash-based SSD.
+2. Concurrency and crash recovery are much simpler. 
+   * No worry about crash while a value was being overwritten, leaving you with half old, half new value
+3. Merging old segments avoid the problem of data files getting fragmented over time.
+
+## Indexes
+1. Index: The general idea behind them is to keep some additional metadata on the side, which acts as a signpost and helps you to locate the data you want. An index is an additional structure that is derived from the primary data. 
    * This is an important trade-off in storage systems: well-chosen indexes speed up read queries, but every index slows down writes
-
-## Log-Structured Storage Engines
-
-### Indexes
 1. Key-Value Indexes
    * They like a primary key index in the relational model: unique
    * Hash Table Indexes with Append-Only Log Records
@@ -208,11 +214,7 @@
 4. Concurrency control
    * Use one writer thread
    * Can be read concurrently
-#### Advantages of  Append-Only Log
-1. Appending and segment merging are sequential write operations, which are much faster than random writes, especially on magnetic spinning-disk hard drives. To some extent sequential writes are alos preferable on flash-based SSD.
-2. Concurrency and crash recovery are much simpler. 
-   * No worry about crash while a value was being overwritten, leaving you with half old, half new value
-3. Merging old segments avoid the problem of data files getting fragmented over time.
+
 
 #### Disadvantages of Hash Table Index
 1. The hash table must fit in memory. 
@@ -245,6 +247,7 @@
 4. Products
    * Similar storage engines are used in Cassandra and HBase
    * Lucene, an indexing engine for full-text search used by Elasticsearch and Solr, uses a similar method for storing its term dictionary.
+
 #### Performance Optimizations
 1. LSM-tree algorithm can be slow when looking up keys that do not exist in the DB: 
    * Use Bloom filters: A Bloom filter is a memory-efficient data structure for approximating the contents of a set. It can tell you if a key does not appear in the database, and thus saves many unnecessary disk reads for nonexistent keys
@@ -293,17 +296,19 @@
 #### Advantages of LSM-Trees
 1. Write Amplification
    * Write amplification (WA) is an undesirable phenomenon associated with flash memory and solid-state drives (SSDs) where the actual amount of information physically written to the storage media is a multiple of the logical amount intended to be written.
-   * Because flash memory must be erased before it can be rewritten, with much coarser granularity of the erase operation when compared to the write operation,[a] the process to perform these operations results in moving (or rewriting) user data and metadata more than once. Thus, rewriting some data requires an already-used-portion of flash to be read, updated, and written to a new location, together with initially erasing the new location if it was previously used at some point in time. Due to the way flash works, much larger portions of flash must be erased and rewritten than actually required by the amount of new data. This multiplying effect increases the number of writes required over the life of the SSD, which shortens the time it can operate reliably.
+   * Because flash memory must be erased before it can be rewritten, with much coarser granularity of the erase operation when compared to the write operation, the process to perform these operations results in moving (or rewriting) user data and metadata more than once. Thus, rewriting some data requires an already-used-portion of flash to be read, updated, and written to a new location, together with initially erasing the new location if it was previously used at some point in time. Due to the way flash works, much larger portions of flash must be erased and rewritten than actually required by the amount of new data. This multiplying effect increases the number of writes required over the life of the SSD, which shortens the time it can operate reliably.
    * A B-tree index must write every data at least twice: once to WAL, once to the tree page itself. There's overhead from having to write an entire page at a time. 
    * Log-Structured indexes also rewrite data multiple times (compaction, merging of SSTables). 
    * Write amplification is of particular concern of SSDs, which can only overwrite blocks a limited number of times before wearing out.
    * In write-heavy applications, the performance bottleneck might be the rate at which the DB can write to disk.
       * Write amplification reduces write througput
    * LSM-trees are typically able to sustain higher write throughput than B-trees due to lower write amplification, sequentially write compact SSTable files (important on magnetic hard drives)
+
 1. LSM-trees can be compressed better, produce smaller files on disk than B-trees.
    * B-tree leave some disk space unused due to fragmentation: when page split
    * LSM-trees periodically rewrite SSTables to remove fragmentation
    * Reduced data allows more read/write requests within available I/O bandwidth
+
 #### Downsides of LSM-trees
 1. The compaction can sometimes interfere with the performance of onging reads and writes.
    * Disk have limited resources
