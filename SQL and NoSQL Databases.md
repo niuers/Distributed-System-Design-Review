@@ -318,7 +318,7 @@
    * If the new value is larger in size, we may move it to some other place
    * Update all indexes or use a forwarding pointer
 1. Clustered index: Sometimes it's desirable to store the value directly within an index
-   * MySQL's InnoDB storage engiine: Only primary index does clustered index, other second indexes store the primary index value in their leaves.
+   * MySQL's InnoDB storage engiine: Only primary index does clustered index, other second indexes store the primary index value (along with secondary key) in their leaves. So they require two queries if search on secondary index.
    * They speed up reads, but require additional storage and add overhead on writes
    * Additional support for transanction guarantees on consistency
 #### Multi-Column Indexes
