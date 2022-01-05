@@ -175,7 +175,7 @@
 
 ## Log-Structured Storage Engines
 
-## Indexes
+### Indexes
 1. Key-Value Indexes
    * They like a primary key index in the relational model: unique
    * Hash Table Indexes with Append-Only Log Records
@@ -260,6 +260,7 @@
 
 
 ## Page-Oriented Storage Engines
+
 ### B-Trees
 1. They remain the standard index implementation in almost all relational databases, and many nonrelational databases use them too
 2. Like SSTables, B-trees keep key-value pairs sorted by key, which allows efficient key-value lookups and range queries.
@@ -272,12 +273,14 @@
    * Most DBs can fit into a B-tree that is 3 or 4 levels deep. 
    * A four-level tree of 4KB pages with a branching factor of 500 can store up to 256TB.
 5. Deleting a key while keeping the tree balanced is more involved .
+
 ### Making B-Trees Reliable
 1. Orphan page: if DB crashes when you split a page into two and overwrite their parent page to update the references to the two child pages.
 2. To make the DB resilient to crashes it's common to include additional data structure on disk: a **write-ahead log** (WAL, or redo log)
    * WAL log: an append-only file to which every B-tree modification must be written before it can be applied to the pages of the tree itself.
 3. When updating pages, careful concurrency control is required if multiple threads are going to access B-tree at the same time. 
    * This is typically done by protecting the tree's data structures with *latches* or lightweight locks.
+
 ### B-tree Optimizations
 1. Instead of WAL, some DBs use copy-on-write scheme, which is also useful for concurrency control.
 2. We can save space in (internal) pages by not storing the entire key, but abbreviating it.
@@ -285,7 +288,8 @@
 4. Have left/right pointers in leaf pages to go to previous/next leaf pages
 
 ### Compare B-Trees and LSM-Trees
-1. Generally, LSM-trees are typicall faster for writes whereas B-trees are thought to be faster for reads.Because LSM have to check several different data structures and SSTables at different stages of compaction.
+1. Generally, LSM-trees are typicall faster for writes whereas B-trees are thought to be faster for reads. Because LSM have to check several different data structures and SSTables at different stages of compaction.
+
 #### Advantages of LSM-Trees
 1. Write Amplification
    * Write amplification (WA) is an undesirable phenomenon associated with flash memory and solid-state drives (SSDs) where the actual amount of information physically written to the storage media is a multiple of the logical amount intended to be written.
@@ -321,6 +325,7 @@
    * MySQL's InnoDB storage engiine: Only primary index does clustered index, other second indexes store the primary index value (along with secondary key) in their leaves. So they require two queries if search on secondary index.
    * They speed up reads, but require additional storage and add overhead on writes
    * Additional support for transanction guarantees on consistency
+
 #### Multi-Column Indexes
 1. Concatenated Index: combines several fields into one key
    * Important for geospatial data
@@ -341,12 +346,12 @@
 5. In-memory DBs provide data models that are difficult to implement with disk-based indexes
    * Redis offeres priority queues and sets
 1. The so-called anti-caching approach works by evicting the least recently used data from memory to disk when there is not enough memory, and loading it back into memory when it is accessed again in the future. This is similar to what operating systems do with virtual memory and swap files, but the database can manage memory more efficiently than the OS, as it can work at the granularity of individual records rather than entire memory pages
-2. 
+
 ## Transaction vs. Analytics
-3. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
+1. The storage engines fall into two broad categories: optimized for transaction processing (OLTP) and for anlytics (OLAP)
 
 ### OLTP Access Pattern
-1. A transaction needn’t necessarily have ACID properties. Transaction processing just means allowing clients to make low-latency reads and writes— as opposed to **batch processing** jobs, which only run periodically (for example, once per day). 
+1. A transaction needn’t necessarily have ACID properties. Transaction processing just means allowing clients to make low-latency reads and writes—as opposed to **batch processing** jobs, which only run periodically (e.g. once per day). 
 1. Typically user-facing, meaning huge volume of requests
 1. Main read pattern: small number of records in each query, fetched by key
 1. Main write pattern: random-access, low-latency writes from user input. 
@@ -356,7 +361,7 @@
 
 ### OLAP Access Pattern
 1. Primiarly used by business analysts.
-2. Main read pattern: They handle a much lower volume of queries than OLTP, but each query is typically very demanding, requires many millions of records to be scanned in a short time, only reading a few columns per record and calculates aggregate statistics rather than returning the raw data to the user. 
+2. Main read pattern: They handle a much lower volume of queries than OLTP, but each query typically requires many millions of records to be scanned in a short time, only reading a few columns per record and calculates aggregate statistics rather than returning the raw data to the user. 
    * When your queries require sequentially scanning across a large number of rows, indexes are much less relevant. Instead it becomes important to encode data very compactly, to minimize the amount of data that the query needs to read from disk. 
 3. Main write pattern: Bulk import (ETL, Extract-Transform-Load) or event stream (from OLTP DBs)
 4. Disk bandwidth (not seek time) if often bottleneck
