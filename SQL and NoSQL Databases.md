@@ -311,13 +311,14 @@
    * B-tree offers strong transactional semantics: transaction isolation locks on ranges of keys can be directly applied to B-tree.
 
 ### Other Indexing Structures
+
 #### Storing values within the index
-1. The value could be the actual row (document) or a reference to the row stored elsewhere. In the latter case, the place is called *heap file*, and it stores data in no particular order. It is common because it avoids duplicating data when multiple secondary indexes are present. 
+1. The value could be the actual row (document) or a reference to the row stored elsewhere (As MyISM storage engine used in MySQl before v5.6). In the latter case, the place is called *heap file*, and it stores data in no particular order. It is common because it avoids duplicating data when multiple secondary indexes are present. 
 2. When updating a value without changing the key, the heap file approach can be quite efficient when the new value size is smaller than the old value.
    * If the new value is larger in size, we may move it to some other place
    * Update all indexes or use a forwarding pointer
 1. Clustered index: Sometimes it's desirable to store the value directly within an index
-   * MySQL's InnoDB
+   * MySQL's InnoDB storage engiine: Only primary index does clustered index, other second indexes store the primary index value in their leaves.
    * They speed up reads, but require additional storage and add overhead on writes
    * Additional support for transanction guarantees on consistency
 #### Multi-Column Indexes
