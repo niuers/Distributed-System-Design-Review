@@ -10,7 +10,6 @@
    * Helping to eliminate a single point of failure
    * SSL Termination
    * Session Persistence
-3. Horizontal scaling
 1. Load balancers can also help with horizontal scaling, improving performance and availability.
 1. Disadvantages
    * Scaling horizontally introduces complexity and involves cloning servers
