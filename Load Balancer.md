@@ -23,16 +23,11 @@
 1. Introducing a load balancer to help eliminate a single point of failure results in increased complexity.
 1. A single load balancer is a single point of failure, configuring multiple load balancers further increases complexity.
 
-## Networking Protocols Served by Load Balancer
-1. TCP: 
-   * Simply forward network packets without inspecting the content of the packets
-   * Super fast, millions of requests per second 
-1. HTTP: 
- * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
- * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
-
 ## Layer 4 vs. Layer 7 Load Balancers
-### Layer 4
+
+### Layer 4 (TCP)
+   * Simply forward network packets without inspecting the content of the packets
+   * Super fast, millions of requests per second
    * Layer 4 load balancers look at info at the transport layer to decide how to distribute requests. Generally, this involves the source, destination IP addresses, and ports in the header, but not the contents of the packet. Layer 4 load balancers forward network packets to and from the upstream server, performing Network Address Translation (NAT). For Internet traffic specifically, a Layer 4 load balancer bases the load-balancing decision on the source and destination IP addresses and ports recorded in the packet header, without considering the contents of the packet.
    * Transport(Layer 4) This layer provides transparent transfer of data between end systems, or hosts, and is responsible for end-to-end error recovery and flow control. It ensures complete data transfer.
    * Only has access to TCP and UDP data
@@ -50,6 +45,8 @@
 
 
 ### Layer 7
+ * It terminates the connection, load balancer gets a HTTP request from a client, establishes a connection to a server, and sends request to the server, 
+ * It can look inside the message and make a load-balacing decision based on the content of the message, e.g. cookie, header, 
    * Layer 7 load balancers look at the application layer to decide how to distribute requests. This can involve contents of the header, message, and cookies. Layer 7 load balancers terminate network traffic, reads the message, makes a load-balancing decision, then opens a connection to the selected server. For example, a layer 7 load balancer can direct video traffic to servers that host videos while directing more sensitive user billing traffic to security-hardened servers.
 At the cost of flexibility, layer 4 load balancing requires less time and computing resources than Layer 7, although the performance impact can be minimal on modern commodity hardware.
    * A Layer 7 load balancer terminates the network traffic and reads the message within. It can make a load‑balancing decision based on the content of the message (the URL or cookie, for example). It then makes a new TCP connection to the selected upstream server (or reuses an existing one, by means of HTTP keepalives) and writes the request to the server.
