@@ -3,21 +3,21 @@
 1. A transaction is a way for an application to group several reads and writes together into a logical unit.
 2. Conceptually, all the reads and writes in a transaction are executed as one operation: either the entire transaction succeeds (commit) or it fails (abort, rollback).
 3. By using transactions, the application is free to ignore certain potential error scenarios and concurrency issues, because the database takes care of them instead (we call these safety guarantees).
-4. Transactions are an abstraction layer that allows an application to pretend that cer‐ tain concurrency problems and certain kinds of hardware and software faults don’t exist. A large class of errors is reduced down to a simple transaction abort, and the application just needs to try again.
+4. Transactions are an abstraction layer that allows an application to pretend that certain concurrency problems and certain kinds of hardware and software faults don’t exist. A large class of errors is reduced down to a simple transaction abort, and the application just needs to try again.
 5. Transactions in distributed databases open a new set of difficult challenges.
 
 # The Slippery Concept of a Transaction
-1. nonrelational (NoSQL) databases aimed to improve upon the relational status quo by offering a choice of new data models, and by including replication  and partitioning by default. Transactions were the main casualty of this movement: many abandoned transactions entirely, or redefined the word to describe a much weaker set of guarantees than had previously been understood
+1. Nonrelational (NoSQL) databases aimed to improve upon the relational status quo by offering a choice of new data models, ***and by including replication  and partitioning by default**. Transactions were the main casualty of this movement: many abandoned transactions entirely, or redefined the word to describe a much weaker set of guarantees than had previously been understood
 
 ## ACID
-1.The safety guarantees provided by transactions are often described by the well- known acronym ACID, which stands for Atomicity, Consistency, Isolation, and Durability
-1. Systems that do not meet the ACID criteria are sometimes called BASE, which stands for Basically Available, Soft state, and Eventual consistency
+1.The safety guarantees provided by transactions are often described by the well-known acronym ACID, which stands for Atomicity, Consistency, Isolation, and Durability
+1. Systems that do not meet the ACID criteria are sometimes called BASE, which stands for Basically Available, Soft State, and Eventual consistency
 
 ### Atomicity
 1. In the context of ACID, atomicity is not about concurrency, ACID atomicity describes what happens if a client wants to make several writes, but a fault occurs after some of the writes have been processed. 
 2. If the writes are grouped together into an atomic transaction, and the transaction cannot be completed (committed) due to a fault, then the transaction is aborted and the database must discard or undo any writes it has made so far in that transaction.
 3. The ability to abort a transaction on error and have all writes from that transaction discarded is the defining feature of ACID atomicity
-4. The database saves you from having to worry about partial failure, by giv‐ ing an all-or-nothing guarantee.
+4. The database saves you from having to worry about partial failure, by giving an all-or-nothing guarantee.
 
 ### Consistency
 1. In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
@@ -26,9 +26,9 @@
 4. Atomicity, isolation, and durability are properties of the database, whereas consistency (in the ACID sense) is a property of the application.
 
 ### Isolation
-1. if read/write are accessing the same database records, you can run into concurrency problems (race conditions)
+1. If read/write are accessing the same database records, you can run into concurrency problems (race conditions)
 2. Isolation in the sense of ACID means that concurrently executing transactions are isolated from each other: they cannot step on each other’s toes.
-3. The classic database textbooks formalize isolation as serializability, which means that each transaction can pretend that it is the only transaction running on the entire database. The database ensures that when the transactions have committed, the result is the same as if they had run serially (one after another), even though in reality they may have run con‐currently.
+3. The classic database textbooks formalize isolation as *serializability*, which means that each transaction can pretend that it is the only transaction running on the entire database. The database ensures that when the transactions have committed, the result is the same as if they had run serially (one after another), even though in reality they may have run concurrently.
 1. However, in practice, serializable isolation is rarely used, because it carries a performance penalty.
 2. Concurrently running transactions shouldn’t interfere with each other. For example, if one transaction makes several writes, then another transaction should see either all or none of those writes, but not some subset.
 
@@ -39,7 +39,7 @@
 
 ## Single-Object and Multi-Object Operations
 1. Not all applications are susceptible to all those problems: an application with very simple access patterns, such as reading and writing only a single record, can probably manage without transactions.
-2. However, for more complex access patterns, transac‐ tions can hugely reduce the number of potential error cases you need to think about.
+2. However, for more complex access patterns, transactions can hugely reduce the number of potential error cases you need to think about.
 3. in ACID, atomicity and isolation describe what the database should do if a client makes several writes within the same transaction
    * These definitions assume that you want to modify several objects (rows, documents, records) at once (e.g. check for unread email while having a counter of unread messages). Such multi-object transactions are often needed if several pieces of data need to be kept in sync.
 4. Multi-object transactions require some way of determining which read and write operations belong to the same transaction. In relational databases, that is typically done based on the client’s TCP connection to the database server: on any particular connection, everything between a BEGIN TRANSACTION and a COMMIT statement is considered to be part of the same transaction.
@@ -47,7 +47,7 @@
 
 ### Single-Object Writes
 1. Atomicity and isolation also apply when a single object is being changed. For example, imagine you are writing a 20 KB JSON document to a database
-2. To avoid confusing, storage engines almost universally aim to provide atomicity and isolation on the level of a single object (such as a key-value pair) on one node. Atomicity can be implemented using a log for crash recovery (see “Making B-trees reliable” on page 82), and isolation can be implemented using a lock on each object (allowing only one thread to access an object at any one time).
+2. To avoid confusing, storage engines almost universally aim to provide atomicity and isolation on the level of a single object (such as a key-value pair) on one node. *Atomicity can be implemented using a log for crash recovery (see “Making B-trees reliable” on page 82), and isolation can be implemented using a lock on each object (allowing only one thread to access an object at any one time)*.
 3. Single-Object Operations
    * Atomic increment: removes the need for a read-modify-write cycle, (2nd client reads the data before 1st client's write phase)
    * Compare-and-set: allows a write to happen only if the value has not been concurrently changed by someone else
@@ -58,26 +58,28 @@
 ### The need for multi-object transactions
 1. Many distributed datastores have abandoned multi-object transactions because they are difficult to implement across partitions, and they can get in the way in some scenarios where very high availability or performance is required.
 2. However, in many other cases writes to several different objects need to be coordinated
-   * In a relational data model, a row in one table often has a foreign key reference to a row in another table. Multi-object transactions allow you to ensure that these refer‐ ences remain valid.
-   * In a document data model, the fields that need to be updated together are often within the same document, which is treated as a single object—no multi-object transactions are needed when updating a single document. However,document databases lacking join functionality also encourage denormalization . Transactions are very useful in this situation to prevent denormalized data from going out of sync.
-   * the secondary indexes also need to be updated every time you change a value. without transaction isolation, it’s possible for a record to appear in one index but not another, because the update to the second index hasn’t happened yet.
+   * In a relational data model, a row in one table often has a foreign key reference to a row in another table. Multi-object transactions allow you to ensure that these references remain valid.
+   * In a document data model, the fields that need to be updated together are often within the same document, which is treated as a single object—no multi-object transactions are needed when updating a single document. However,document databases lacking join functionality also encourage denormalization. Transactions are very useful in this situation to prevent denormalized data from going out of sync.
+   * The secondary indexes also need to be updated every time you change a value. without transaction isolation, it’s possible for a record to appear in one index but not another, because the update to the second index hasn’t happened yet.
+
 ### Handling errors and aborts
-1. Without transactions, various error scenarios (processes crashing, network interrup‐ tions, power outages, disk full, unexpected concurrency, etc.) mean that data can become inconsistent in various ways.
+1. Without transactions, various error scenarios (processes crashing, network interruptions, power outages, disk full, unexpected concurrency, etc.) mean that data can become inconsistent in various ways.
 1. A key feature of a transaction is that it can be aborted and safely retried if an error occurred.
-2. Not all systems follow that philosophy, though. In particular, datastores with leader‐ less replication (see “Leaderless Replication” on page 177) work much more on a “best effort” basis, which could be summarized as “the database will do as much as it can, and if it runs into an error, it won’t undo something it has already done”—so it’s the application’s responsibility to recover from errors.
+2. Not all systems follow that philosophy, though. In particular, datastores with leader‐less replication (see “Leaderless Replication” on page 177) work much more on a “best effort” basis, which could be summarized as “the database will do as much as it can, and if it runs into an error, it won’t undo something it has already done”—so it’s the application’s responsibility to recover from errors.
 3. Although retrying an aborted transaction is a simple and effective error handling mechanism, it isn’t perfect:
    * If the transaction actually succeeded, but the network failed while the server tried to acknowledge the successful commit to the client (so the client thinks it failed)
    * If the error is due to overload, retrying the transaction will make the problem worse, not better. To avoid such feedback cycles, you can limit the number of retries, use exponential backoff, and handle overload-related errors differently from other errors (if possible).
-   * It is only worth retrying after transient errors (for example due to deadlock, iso‐ lation violation, temporary network interruptions, and failover); after a perma‐ nent error (e.g., constraint violation) a retry would be pointless.
+   * It is only worth retrying after transient errors (for example due to deadlock, isolation violation, temporary network interruptions, and failover); after a perma‐ nent error (e.g., constraint violation) a retry would be pointless.
    * If the transaction also has side effects outside of the database, those side effects may happen even if the transaction is aborted. If you want to make sure that several different systems either commit or abort together, two-phase commit can help
    * If the client process fails while retrying, any data it was trying to write to the database is lost.
 
 # Weak Isolation Levels
 1. Concurrency issues (race conditions) only come into play when one transaction reads data that is concurrently modified by another transaction, or when two transactions try to simultaneously modify the same data.
 2. In theory, transaction isolation should make your life easier by letting you pretend that no concurrency is happening: serializable isolation means that the database guarantees that transactions have the same effect as if they ran serially (i.e., one at a time, without any concurrency).
-3. Serializable isolation has a performance cost. It’s therefore common for systems to use weaker levels of isolation, which protect against some concurrency issues, but not all. Even many popular relational data‐ base systems (which are usually considered “ACID”) use weak isolation.
+3. Serializable isolation has a performance cost. It’s therefore common for systems to use weaker levels of isolation, which protect against some concurrency issues, but not all. Even many popular relational database systems (which are usually considered “ACID”) use weak isolation.
+
 ## Read Committed
-1. read committed makes two guarantees:
+1. Read committed makes two guarantees:
    * When reading from the database, you will only see data that has been committed (no dirty reads).
       * This means that any writes by a transaction only become visible to others when that transaction commits (and then all of its writes become visible at once).
    * When writing to the database, you will only overwrite data that has been committed (no dirty writes)
@@ -93,7 +95,7 @@
 1. One client overwrites data that another client has written, but not yet committed. Almost all transaction implementations prevent dirty writes.
 1. What happens if two transactions concurrently try to update the same object in a database? We don’t know in which order the writes will happen, but we normally assume that the later write overwrites the earlier write. However, what happens if the earlier write is part of a transaction that has not yet committed, so the later write overwrites an uncommitted value? This is called a dirty write.
 2. Reasons to prevent dirty writes
-   * If transactions update multiple objects, dirty writes can lead to a bad outcome. conflicting writes from different transactions can be mixed up
+   * If transactions update multiple objects, dirty writes can lead to a bad outcome. Conflicting writes from different transactions can be mixed up
    * However, read committed does not prevent the race condition between two counter increments. In this case, the second write happens after the first transaction has committed, so it’s not a dirty write.
 
 ### Implementing read committed
@@ -105,8 +107,8 @@
 ## Snapshot Isolation and Repeatable Read
 1. Problems with Read Committed
    * **nonrepeatable read or read skew**: A client sees different parts of the database at different points in time. This issue is most commonly prevented with snapshot isolation, which allows a transaction to read from a consistent snapshot at one point in time. It is usually implemented with multi-version concurrency control (MVCC).
-   * think about an example of balance transfer from one account to another, a user read one account before incoming payment has arrived, and another account after outgoing payment has been made
-   * 
+   * Think about an example of balance transfer from one account to another, a user read one account before incoming payment has arrived, and another account after outgoing payment has been made
+
 1. This tempoary inconsistency can cause problem in
    * backups
    * Analytic queries and integrity checks
@@ -129,6 +131,8 @@
 ### Indexes and snapshot isolation
 1. How do indexes work in a multi-version database? 
    * One option is to have the index simply point to all versions of an object and require an index query to filter out any object versions that are not visible to the current transaction. When
+
+
 ### Repeatable read and naming confusion
 1. Snapshot isolation is a useful isolation level, especially for read-only transactions. 
 2. However, many databases that implement it call it by different names. In Oracle it is called serializable, and in PostgreSQL and MySQL it is called repeatable read
