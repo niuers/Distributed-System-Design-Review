@@ -15,13 +15,6 @@
 1. How to route requests to the right partitions and execute queries?
 1. How to rebalance data when add or remove nodes?
 
-## Comparison
-Markdown | Less | Pretty
---- | --- | ---
-*Still* | `renders` | **nicely**
-Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, CouchBase | 3
-
-
 # Partitioning and Replication
 1. Partitioning is usually combined with replication so that copies of each partition are stored on multiple nodes.
 2. The choice of partitioning scheme is mostly independent of the choice of replication scheme.
@@ -31,33 +24,35 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
 2. Avoid hot spot
    * Assign records to nodes randomly. But this has a big disadvantage: when you’re trying to read a particular item, you have no way of knowing which node it is on, so you have to query all nodes in parallel.
    * Assume Key-Value data model
-      * Partitioning by Key Range: 
-      * 
+      * Partitioning by Key Range
 
 ## Partitioning by Key Range
-1. Assign a continuous range of keys (from some minimum to some maximum) to each partition. Within each partition, we can keep keys in sorted order
+1. Assign a continuous range of keys to each partition. Within each partition, we can keep keys in sorted order
    * Can easily find the node for a key
-   * range scans are easy if keys are sorted in each partition: SSTables and LSM-trees
-   * certain access patterns can lead to hot spots
+   * Range scans are easy if keys are sorted in each partition: SSTables and LSM-trees
+   * Certain access patterns can lead to hot spots
       * Modify the key, adds complexity for query
    * Partitions are typically rebalanced dynamically by splitting the range into two subranges when a partition gets too big.
 1. Products: Bigtable, HBase, RethinkDB, and MongoDB before version 2.4
+
 ## Partitioning by Hash Key
 1. A good hash function takes skewed data and makes it uniformly distributed
    * Programming languages' hash function may return different hash value in different processes for the same key, e.g. Java's Object.hashCode(). So not good.
 
 1. Each partition handles a range of hashes
    * This technique is good at distributing keys fairly among the partitions. The partition boundaries can be evenly spaced, or they can be chosen pseudorandomly (in which case the technique is sometimes known as consistent hashing)
-   * it destroys the ordering of keys, Can not do efficient range queries: has to query all partitions
+   * it destroys the ordering of keys, **Can not do efficient range queries**: has to query all partitions
    * Common to create a fixed number of partitions in advance, to assign several partitions to each node, and to move entire partitions from one node to another when nodes are added or removed. dynamic partitioning can also be used.
+
 3. Products
-   * Cassandra and MongoDB use MD5, and Voldemort uses the Fowler– Noll–Vo function
+   * Cassandra and MongoDB use MD5, and Voldemort uses the Fowler–NollVo function
    * Cassandra achieves a compromise: 
       * A table in Cassandra can be declared with a compound primary key consisting of several columns. Only the first part of that key is hashed to determine the partition, but the other columns are used as a concatenated index for sorting the data in Cassandra’s SSTables
       * A query with fixed value of first column can perform an efficient range scan over the other columns of the key
       * The concatenated index approach enables an elegant data model for one-to-many relationships
+
 ### Consistent Hashing
-1. It uses randomly chosen partition boundaries to avoid the need for central control or distributed consensus. Note
+1. It uses randomly chosen partition boundaries to avoid the need for central control or distributed consensus.
 2. The consistent here describes a particular approach to rebalancing
 
 ### Skewed Workloads and Relieving Hot Spot
@@ -72,7 +67,7 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
 
 ## Partitioning and Secondary Indexes
 1. A secondary index usually doesn’t identify a record uniquely but rather is a way of searching for occurrences of a particular value
-3. The problem with secondary indexes is that they don’t map neatly to partitions.
+3. **The problem with secondary indexes is that they don’t map neatly to partitions**
    * HBase and Voldemort have avoided secondary indexes
 2. A secondary index also needs to be partitioned. 
 
@@ -84,11 +79,11 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
       * MongoDB, Riak, Cassandra, Elasticsearch, SolrCloud, and VoltDB all use document-partitioned secondary indexes
 
 ### Partitioning Secondary Indexes by Term
-1. we can construct a global index that covers data in all partitions. However, we can’t just store that index on one node, since it would likely become a bottleneck and defeat the pur‐ pose of partitioning. A global index must also be partitioned, but it can be partitioned differently from the primary key index
-2. It's called term-partitioned index, because the term we’re looking for deter‐ mines the partition of the index
-   * it can make reads more efficient
-   * writes are slower and more complicated
-   * updates to global secondary indexes are often asynchronous (that is, if you read the index shortly after a write, the change you just made may not yet be reflected in the index
+1. We can construct a global index that covers data in all partitions. However, we can’t just store that index on one node, since it would likely become a bottleneck and defeat the purpose of partitioning. A global index must also be partitioned, but it can be partitioned differently from the primary key index
+2. It's called term-partitioned index, because the term we’re looking for determines the partition of the index
+   * It can make reads more efficient
+   * Writes are slower and more complicated
+   * Updates to global secondary indexes are often asynchronous (that is, if you read the index shortly after a write, the change you just made may not yet be reflected in the index
 
 # Rebalancing Partitions
 1. The need of rebalancing
@@ -96,21 +91,24 @@ Products | MongoDB, Elasticsearch, SolrCloud, HBase, Bigtable, Cassandra, Riak, 
    * The dataset size increases, so you want to add more disks and RAM to store it.
    * A machine fails, and other machines need to take over the failed machine’s responsibilities
 3. The process of moving data and requests from one node in the cluster to another is called rebalancing
-4. rebalancing is usually expected to meet some minimum requirements:
+4. Rebalancing is usually expected to meet some minimum requirements:
    * After rebalancing, the load (data storage, read and write requests) should be shared fairly between the nodes in the cluster.
    * Whille rebalancing is happening, the database should continue accepting reads and writes.
    * No more data than necessary should be moved between nodes, to make rebalanc‐ ing fast and to minimize the network and disk I/O load
 
 ## Strategies for Rebalancing
+
 We need an approach that doesn’t move data around more than necessary.
+
 ### How not to do it: hash mod N
 1. If the number of nodes N changes, most of the keys will need to be moved from one node to another
+2. 
 ### Fixed number of partitions
 1. Create many more partitions than there are nodes, and assign several partitions to each node. 
 2. Now, if a node is added to the cluster, the new node can steal a few partitions from every existing node until partitions are fairly distributed once again. 
 3. Only entire partitions are moved between nodes. The number of partitions does not change, nor does the assignment of keys to partitions. The only thing that changes is the assignment of partitions to nodes. 
 4. This change of assignment is not immediate— it takes some time to transfer a large amount of data over the network—so the old assignment of partitions is used for any reads and writes that happen while the transfer is in progress.
-5. This approach to rebalancing is used in Riak [15], Elasticsearch [24], Couchbase [10], and Voldemort
+5. This approach to rebalancing is used in Riak, Elasticsearch, Couchbase, and Voldemort
 6. Choosing the right number of partitions is difficult if the total size of the dataset is highly variable. If partitions are very large, rebalancing and recovery from node failures become expensive. But if partitions are too small, they incur too much overhead.
 
 ### Dynamic Partitioning
@@ -123,9 +121,9 @@ We need an approach that doesn’t move data around more than necessary.
 
 ### Partitioning proportionally to nodes
 1. In both of above strategies, the number of partitions is independent of the number of nodes.
-2. make the number of partitions proportional to the number of nodes—in other words, to have a fixed number of partitions per node
+2. Make the number of partitions proportional to the number of nodes—in other words, to have a fixed number of partitions per node
 3. When a new node joins the cluster, it randomly chooses a fixed number of existing partitions to split, and then takes ownership of one half of each of those split partitions while leaving the other half of each partition in place.
-4. Picking partition boundaries randomly requires that hash-based partitioning is used (so the boundaries can be picked from the range of numbers produced by the hash function). Indeed, this approach corresponds most closely to the original definition of consistent hashing [7]
+4. Picking partition boundaries randomly requires that hash-based partitioning is used (so the boundaries can be picked from the range of numbers produced by the hash function). Indeed, this approach corresponds most closely to the original definition of consistent hashing.
 5. Cassandra (256 partitions per node by default) and Ketama
 
 ## Operations: Automatic or Manual Rebalancing
@@ -143,10 +141,10 @@ We need an approach that doesn’t move data around more than necessary.
 
 ### How to Keep Updated on Partition Changes
 1. In all cases, the key problem is: how does the component making the routing decision (which may be one of the nodes, or the routing tier, or the client) learn about changes in the assignment of partitions to nodes?
-2. Consensus problem: it is important that all participants agree— otherwise requests would be sent to the wrong nodes and not handled correctly
+2. Consensus problem: it is important that all participants agree—otherwise requests would be sent to the wrong nodes and not handled correctly
 3. Many distributed data systems rely on a separate coordination service (from routing tier, etc.) such as ZooKeeper to keep track of this cluster metadata
 4. Each node registers itself in ZooKeeper, and ZooKeeper maintains the authoritative mapping of partitions to nodes. Other actors, such as the routing tier or the partitioning-aware client, can subscribe to this information in ZooKeeper. Whenever a partition changes ownership, or a node is added or removed, ZooKeeper notifies the routing tier so that it can keep its routing information up to date
-5. HBase, SolrCloud, and Kafka also use ZooKeeper to track partition assignment. MongoDB has a similar architecture, but it relies on its own config server implemen‐ tation and mongos daemons as the routing tier
+5. HBase, SolrCloud, and Kafka also use ZooKeeper to track partition assignment. MongoDB has a similar architecture, but it relies on its own config server implementation and mongos daemons as the routing tier
 6. Cassandra and Riak take a different approach: they use a *gossip protocol* among the nodes to disseminate any changes in cluster state. 
    * Requests can be sent to any node, and that node forwards them to the appropriate node for the requested partition
 7. When using a routing tier or when sending requests to a random node, clients still need to find the IP addresses to connect to. These are not as fast-changing as the assignment of partitions to nodes, so it is often sufficient to use DNS for this purpose.
