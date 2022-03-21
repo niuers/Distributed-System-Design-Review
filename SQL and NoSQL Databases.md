@@ -408,6 +408,9 @@
    * Take a matrix of nxm, where n is the unique number of values, and m is the number of rows. So we only need n bitmaps to represent all data in this column. Each bitmap has a length of m.
 1. If n is very small (for example, a country column may have approximately 200 dis‐ tinct values), those bitmaps can be stored with one bit per row. But if n is bigger, there will be a lot of zeros in most of the bitmaps (we say that they are sparse). In that case, the bitmaps can additionally be **run-length encoded (RLE)**.
 1. Cassandra and HBase have a concept of column families, which they inherited from Bigtable. However, it is very misleading to call them column-oriented: within each column family, they store all columns from a row together, along with a row key, and they do not use column compression. Thus, the Bigtable model is still mostly row-oriented.
+2. Cassandra:
+  * Each table requires a unique *primary key*. The first field listed is the partition key, since its hashed value is used to determine the node to store the data. If those fields are wrapped in parentheses then the partition key is composite. Otherwise the first field is the partition key. Any fields listed after the partition key are called clustering columns. These store data in ascending or descending order within the partition for the fast retrieval of similar values. All the fields together are the primary key.
+
 
 #### Memory bandwidth and vectorized processing
 1. For data warehouse queries that need to scan over millions of rows, a big bottleneck is the bandwidth for getting data from disk into memory.
