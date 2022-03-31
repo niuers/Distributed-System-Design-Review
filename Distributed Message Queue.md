@@ -158,30 +158,29 @@
 # RabbitMQ
 # In-Memory Message Queue using mmap
 
- mmap: https://realpython.com/python-mmap/
-. Python’s mmap provides memory-mapped file input and output (I/O). It allows you to take advantage of lower-level operating system functionality to read files as if they were one large string or array. This can provide significant performance improvements in code that requires a lot of file I/O.
-. operating system uses page table to map from virtual memory to physical memory
-. mmap uses virtual memory to make it appear that you’ve loaded a very large file into memory, even if the contents of the file are too big to fit in your physical memory.
-. Python’s mmap uses shared memory to efficiently share large amounts of data between multiple Python processes, threads, and tasks that are happening concurrently
-. Memory mapping is another way to perform file I/O that can result in better performance and memory efficiency.
-. regular file I/O
+1. mmap: https://realpython.com/python-mmap/
+ 
+1. Python’s mmap provides memory-mapped file input and output (I/O). It allows you to take advantage of lower-level operating system functionality to read files as if they were one large string or array. This can provide significant performance improvements in code that requires a lot of file I/O.
+1. operating system uses page table to map from virtual memory to physical memory
+1. mmap uses virtual memory to make it appear that you’ve loaded a very large file into memory, even if the contents of the file are too big to fit in your physical memory.
+1. Python’s mmap uses shared memory to efficiently share large amounts of data between multiple Python processes, threads, and tasks that are happening concurrently
+1. Memory mapping is another way to perform file I/O that can result in better performance and memory efficiency.
+1. regular file I/O
 Transferring control to the kernel or core operating system code with system calls
 Interacting with the physical disk where the file resides
 Copying the data into different buffers between user space (application buffer) and kernel space (read buffer)
-. All access with the physical hardware must happen in a protected environment called kernel space. System calls are the API that the operating system provides to allow your program to go from user space to kernel space, where the low-level details of the physical hardware are managed.
-. The most important thing to remember is that system calls are relatively expensive computationally speaking, so the fewer system calls you do, the faster your code will likely execute.
-. memory mapping doesn’t have to use more memory than the conventional approach. The operating system is very clever. It will lazily load the data as it’s requested
-. In addition, thanks to virtual memory, you can load a file that’s larger than your physical memory. However, you won’t see the huge performance improvements from memory mapping when there isn’t enough physical memory for your file, because the operating system will use a slower physical storage medium like a solid-state disk to mimic the physical memory it lacks.
-. Python’s mmap file object can be sliced just like string objects!
-. mmap objects as strings. mmap operates on bytes, not strings
-. Memory-Mapped Objects as Files: 
-. Sharing Data Between Processes With Python’s mmap
-a. you can also create anonymous memory maps that have no physical storage
-b. 
-Data doesn’t have to be copied between processes.
-The operating system handles the memory transparently.
-Data doesn’t have to be pickled between processes, which saves CPU time.
-
-c. mmap is incompatible with higher-level, more full-featured APIs like the built-in multiprocessing module. The multiprocessing module requires data passed between processes to support the pickle protocol, which mmap does not
-d. Sharing between siblings: processes can use IPC to exchange the file descriptor or use an extra manage layer. Still need use IPC to exchange file descriptor.
+1. All access with the physical hardware must happen in a protected environment called kernel space. System calls are the API that the operating system provides to allow your program to go from user space to kernel space, where the low-level details of the physical hardware are managed.
+1. The most important thing to remember is that system calls are relatively expensive computationally speaking, so the fewer system calls you do, the faster your code will likely execute.
+1. memory mapping doesn’t have to use more memory than the conventional approach. The operating system is very clever. It will lazily load the data as it’s requested
+1. In addition, thanks to virtual memory, you can load a file that’s larger than your physical memory. However, you won’t see the huge performance improvements from memory mapping when there isn’t enough physical memory for your file, because the operating system will use a slower physical storage medium like a solid-state disk to mimic the physical memory it lacks.
+1. Python’s mmap file object can be sliced just like string objects!
+1. mmap objects as strings. mmap operates on bytes, not strings
+1. Memory-Mapped Objects as Files: 
+1. Sharing Data Between Processes With Python’s mmap
+  * You can also create anonymous memory maps that have no physical storage
+  * Data doesn’t have to be copied between processes.
+  * The operating system handles the memory transparently.
+  * Data doesn’t have to be pickled between processes, which saves CPU time.
+  * mmap is incompatible with higher-level, more full-featured APIs like the built-in multiprocessing module. The multiprocessing module requires data passed between processes to support the pickle protocol, which mmap does not
+1. Sharing between siblings: processes can use IPC to exchange the file descriptor or use an extra manage layer. Still need use IPC to exchange file descriptor.
 
