@@ -297,3 +297,6 @@ In those scenarios you have to consider relying fully on database caching, addin
 1. It is a web service that makes it easy to set up, manage, and scale a distributed in-memory data store or cache environment in the cloud
 2. Amazon ElastiCache works with both the Redis and Memcached engines
 3. 
+
+
+[Cache Consistency]: https://yunpengn.github.io/blog/2019/05/04/consistent-redis-sql/
