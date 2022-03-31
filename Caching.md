@@ -192,10 +192,62 @@ Generally, you should try to avoid file-based caching, as it makes cloning and a
 9. You can run out of RAM for the cache   
 
 ### Cache Consistency
-1. Writes: make sure for user who's writing data get that fresh data immediately
+1. Three Pitfalls
+  * When changes to the primary database aren’t reflected in the cache
+  * When there’s a delay in updating cached results
+     * Each time a value is updated in the primary database, a message is sent to the cache, instructing it either to update the changed value or to remove it entirely. (In the latter case, the next time the value is requested, it will be accessed from the primary database and then from the cache thereafter.) Under normal circumstances, this communication happens relatively quickly and the cached item is either updated or removed in order to maintain cache consistency.
+  * When there’s inconsistency across cached nodes due to replication
+1. Need to be aware of the cost of cache consistency
+2. How to deal with Cache Consistency
+  * Cache invalidation (Cache Aside?)
+    * With cache invalidation, whenever a value is updated in the primary database, each cached item with a corresponding key is automatically deleted (always delete rather than update the cache, the new value will be inserted when next cache miss) from the cache or caches. Although cache invalidation could perhaps be seen as a “brute force approach,” the advantage is that it requires only one costly and often time-consuming write—to the primary database itself—instead of two or more. 
+    * cannot guarantee eventual consistency
+    * Client might still read stale data in case of 'delete' failure
+    * Client might read stale data before deletion
+    * Variant 1
+      * For mutable operations (create, update, delete):
+      * Create, update or delete the data to MySQL;
+      * Delete the entry in Redis (always delete rather than update the cache, the new value will be inserted when next cache miss).
+    * Variant 2
+      * Delete the entry in Redis;
+      * Create, update or delete the data to MySQL.
+      * cannot guarantee eventual consistency
+      * Another process might instill stale value before the DB gets updated
+      * Another Variant: Create, update or delete the data to MySQL; Create, update or delete the entry in Redis. (bad)
+
+  * Write-through caching
+    * In this case, rather than updating the primary database and removing the cache, with the write-through strategy, the application updates(create/update/delete) the cache, and then the **cache updates the primary database synchronously**. In other words, instead of relying on the primary database to initiate any updating, the cache is in charge of maintaining its own consistency and delivering word of any changes it makes back to the primary database.
+    * Unfortunately, there are times when two writes can actually make a wrong. One of the drawbacks of the write-through cache strategy is that updating both the cache and the primary database requires two time-consuming, processor-taxing changes, first to the cache and then to the primary database.
+    * It also risks of losing data
+
+  * Write-behind caching
+    * Another strategy, known as write-behind, avoids this problem by initially updating only the cache and then updating the primary database later. Of course, the primary database will also need to be updated, and the sooner the better, but in this case the user doesn’t have to pay the “cost” of the two writes. The second write to the primary database occurs asynchronously and behind the scenes (hence the name, write-behind) at a time when it is less likely to impair performance.
+    * The client only needs to create, update or delete the entry in Redis. The cache layer saves the change into a message queue and returns success to the client. The change is replicated to MySQL asynchronously and may happen after Redis sends success response to the client.
+    * the message queue used must be FIFO (first in first out). Otherwise, the updates to MySQL may be out of order and thus the eventual result may be incorrect
+  * Double Delete
+    * The algorithm for double delete pattern is:
+    * For immutable operations (read):
+      * Cache hit: return data from Redis directly, with no query to MySQL;
+      * Cache miss: query MySQL to get the data (can use read replicas to improve performance), save the returned data to Redis, return the result to client.
+    * For mutable operations (create, update, delete):
+      * Delete the entry in Redis;
+      * Create, update or delete the data to MySQL;
+      * Sleep for a while (such as 500ms);
+      * Delete the entry in Redis again.
+    * it mostly guarantees eventual consistency under normal scenarios
+
+  * Write Behind - Variant
+    * (Canan) Rather than replicating changes from Redis to MySQL, it subscribes to the binlog of MySQL and replicates it to Redis. This provides much better durability and consistency than the original algorithm. Since binlog is part of the RDMS technology, we can assume it is durable and resilient under disaster. Such an architecture is also quite mature as it has been used to replicate changes between MySQL master and slaves.
+
+* In conclusion, none of the approaches above can guarantee strong consistency. Strong consistency may not be a realistic requirement for the consistency between Redis and MySQL as well. To guarantee strong consistency, we have to implement ACID on all operations. Doing so will degrade the performance of the cache layer, which will defeat our objectives of using Redis cache.
+
+However, all the approaches above have attempted to achieve eventual consistency, of which the last one (introduced by canal) being the best. 
+
+
+3. Writes: make sure for user who's writing data get that fresh data immediately
    * FB posts wrong image, don't want too long delay between the time user posts image and user sees the image
-3. While caching is fantastic, it does require you to maintain consistency between your caches and the source of truth (i.e. your database), at risk of truly bizarre applicaiton behavior. Solving this problem is known as cache invalidation.
-4. If you’re dealing with a single datacenter, it tends to be a straightforward problem, but it’s easy to introduce errors if you have multiple codepaths writing to your database and cache (which is almost always going to happen if you don’t go into writing the application with a caching strategy already in mind). At a high level, the solution is: each time a value changes, write the new value into the cache (this is called a write-through cache) or simply delete the current value from the cache and allow a read-through cache to populate it later (choosing between read and write through caches depends on your application’s details, but generally I prefer write-through caches as they reduce likelihood of a stampede on your backend database).
+4. While caching is fantastic, it does require you to maintain consistency between your caches and the source of truth (i.e. your database), at risk of truly bizarre applicaiton behavior. Solving this problem is known as cache invalidation.
+5. If you’re dealing with a single datacenter, it tends to be a straightforward problem, but it’s easy to introduce errors if you have multiple codepaths writing to your database and cache (which is almost always going to happen if you don’t go into writing the application with a caching strategy already in mind). At a high level, the solution is: each time a value changes, write the new value into the cache (this is called a write-through cache) or simply delete the current value from the cache and allow a read-through cache to populate it later (choosing between read and write through caches depends on your application’s details, but generally I prefer write-through caches as they reduce likelihood of a stampede on your backend database).
 
 Invalidation becomes meaningfully more challenging for scenarios involving fuzzy queries (e.g if you are trying to add application level caching in-front of a full-text search engine like SOLR), or modifications to unknown number of elements (e.g. deleting all objects created more than a week ago).
 
