@@ -646,7 +646,7 @@ The _id field is always the first field in the documents. If the server receives
    * This method uses the "sendfile" system call which allows for very efficient transfer of data from a file to another file (including sockets). 
       * sendfile() claims to make data transfer happening under kernel space only — i.e data transferred from kernel system cache to NIC buffer (or traversed through kernel system cache if local copy), thus doesnt require context switches as in read+write combination. sendfile() has now been widely used as a supported data transfering technique especially under nginx and kafka.
       * No context switch between user space and kernel space
-      * No copy from kernel buffer to user buffer and user buffer to NIC buffer
+      * No copy from kernel buffer to user buffer and user buffer to NIC (network interface card) buffer
    * This optimization is what allows us to pull ~100MB/s out of a single broker
    * KafkaStream is an iterable 
    * Blocking or non-blocking behavior 
