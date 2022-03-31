@@ -50,6 +50,29 @@
       * A table in Cassandra can be declared with a compound primary key consisting of several columns. Only the first part of that key is hashed to determine the partition, but the other columns are used as a concatenated index for sorting the data in Cassandra’s SSTables
       * A query with fixed value of first column can perform an efficient range scan over the other columns of the key
       * The concatenated index approach enables an elegant data model for one-to-many relationships
+   * Cassandra Indexes
+   * When to use an index
+     * Cassandra's built-in indexes are best on a table having many rows that contain the indexed value. The more unique values that exist in a particular column, the more overhead you will have, on average, to query and maintain the index. For example, suppose you had a playlists table with a billion songs and wanted to look up songs by the artist. Many songs will share the same column value for artist. The artist column is a good candidate for an index.
+   * When not to use an index
+     * Do not use an index in these situations:
+     * On high-cardinality columns because you then query a huge volume of records for a small number of results. See Problems using a high-cardinality column index below.
+     * In tables that use a counter column
+     * On a frequently updated or deleted column. See Problems using an index on a frequently updated or deleted column below.
+     * To look for a row in a large partition unless narrowly queried. See Problems using an index to look for a row in a large partition unless narrowly queried below.
+
+    * Problems using a high-cardinality column index
+If you create an index on a high-cardinality column, which has many distinct values, a query between the fields will incur many seeks for very few results. In the table with a billion songs, looking up songs by writer (a value that is typically unique for each song) instead of by their artist, is likely to be very inefficient. It would probably be more efficient to manually maintain the table as a form of an index instead of using the Cassandra built-in index. For columns containing unique data, it is sometimes fine performance-wise to use an index for convenience, as long as the query volume to the table having an indexed column is moderate and not under constant load.
+
+Conversely, creating an index on an extremely low-cardinality column, such as a boolean column, does not make sense. Each value in the index becomes a single row in the index, resulting in a huge row for all the false values, for example. Indexing a multitude of indexed columns having foo = true and foo = false is not useful.
+
+    * Problems using an index on a frequently updated or deleted column
+
+Cassandra stores tombstones in the index until the tombstone limit reaches 100K cells. After exceeding the tombstone limit, the query that uses the indexed value will fail.
+
+    * Problems using an index to look for a row in a large partition unless narrowly queried
+A query on an indexed column in a large cluster typically requires collating responses from multiple data partitions. The query response slows down as more machines are added to the cluster. You can avoid a performance hit when looking for a row in a large partition by narrowing the search, as shown in the next section.
+
+    * You can create secondary index on a column: secondary indexes are handled as "local indexes" -- each node creates a local index table only for the data it owns. This helps in the case that you need to scan all partitions, and search for rows satisfying certain condition.
 
 ### Consistent Hashing
 1. It uses randomly chosen partition boundaries to avoid the need for central control or distributed consensus.
