@@ -299,4 +299,4 @@ In those scenarios you have to consider relying fully on database caching, addin
 3. 
 
 
-[Cache Consistency]: https://yunpengn.github.io/blog/2019/05/04/consistent-redis-sql/
+[Cache Consistency](https://yunpengn.github.io/blog/2019/05/04/consistent-redis-sql/)
