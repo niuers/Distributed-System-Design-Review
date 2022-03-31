@@ -1,3 +1,5 @@
+https://docs.microsoft.com/en-us/dotnet/architecture/cloud-native/relational-vs-nosql-data
+
 # Data Models
 1. They are perhaps the most important part on how we *think about the problem* 
 2. Most applications are built by layering one data model on top of another. For each layer, the key question is: *how is it represented in terms of the next-lower layer?* Each layer hides the complexity of the layers below it by providing a clean data model.
