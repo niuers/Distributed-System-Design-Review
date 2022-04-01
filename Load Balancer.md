@@ -171,6 +171,9 @@ Even if you visit website multiple times, you should end up with the same sessio
    * Store the ID of the server in the cookie, but that exposes the private IP to external world. Also, what if the IP changed for the server?
    * It's better to store the hash of the corresponding server. This can be set by the load balancer.
    * It breaks down when user disables the cookie though.
+   * Easy to lose the state if stored locally
+   * Sticky session doesn't help to scale
+   * Might cause security problem: DDoS on the single server
 3. Hash based Loading balancer
 4. Sometimes on the internet, you will find a few percent of the clients which disable cookies on their browser. Obviously they have troubles everywhere on the web, but you can still help them access your site by using the "source" balancing algorithm instead of the "roundrobin". It ensures that a given IP address always reaches the same server as long as the number of servers remains unchanged. Never use this behind a proxy or in a small network, because the distribution will be unfair. However, in large internal networks, and on the internet, it works quite well. Clients which have a dynamic address will not be affected as long as they accept the cookie, because the cookie always has precedence over load balancing.
 
