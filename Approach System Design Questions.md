@@ -42,6 +42,10 @@
 42. Be a “how team” instead of a “no team”.
 43. Build security into the software development lifecycle.  You need to train developers on how to write secure software and make it a business priority from the start.
 44. Not using metrics in your development process is like trying to land a plane in a storm with your altimeter not working. Throughout your development process, compute metrics such as site throughput, time to fix Blocker/Critical bugs, code coverage and use them to gauge your performance.
+45. [Services](http://highscalability.com/blog/2011/11/29/datasift-architecture-realtime-datamining-at-120000-tweets-p.html). It's hard to design using services from the start. They had an architecture from day one, but how you connect those services, how you make those services redundant, how you make those services respond to failures, and how you make everything not fail if one things fails--all these types of issues have been pain points. Dividing components into services is key to solving these distributed programming issues. Services have also allowed each component to be made scalable in isolation.
+46. Metrics are more important than logging. Logging always gets filled up with stuff you don’t use. It’s more efficient to be able to create alerts for metrics that go out of bounds. When a metric triggers awareness of problems then you can go look at logs.
+
+
 
 
 
