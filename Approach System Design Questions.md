@@ -36,6 +36,14 @@
 35. Developers should spend some time with customer service every two years. Their they'll actually listen to customer service calls, answer customer service e-mails, and really understand the impact of the kinds of things they do as technologists.
 36. Use a "voice of the customer," which is a realistic story from a customer about some specific part of your site's experience. This helps managers and engineers connect with the fact that we build these technologies for real people. Customer service statistics are an early indicator if you are doing something wrong, or what the real pain points are for your customers.
 37. Infrastructure for Amazon, like for Google, is a huge competitive advantage. They can build very complex applications out of primitive services that are by themselves relatively simple. They can scale their operation independently, maintain unparalleled system availability, and introduce new services quickly without the need for massive reconfiguration.
+38. [“Be brief, be bright, be gone”](http://highscalability.com/blog/2012/7/16/cinchcast-architecture-producing-1500-hours-of-audio-every-d.html): Respect another person’s time. Don’t come with problems, come with solutions.
+40. Don’t go chasing hot technologies of the day. Instead ‘mitigate your top problems’.   We adopt new technologies but do so, when the business case requires it. Appetite for Production outages decreases significantly when you have millions of users.
+41. Achieve “essential”, then worry about “excellent”.
+42. Be a “how team” instead of a “no team”.
+43. Build security into the software development lifecycle.  You need to train developers on how to write secure software and make it a business priority from the start.
+44. Not using metrics in your development process is like trying to land a plane in a storm with your altimeter not working. Throughout your development process, compute metrics such as site throughput, time to fix Blocker/Critical bugs, code coverage and use them to gauge your performance.
+
+
 
 
 
