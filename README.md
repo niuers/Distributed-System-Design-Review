@@ -291,6 +291,32 @@ With the spider web of all the services to work with, chances of failures increa
 4. How does the skewness of our data affect our throughput?
 5. Scaling out vs. Scaling up decision
 
+# [Improve Instgram Performance](https://instagram-engineering.com/making-instagram-com-faster-part-3-cache-first-6f3f130b9669)
+1. Correctly prioritizing resource download and execution and reducing browser downtime during the page load is one of the main levers for improving web application performance.
+1. [Resource prefetching: JavaScript, XHR, and image prefetching (and how you need to be careful)](https://instagram-engineering.com/making-instagram-com-faster-part-1-62cc0c327538)
+  1. As a general principle, we want to inform the browser as early as possible about what resources are required to load the page. These resources mainly include those that are dynamically fetched by JavaScript (other scripts, images, XHR requests etc.) since the browser is unable to discover these dependent resources until it has parsed and executed some other JavaScript first.
+  2. Instead of waiting for the browser to discover these resources itself, we can provide a hint to the browser that it should start working on fetching those resources immediately. The way we do this is by using HTML preload tags. 
+  3. At Instagram, we use these preload hints for two types of resources on the critical page loading path: dynamically loaded JavaScript and preloading XHR GraphQL requests for data. 
+  4. Dynamically loaded scripts are those that are loaded via import('...') for a particular client-side route. We maintain a list of mappings between server-side entrypoints and client-side route scripts — so when we receive a page request on the server-side, we know which client-side route scripts will be required for a particular server-side entrypoint and we can add a preload for these route specific scripts as we render the initial page HTML.
+  5. In addition to starting the download of resources sooner, link preloads also have the additional benefit of increasing the network priority of async script downloads. This becomes important for async scripts on the critical loading path because the default priority for these is Low. This means that XHR requests and images in the viewport will have higher network priority, and images outside the viewport will have the same network priority. This can cause situations where critical scripts required for rendering the page are blocked or have to share bandwidth with other resources
+  6. Problems with preload prioritization: The problem with preloads is that with the extra control it provides, comes the extra responsibility of correctly setting the resource priorities. 
+  7. We decided to have a preload tag for all script resources and to place them in the order that they would be needed. This ensured that we were able to start preloading all script resources as early as possible in the page (including synchronous script tags that couldn’t be rendered into the HTML until after certain server side data was added to the page), and ensured that we could control the ordering of script resource loading.
+  8. Image prefetching: 
+    9. we don’t want the user to wait every time they get to the bottom of the feed (while we load a new batch of posts), so it’s very important for the user experience that we load in new batches before the user hits the end of their current feed.
+    10. This is quite tricky to do in practice for a few reasons:
+      11. We don’t want off-screen batch loading to take CPU and bandwidth priority away from parts of the feed the user is currently viewing.
+      12. We don’t want to waste user bandwidth by being over-eager with preloading posts the user might not ever bother scrolling down to see, but on the other hand if we don’t preload enough, the user will frequently hit the end of feed.
+      13. Instagram.com is designed to work on a variety of screen sizes and devices, so we display feed images using the img srcset attribute (which lets the browser decide which image resolution to use based on the users screen size). This means it's not easy to determine which image resolution we should preload & risks preloading images the browser will never use.
+      14. The approach we used to solve the problem was to build a prioritized task abstraction that handles queueing of asynchronous work (in this case, a prefetch for the next batch of feed posts). This prefetch task is initially queued at an idle priority (using requestIdleCallback), so it won’t begin unless the browser is not doing any other important work. However if the user scrolls close enough to the end of the current feed, we increase the priority of this prefetch task to ‘high’ by cancelling the pending idle callback and thus firing off the prefetch immediately.
+
+
+
+
+
+3. Cache First rendering approach
+  1. When the page is loaded, we immediately present users with a cached copy of their previous feed and stories tray, and then replace it with fresh data once it’s available.
+
+
 # Resources
 1. [CS75 (Summer 2012) Lecture 9 Scalability Harvard Web Development David Malan](https://youtu.be/-W9F__D3oY4)
 2. Check Bronson's TAO pdf paper in same link as video
