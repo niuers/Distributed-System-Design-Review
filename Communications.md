@@ -218,7 +218,7 @@ The client repeats the above three steps periodically to get updates from the se
 
   
 ### WebSockets
-1. WebSocket is a computer communication protocol which provides full-duplex communication channels over a single TCP connection.
+1. WebSocket is a computer communication protocol which provides full-duplex communication channels over a single TCP connection. In a nutshell, WebSockets are a thin transport layer built on top of a device’s TCP/IP stack. The
 2. It is different from HTTP but compatible with HTTP.
   1. Located at layer 7 in the OSI model and depends on TCP at layer 4.
   1. Works over port 80 and 443 ( in case of TLS encrypted) and supports HTTP proxies and intermediaries.
