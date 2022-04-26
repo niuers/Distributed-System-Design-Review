@@ -9,11 +9,191 @@ The Secure Sockets Layer (SSL) protocol is primarily used to encrypt confidentia
 
 
 # Hypertext transfer protocol (HTTP)
+1. On the software side, a web server includes several parts that control how web users access hosted files. At a minimum, this is an HTTP server. On the hardware side, a web server is a computer that stores web server software and a website's component files (for example, HTML documents, images, CSS stylesheets, and JavaScript files). A web server connects to the Internet and supports physical data interchange with other devices connected to the web.
+1. A Protocol is a set of rules for communication between two computers. HTTP is a textual, stateless protocol. HTTP follows a classical client-server model (which means requests are initiated by the recipient, usually the Web browser), with a client opening a connection to make a request, then waiting until it receives a response. HTTP is a stateless protocol, meaning that the server does not keep any data (state) between two requests.
 1. HTTP is a method for encoding and transporting data between a client (browser) and a server. It is a request/response protocol: clients issue requests and servers issue responses with relevant content and completion status info about the request. HTTP is self-contained, allowing requests and responses to flow through many intermediate routers and servers that perform load balancing, caching, encryption, and compression. This self‑contained design allows for the distributed nature of the Internet, where a request or response might pass through many intermediate routers and proxy servers.
 1. Information is exchanged between clients and servers in the form of Hypertext documents (HTML). 
 1. A basic HTTP request consists of a verb (method) and a resource (endpoint). Below are common HTTP verbs: GET, POST, PUT
 1. HTTP is an application layer protocol relying on lower-level protocols such as TCP and UDP.
 1. HTTP resources such as web servers are identified across the Internet using unique identifiers known as Uniform Resource Locators (URLs).
+2. Usually only clients make HTTP requests, and only to servers. Servers respond to a client's HTTP request. A server can also populate data into a client cache, in advance of it being requested, through a mechanism called a server push.
+3. On a web server, the HTTP server is responsible for processing and answering incoming requests.
+4. HTTP is stateless, but not sessionless
+  1. HTTP is stateless: there is no link between two requests being successively carried out on the same connection. This immediately has the prospect of being problematic for users attempting to interact with certain pages coherently, for example, using e-commerce shopping baskets. 
+  2. But while the core of HTTP itself is stateless, HTTP cookies allow the use of stateful sessions. Using header extensibility, HTTP Cookies are added to the workflow, allowing session creation on each HTTP request to share the same context, or the same state.
+5. HTTP and connections
+  1. A connection is controlled at the transport layer, and therefore fundamentally out of scope for HTTP. HTTP doesn't require the underlying transport protocol to be connection-based; it only requires it to be reliable, or not lose messages (at minimum, presenting an error in such cases). Among the two most common transport protocols on the Internet, TCP is reliable and UDP isn't. HTTP therefore relies on the TCP standard, which is connection-based.
+  2. Before a client and server can exchange an HTTP request/response pair, they must establish a TCP connection, a process which requires several round-trips. The default behavior of HTTP/1.0 is to open a separate TCP connection for each HTTP request/response pair. This is less efficient than sharing a single TCP connection when multiple requests are sent in close succession.
+  3. In order to mitigate this flaw, HTTP/1.1 introduced pipelining (which proved difficult to implement) and persistent connections: the underlying TCP connection can be partially controlled using the Connection header. HTTP/2 went a step further by multiplexing messages over a single connection, helping keep the connection warm and more efficient.
+6. What can be controlled by HTTP
+  1. Caching: How documents are cached can be controlled by HTTP. The server can instruct proxies and clients about what to cache and for how long. The client can instruct intermediate cache proxies to ignore the stored document.
+  2. Relaxing the origin constraint: To prevent snooping and other privacy invasions, Web browsers enforce strict separation between Web sites. Only pages from the same origin can access all the information of a Web page. Though such a constraint is a burden to the server, HTTP headers can relax this strict separation on the server side, allowing a document to become a patchwork of information sourced from different domains; there could even be security-related reasons to do so.
+  3. Authentication: Some pages may be protected so that only specific users can access them. Basic authentication may be provided by HTTP, either using the WWW-Authenticate and similar headers, or by setting a specific session using HTTP cookies.
+  4. Proxy and tunneling: Servers or clients are often located on intranets and hide their true IP address from other computers. HTTP requests then go through proxies to cross this network barrier. Not all proxies are HTTP proxies. The SOCKS protocol, for example, operates at a lower level. Other protocols, like ftp, can be handled by these proxies.
+  5. Sessions: Using HTTP cookies allows you to link requests with the state of the server. This creates sessions, despite basic HTTP being a state-less protocol. This is useful not only for e-commerce shopping baskets, but also for any site allowing user configuration of the output.
+
+## HTTP flow
+When a client wants to communicate with a server, either the final server or an intermediate proxy, it performs the following steps:
+
+1. Open a TCP connection: The TCP connection is used to send a request, or several, and receive an answer. The client may open a new connection, reuse an existing connection, or open several TCP connections to the servers.
+2. Send an HTTP message: HTTP messages (before HTTP/2) are human-readable. With HTTP/2, these simple messages are encapsulated in frames, making them impossible to read directly, but the principle remains the same. For example:
+```
+GET / HTTP/1.1
+Host: developer.mozilla.org
+Accept-Language: fr
+```
+3. Read the response sent by the server, such as:
+```
+HTTP/1.1 200 OK
+Date: Sat, 09 Oct 2010 14:28:02 GMT
+Server: Apache
+
+Last-Modified: Tue, 01 Dec 2009 20:18:22 GMT
+ETag: "51142bc1-7449-479b075b2891b"
+Accept-Ranges: bytes
+Content-Length: 29769
+Content-Type: text/html
+
+<!DOCTYPE html... (here come the 29769 bytes of the requested web page)
+```
+4. Close or reuse the connection for further requests.
+  5. If HTTP pipelining is activated, several requests can be sent without waiting for the first response to be fully received. HTTP pipelining has proven difficult to implement in existing networks, where old pieces of software coexist with modern versions. HTTP pipelining has been superseded in HTTP/2 with more robust multiplexing requests within a frame.
+
+## APIs based on HTTP
+1. The most commonly used API based on HTTP is the XMLHttpRequest API, which can be used to exchange data between a user agent and a server. 
+2. The modern Fetch API provides the same features with a more powerful and flexible feature set.
+3. Another API, server-sent events, is a one-way service that allows a server to send events to the client, using HTTP as a transport mechanism. Using the EventSource interface, the client opens a connection and establishes event handlers. The client browser automatically converts the messages that arrive on the HTTP stream into appropriate Event objects, delivering them to the event handlers that have been registered for the events' type if known, or to the onmessage event handler if no type-specific event handler was established.
+
+
+## Components of HTTP-based systems
+1. Between the client and the server there are numerous entities, collectively called proxies, which perform different operations and act as gateways or caches, for example.
+2. The user-agent is any tool that acts on behalf of the user. This role is primarily performed by the Web browser, but it may also be performed by programs used by engineers and Web developers to debug their applications.
+3. The Web server
+4. Proxies
+  1. Between the Web browser and the server, numerous computers and machines relay the HTTP messages. Due to the layered structure of the Web stack, most of these operate at the transport, network or physical levels, becoming transparent at the HTTP layer and potentially having a significant impact on performance. 
+  2. Those operating at the application layers are generally called proxies. These can be transparent, forwarding on the requests they receive without altering them in any way, or non-transparent, in which case they will change the request in some way before passing it along to the server. Proxies may perform numerous functions:
+    3. caching (the cache can be public or private, like the browser cache)
+    4. filtering (like an antivirus scan or parental controls)
+    5. load balancing (to allow multiple servers to serve different requests)
+    6. authentication (to control access to different resources)
+    7. logging (allowing the storage of historical information)
+8. 
+
+## HTTP caching
+1. These can be grouped into two main categories: shared and private caches. A shared cache is a cache that stores responses for reuse by more than one user. A private cache is dedicated to a single user. This page will mostly talk about browser and proxy caches, but there are also gateway caches, CDN, reverse proxy caches and load balancers that are deployed on web servers for better reliability, performance and scaling of web sites and web applications.
+2. Private browser caches
+  1. A private cache is dedicated to a single user. You may have seen "caching" in your browser's settings already. A browser cache holds all documents the user downloads via HTTP. This cache is used to make visited documents available for back/forward navigation, saving, viewing-as-source, etc. without requiring an additional trip to the server. It also improves offline browsing of cached content.
+3. Shared proxy caches
+  1. A shared cache is a cache that stores responses to be reused by more than one user. For example, an Internet Service Provider (ISP) or your company might have set up a web proxy as part of its local network infrastructure to serve many users so that popular resources are reused a number of times, reducing network traffic and latency.
+4. Common forms of caching entries are:
+  5. Successful results of a retrieval request: a 200 (OK) response to a GET request containing a resource like HTML documents, images or files.
+  6. Permanent redirects: a 301 (Moved Permanently) response.
+  7. Error responses: a 404 (Not Found) result page.
+  8. Incomplete results: a 206 (Partial Content) response.
+  9. Responses other than GET if something suitable for use as a cache key is defined.
+5. Controlling caching
+  1. The Cache-Control header
+    1. The Cache-Control HTTP/1.1 general-header field is used to specify directives for caching mechanisms in both requests and responses. Use this header to define your caching policies with the variety of directives it provides.
+  2. Expiration
+    3. The most important directive here is max-age=<seconds>, which is the maximum amount of time in which a resource will be considered fresh. This directive is relative to the time that the response was sent by the server, and overrides the Expires header (if set).
+  3. Note that a stale resource is not evicted or ignored; when the cache receives a request for a stale resource, it forwards this request with an If-None-Match header to check if it is in fact still fresh. If so, the server returns a 304 (Not Modified) header without sending the body of the requested resource, saving some bandwidth.
+
+### Cache validation
+1. When a cached resource's expiration time has been reached, the resource is either validated or fetched again. Validation can only occur if the server provided either a strong validator or a weak validator.
+2. Revalidation is triggered when the user presses the Reload button. It is also triggered during normal browsing if the cached response includes the "Cache-Control: must-revalidate" header. You can also use the cache validation preferences in the Advanced->Cache preferences panel, which offers the option to force a validation each time a resource is loaded.
+
+## Using HTTP cookies
+1. An HTTP cookie (web cookie, browser cookie) is a small piece of data that a server sends to a user's web browser. The browser may store the cookie and send it back to the same server with later requests. Typically, an HTTP cookie is used to tell if two requests come from the same browser—keeping a user logged in, for example. It remembers stateful information for the stateless HTTP protocol.
+2. Cookies are mainly used for three purposes:
+  1. Session management: Logins, shopping carts, game scores, or anything else the server should remember
+  2. Personalization: User preferences, themes, and other settings
+  3. Tracking: Recording and analyzing user behavior
+
+3. Cookies were once used for general client-side storage. While this made sense when they were the only way to store data on the client, modern storage APIs are now recommended. Cookies are sent with every request, so they can worsen performance (especially for mobile data connections). Modern APIs for client storage are the Web Storage API (localStorage and sessionStorage) and IndexedDB.
+
+4. After receiving an HTTP request, a server can send one or more Set-Cookie headers with the response. The browser usually stores the cookie and sends it with requests made to the same server inside a Cookie HTTP header. You can specify an expiration date or time period after which the cookie shouldn't be sent. You can also set additional restrictions to a specific domain and path to limit where the cookie is sent.
+5. Then, with every subsequent request to the server, the browser sends all previously stored cookies back to the server using the Cookie header
+
+## A typical HTTP session
+1. In client-server protocols, like HTTP, sessions consist of three phases:
+  1. The client establishes a TCP connection (or the appropriate connection if the transport layer is not TCP).
+  2. The client sends its request, and waits for the answer.
+  3. The server processes the request, sending back its answer, providing a status code and appropriate data.
+2. As of HTTP/1.1, the connection is no longer closed after completing the third phase, and the client is now granted a further request: this means the second and third phases can now be performed any number of times.
+  
+3. Establishing a connection
+  1. In client-server protocols, it is the client which establishes the connection. Opening a connection in HTTP means initiating a connection in the underlying transport layer, usually this is TCP.
+  2. With TCP the default port, for an HTTP server on a computer, is port 80. Other ports can also be used, like 8000 or 8080. The URL of a page to fetch contains both the domain name, and the port number, though the latter can be omitted if it is 80. See Identifying resources on the Web for more details.
+  3. The client-server model does not allow the server to send data to the client without an explicit request for it. To work around this problem, web developers use several techniques: ping the server periodically via the XMLHTTPRequest, fetch() APIs, using the WebSockets API, or similar protocols.
+
+4. Sending a client request
+  1. Once the connection is established, the user-agent can send the request (a user-agent is typically a web browser, but can be anything else, a crawler, for example). A client request consists of text directives, separated by CRLF (carriage return, followed by line feed), divided into three blocks:
+    1. The first line contains a request method followed by its parameters:
+      * the path of the document, as an absolute URL without the protocol or domain name
+      * the HTTP protocol version
+    2. Subsequent lines represent an HTTP header, giving the server information about what type of data is appropriate (for example, what language, what MIME types), or other data altering its behavior (for example, not sending an answer if it is already cached). These HTTP headers form a block which ends with an empty line.
+    3. The final block is an optional data block, which may contain further data mainly used by the POST method.
+
+5. Structure of a server response
+After the connected agent has sent its request, the web server processes it, and ultimately returns a response. Similar to a client request, a server response is formed of text directives, separated by CRLF, though divided into three blocks:
+
+The first line, the status line, consists of an acknowledgment of the HTTP version used, followed by a response status code (and its brief meaning in human-readable text).
+Subsequent lines represent specific HTTP headers, giving the client information about the data sent (for example, type, data size, compression algorithm used, hints about caching). Similarly to the block of HTTP headers for a client request, these HTTP headers form a block ending with an empty line.
+The final block is a data block, which contains the optional data.
+
+## Connection management in HTTP/1.x
+1. Connection management is a key topic in HTTP: opening and maintaining connections largely impacts the performance of Web sites and Web applications. In HTTP/1.x, there are several models: short-lived connections, persistent connections, and HTTP pipelining.
+2. Two newer models were created in HTTP/1.1. The persistent-connection model keeps connections opened between successive requests, reducing the time needed to open new connections. The HTTP pipelining model goes one step further, by sending several successive requests without even waiting for an answer, reducing much of the latency in the network.
+3. HTTP/2 adds additional models for connection management.
+4. A related topic is the concept of HTTP connection upgrades, wherein an HTTP/1.1 connection is upgraded to a different protocol, such as TLS/1.0, WebSocket, or even HTTP/2 in cleartext.
+  
+### Short-Lived
+1. The original model of HTTP, and the default one in HTTP/1.0, is short-lived connections. 
+1. short-lived: a new one created each time a request needed sending, and closed once the answer had been received. this means a TCP handshake happens before each HTTP request, and these are serialized.
+2. The TCP handshake itself is time-consuming, but a TCP connection adapts to its load, becoming more efficient with more sustained (or warm) connections. Short-lived connections do not make use of this efficiency feature of TCP, and performance degrades from optimum by persisting to transmit over a new, cold connection.
+3. This model is the default model used in HTTP/1.0 (if there is no Connection header, or if its value is set to close). In HTTP/1.1, this model is only used when the Connection header is sent with a value of close.
+
+2. This simple model held an innate limitation on performance: opening each TCP connection is a resource-consuming operation. Several messages must be exchanged between the client and the server. Network latency and bandwidth affect performance when a request needs sending. Modern Web pages require many requests (a dozen or more) to serve the amount of information needed, proving this earlier model inefficient.
+5. Unless dealing with a very old system, which doesn't support a persistent connection, there is no compelling reason to use this model.
+
+### Persistent Connections
+1. Short-lived connections have two major hitches: the time taken to establish a new connection is significant, and performance of the underlying TCP connection gets better only when this connection has been in use for some time (warm connection). 
+2. Alternatively this may be called a keep-alive connection.
+3. A persistent connection is one which remains open for a period of time, and can be reused for several requests, saving the need for a new TCP handshake, and utilizing TCP's performance enhancing capabilities. This connection will not stay open forever: idle connections are closed after some time (a server may use the Keep-Alive header to specify a minimum time the connection should be kept open).
+4. Persistent connections also have drawbacks; even when idling they consume server resources, and under heavy load, DoS attacks can be conducted. In such cases, using non-persistent connections, which are closed as soon as they are idle, can provide better performance
+5. In HTTP/1.1, persistence is the default, and the header is no longer needed (but it is often added as a defensive measure against cases requiring a fallback to HTTP/1.0).
+
+### HTTP Pipelining
+1. Pipelining is complex to implement correctly
+2. By default, HTTP requests are issued sequentially. The next request is only issued once the response to the current request has been received. As they are affected by network latencies and bandwidth limitations, this can result in significant delay before the next request is seen by the server.
+3. Pipelining is the process to send successive requests, over the same persistent connection, without waiting for the answer. This avoids latency of the connection. Theoretically, performance could also be improved if two HTTP requests were to be packed into the same TCP message.
+4. Not all types of HTTP requests can be pipelined: only idempotent methods, that is GET, HEAD, PUT and DELETE, can be replayed safely. Should a failure happen, the pipeline content can be repeated.
+5. 
+
+
+  
+  
+
+
+  
+  
+
+
+
+
+
+
+# Difference between connections and connectionless
+1. IP is a connectionless protocol. That means that there is no relationship between the packets sent – they are all individuals.
+  2. IP is known as a best-effort protocol, but it does not guarantee packet delivery. Packets may be lost, corrupted, out of order, or duplicated. IP does nothing to correct those conditions. TCP does.
+3. TCP makes a connection-oriented protocol on top of connectionless IP because the packets are related. Mostly they must be delivered in a certain order.
+  4. Now actually, TCP takes an entire message and splits it into packets for IP to transfer. The message will be reassembled in the correct order. But messages may be delivered out of order. Thus an application protocol must ensure the messages are also delivered in correct order. Mostly that will be handled in middleware (the session layer in OSI).
+  5. Also related to connections are sequence numbers – these implement the guarantees of TCP. Sequence numbers make sure all packets are received in the correct order and discard duplicates. Connectionless protocols have no way of doing this.
+  6. But note a session-layer protocol might also be needed to ensure correct order of messages, since TCP only guarantees that within a message.
+5. Note that UDP is a very thin transport layer over TCP. While IP does machine-to-machine delivery, transport layer protocols are process-to-process. They add ports to identify the receiving process on the receiving machine.
+6. Another important point is that each network layer is independent in its connection-oriented or connectionless aspect. Connectionless protocols may be implemented over connection-oriented and as we have seen, connection-oriented TCP can be implemented over connectionless IP.
+
+
 
 # Transmission control protocol (TCP)
 1. TCP is a connection-oriented protocol over an IP network. Connection is established and terminated using a handshake. All packets sent are guaranteed to reach the destination in the original order and without corruption through:
@@ -37,28 +217,53 @@ The Secure Sockets Layer (SSL) protocol is primarily used to encrypt confidentia
          * You want to automatically make a best estimate use of the network throughput
 6. Data is read as a “stream,” with nothing distinguishing where one packet ends and another begins. There may be multiple packets per read call.
 
+## TCP Streams
+1. It’s a continuous byte stream. You write data in-order, and it’s received in-order. The lower levels of the stack handle packetizing, sending, receiving, reordering, reassembling, etc. And, because it’s a reliable transport, it even handles retransmitting data if portions got lost.
+## Reliable Datagrams
+1. We want to send reliable datagrams (as compared to UDP) so we need use shared context between sender and receiver to build a reliable transport over an unreliable transport. This "shared context" is called a "connection".
+2. The definition of a connection, as I understand it:
+  1. Data is transmitted and received in-order, from the application’s view.
+  1. There’s a notion of “session”, with a set-up and tear-down phase.
+3. In my strawman reliable datagram example, all those pieces are present:
+  1. The datagram’s contents are in-order even if the datagram is packetized.
+  1. The sender and receiver must perform some minimal handshake to establish a mutual context, so that reordering, reassembly, and retransmits can happen.
+  1. There’s even a teardown phase, where the sender learns everything it sent was received successfully, so it can retire its context.
+And thus, the shared context is what embodies the working details of the connection.
+4. The notion of connection resides in the shared context both ends of the link have to maintain so they can remain synchronized across multiple packets, and abstract away the packetization, reordering, and lossiness of the network, for the duration of a “session,” whether that’s a single datagram or a long-lived stream.
+5. And that’s the point. The connection exists in the notion of a “session” and “shared context” that allow the sender and receiver to ferry a large block of data coherently from one side to the other.
+
+
+
+
 #### Examples
 Examples: World Wide Web (Apache TCP port 80), e-mail (SMTP TCP port 25 Postfix MTA), File Transfer Protocol (FTP port 21) and Secure Shell (OpenSSH port 22) etc.	
 
 # User datagram protocol (UDP)
-1. Instead of treating communications between computers like writing to files, what if we want to send and receive packets directly?
-2. When you a send a data or message, you don’t know if it’ll get there, it could get lost on the way. There may be corruption while transferring a message.
-3. Packets are sent individually and are guaranteed to be whole if they arrive. One packet per one read call.
-4. UDP is connectionless. Datagrams (analogous to packets) are guaranteed only at the datagram level. Datagrams might reach their destination out of order or not at all. UDP does not support congestion control. Without the guarantees that TCP support, UDP is generally more efficient.
+
+1. UDP is connectionless. It’s stateless, really. You package up your datagram, and lob it onto the network. If it arrives at the destination, and an app is listening, then it’s delivered to the listening app.
+2. If I send a UDP packet out to the network, I have no idea whether the remote side received it. And if the remote side sends me a reply, they have no idea whether I received that reply.There’s nothing in the protocol to tell you anything about delivery. If the UDP packet makes it to the other side, and the other side is listening, then the other side gets to hear about it.
+3. Instead of treating communications between computers like writing to files, what if we want to send and receive packets directly?
+4. When you a send a data or message, you don’t know if it’ll get there, it could get lost on the way. There may be corruption while transferring a message.
+5. Packets are sent individually and are guaranteed to be whole if they arrive. One packet per one read call.
+6. UDP is connectionless. Datagrams (analogous to packets) are guaranteed only at the datagram level. Datagrams might reach their destination out of order or not at all. UDP does not support congestion control. Without the guarantees that TCP support, UDP is generally more efficient.
     * Not all data may be present. If the data is incomplete, don't resend
     * UDP can broadcast, sending datagrams to all devices on the subnet. This is useful with DHCP because the client has not yet received an IP address, thus preventing a way for TCP to stream without the IP address.
-5. UDP is less reliable but works well in real time use cases such as VoIP, video chat, streaming, and realtime multiplayer games.
-6. Use UDP over TCP when:
+7. UDP is less reliable but works well in real time use cases such as VoIP, video chat, streaming, and realtime multiplayer games.
+8. Use UDP over TCP when:
       * You need the lowest latency
       * Late data is worse than loss of data
       * You want to implement your own error correction
-7. It's built on top of IP, but unlike TCP, instead of adding lots of features and complexity, UDP is a very thin layer over IP.
-8. With UDP we can send a packet to a destination IP address (eg. 112.140.20.10) and port (say 52423), and it gets passed from computer to computer until it arrives at the destination or is lost along the way.
-9. On the receiver side, we just sit there listening on a specific port (eg. 52423) and when a packet arrives from any computer (remember there are no connections!), we get notified of the address and port of the computer that sent the packet, the size of the packet, and can read the packet data.
-10. Like IP, UDP is an unreliable protocol. In practice however, most packets that are sent will get through, but you’ll usually have around 1-5% packet loss, and occasionally you’ll get periods where no packets get through at all (remember there are lots of computers between you and your destination where things can go wrong…)
-11. There is also no guarantee of ordering of packets with UDP. You could send 5 packets in order 1,2,3,4,5 and they could arrive completely out of order like 3,1,2,5,4. In practice, packets tend to arrive in order most of the time, but you cannot rely on this!
-12. UDP also provides a 16 bit checksum, which in theory is meant to protect you from receiving invalid or truncated data, but you can’t even trust this, since 16 bits is just not enough protection when you are sending UDP packets rapidly over a long period of time. Statistically, you can’t even rely on this checksum and must add your own.
-13. In certain situations UDP is used because it allows broadcast packet transmission. This is sometimes fundamental in cases like DHCP protocol, because the client machine hasn't still received an IP address (this is the DHCP negotiaton protocol purpose) and there won't be any way to establish a TCP stream without the IP address itself.
+9. It's built on top of IP, but unlike TCP, instead of adding lots of features and complexity, UDP is a very thin layer over IP.
+10. With UDP we can send a packet to a destination IP address (eg. 112.140.20.10) and port (say 52423), and it gets passed from computer to computer until it arrives at the destination or is lost along the way.
+11. On the receiver side, we just sit there listening on a specific port (eg. 52423) and when a packet arrives from any computer (remember there are no connections!), we get notified of the address and port of the computer that sent the packet, the size of the packet, and can read the packet data.
+12. Like IP, UDP is an unreliable protocol. In practice however, most packets that are sent will get through, but you’ll usually have around 1-5% packet loss, and occasionally you’ll get periods where no packets get through at all (remember there are lots of computers between you and your destination where things can go wrong…)
+13. There is also no guarantee of ordering of packets with UDP. You could send 5 packets in order 1,2,3,4,5 and they could arrive completely out of order like 3,1,2,5,4. In practice, packets tend to arrive in order most of the time, but you cannot rely on this!
+14. UDP also provides a 16 bit checksum, which in theory is meant to protect you from receiving invalid or truncated data, but you can’t even trust this, since 16 bits is just not enough protection when you are sending UDP packets rapidly over a long period of time. Statistically, you can’t even rely on this checksum and must add your own.
+15. In certain situations UDP is used because it allows broadcast packet transmission. This is sometimes fundamental in cases like DHCP protocol, because the client machine hasn't still received an IP address (this is the DHCP negotiaton protocol purpose) and there won't be any way to establish a TCP stream without the IP address itself.
+## IP fragmentation
+1. A UDP datagram could get fragmented at the IP layer. The IP layer can perform some limited reordering and reassembly, but if any fragment gets lost, the whole IP packet gets lost, and thus the whole datagram gets lost. IP reassembly is a best-effort deal. Usually you want to send UDP with Don’t Fragment set to 1.
+
+
 
 
 ### Examples
