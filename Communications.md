@@ -170,6 +170,108 @@ The final block is a data block, which contains the optional data.
 4. Not all types of HTTP requests can be pipelined: only idempotent methods, that is GET, HEAD, PUT and DELETE, can be replayed safely. Should a failure happen, the pipeline content can be repeated.
 5. 
 
+### Keep-Alive
+1. The Keep-Alive general header allows the sender to hint about how the connection may be used to set a timeout and a maximum amount of requests.
+2. timeout: An integer that is the time in seconds that the host will allow an idle connection to remain open before it is closed. A connection is idle if no data is sent or received by a host. A host may keep an idle connection open for longer than timeout seconds, but the host should attempt to retain a connection for at least timeout seconds.
+3. max: An integer that is the maximum number of requests that can be sent on this connection before closing it. Unless 0, this value is ignored for non-pipelined connections as another request will be sent in the next response. An HTTP pipeline can use it to limit the pipelining.
+4. HTTP keepalive allows the client to keep a connection open, but idle, to allow it to make future requests a little bit more efficiently. The server cannot send data to a client over a keepalive connection, as no request is active.
+5. Keep-Alive controls behavior when the request ends -- but a long polling request will take a very long time to end.
+5. Long polling is a mechanism where the server keeps a request (and thus a connection) active, but not sending data, to allow the server to send data to the client when it becomes available -- for instance, when an event occurs.
+
+
+### Long-Polling
+1. With long-polling you have reconnect after every message, which is a very expensive operation (relatively speaking). HTTP headers often form the bulk of the request, and the number of connections you have to maintain is high. All of these things add up.In addition, TCP slow start, window sizing, etc, work against you when it comes to optimizing for latency
+2. There is nothing inherently wrong with long polling, but when you consider the overhead of a small payload (let's say 4 bytes for fun) the HTTP request headers add significant overhead. WebSockets have very little overhead for a 4 byte payload (2-4 bytes depending on masking (4 for the spec)) ... and the latency is less than half. It's just more efficient.
+3. With Long-Polling, the client requests information from the server exactly as in normal polling, but with the expectation that the server may not respond immediately. That’s why this technique is sometimes referred to as a “Hanging GET”.
+4. Each Long-Poll request has a timeout. The client has to reconnect periodically after the connection is closed due to timeouts.
+5. Some challenges in long polling:
+  1. Message ordering and delivery guarantees.
+  2. Message ordering cannot be guaranteed if the same client opens multiple connections to the server.
+  3. If the client was not able to receive the message then there will be possible message loss.
+Performance and scaling.
+Device support and fall backs.
+
+
+### Server-Sent Events
+1. SSE, on the other hand, basically is long-polling and keep-alives, but with better defined behavior and a nicer API on the client side.
+2. Server-Sent Events are a one-way communication channel where events flow from server to client only. Server-Sent Events allows browser clients to receive a stream of events from a server over an HTTP connection without polling.
+3. A client subscribes to a “stream” from a server and the server will send messages (“event-stream”) to the client until the server or the client closes the stream. It is up to the server to decide when and what to send the client, for instance as soon as data changes.
+4. A flow for server send events will be as follows.
+  1. Browser client creates a connection using an EventSource API with a server endpoint which is expected to return a stream of events over time. This essentially makes an HTTP request at given URL.
+  1. The server receives a regular HTTP request from the client and opens the connection and keeps it open. The server can now send the event data as long as it wants or it can close the connection if there are no data.
+  1. The client receives each event from the server and process it. If it receives a close signal from the server it can close the connection. The client can also initiate the connection close request.
+1. As SSE is based on HTTP, it is more compliant with existing IT infrastructure like (Load Balancer, Firewall, etc), unlike WebSockets which can be blocked by some firewall. Server-Sent events are not supported by all browsers.
+1. Cases like this are updating statuses, push notifications, newsletters and news feeds. In scenarios like this, SSEs are most appreciated.
+
+
+
+
+
+### Ajax Polling
+1. In simple terms, Short polling is an AJAX-based timer that calls at fixed delays whereas Long polling is based on Comet (i.e server will send data to the client when the server event happens with no delay). 
+2. The problem with Polling is that the client has to keep asking the server for any new data. As a result, a lot of responses are empty, creating HTTP overhead.
+3. The basic idea is that the client repeatedly polls (or requests) a server for data. The client makes a request and waits for the server to respond with data. If no data is available, an empty response is returned.
+The client opens a connection and requests data from the server using regular HTTP.
+The requested web page sends requests to the server at regular intervals (e.g., 0.5 seconds).
+The server calculates the response and sends it back, just like regular HTTP traffic.
+The client repeats the above three steps periodically to get updates from the server.
+
+  
+### WebSockets
+1. WebSocket is a computer communication protocol which provides full-duplex communication channels over a single TCP connection.
+2. It is different from HTTP but compatible with HTTP.
+  1. Located at layer 7 in the OSI model and depends on TCP at layer 4.
+  1. Works over port 80 and 443 ( in case of TLS encrypted) and supports HTTP proxies and intermediaries.
+  1. To achieve compatibility, the WebSocket handshake uses Upgrade header to update the protocol to the WebSocket protocol.
+3. The WebSocket protocol enables interaction between a client and a web server with lesser overheads, providing real-time data transfer from and to the server. WebSockets keeps the connection open, allowing messages to be passed back and forth between the client and the server. In this way, a two-way ongoing conversation can take place between the client and the server.
+4. A WebSocket connection flow will look something like this:
+
+  1. A client initiates a WebSocket handshake process by sending a request which also contains Upgrade header to switch to WebSocket protocol along with other information.
+  2. The server receives WebSocket handshake request and process it.
+  3. If the server can establish the connection and agrees with client terms then sends a response to the client, acknowledging the WebSocket handshake request with other information.
+  4. If the server can not establish the connection then it sends response acknowledging it cannot establish WebSocket connection.
+  5. Once the client receives a successful WebSocket connection handshake request, WebSocket connection will be opened. Now, client and servers can start sending data in both directions allowing real-time communication.
+  6. The connection will be closed once the server or the client decides to close the connection.
+
+
+5. Why the WebSocket protocol is the better choice then Long polling
+  1. Long polling is much more resource intensive on servers whereas WebSockets have an extremely lightweight footprint on servers. Long polling also requires many hops between servers and devices. And these gateways often have different ideas of how long a typical connection is allowed to stay open. If it stays open too long something may kill it, maybe even when it was doing something important.
+
+  2. Why you should build with WebSockets:
+    1. Full-duplex asynchronous messaging. In other words, both the client and the server can stream messages to each other independently.
+    1. WebSockets pass through most firewalls without any reconfiguration.
+    1. Good security model (origin-based security model).
+1. Use cases: real-time polling applications, chat applications, media players and the like.
+
+
+### SSE vs. Websockets
+1. WebSockets are undoubtedly more complex and demanding than SSEs, and require a bit of developer input up front. For this investment, you gain a full-duplex TCP connection that is useful for a wider range of application scenarios. For example WebSockets tend to be preferable for use cases such as multi-player games or location-based apps. Where SSE + AJAX can technically be used to achieve these, this might cause the domain to get multiplexed as the AJAX requests aren’t really in sync.
+
+SSE is a simpler and faster solution, but it isn’t extensible: if your web application requirements were to change, the likelihood is it would eventually need to be refactored using… WebSockets. Although WebSocket technology presents more upfront work, it’s a more versatile and extensible framework, so a better option for complex applications that are likely to add new features over time. Once you’ve decided which is best for you – you can get started building.
+
+1. SSEs are sent over traditional HTTP. That means they do not require a special protocol or server implementation to get working. WebSockets on the other hand, require full-duplex connections and new Web Socket servers to handle the protocol.
+1. However, Websockets can be overkill for some types of application, and the backend could be easier to implement with a protocol such as SSE.
+
+Furthermore SSE can be polyfilled into older browsers that do not support it natively using just JavaScript. Some implementations of SSE polyfills can be found on the Modernizr github page.
+
+
+1. Advantages of SSE over Websockets:
+  1. Transported over simple HTTP instead of a custom protocol
+  1. Can be poly-filled with javascript to "backport" SSE to browsers that do not support it yet.
+  1. Built in support for re-connection and event-id
+  1. Simpler protocol
+  1. No trouble with corporate firewalls doing packet inspection (Some enterprise firewalls with packet inspection have trouble dealing with WebSockets (Sophos XG Firewall, WatchGuard, McAfee Web Gateway).
+1. Advantages of Websockets over SSE:
+  1. Real time, two directional communication.
+  1. Native support in more browsers
+1. Ideal use cases of SSE:
+  1. Stock ticker streaming
+  1. twitter feed updating
+  1. Notifications to browser
+1. SSE gotchas:
+  1. No binary support (Only WS can transmit both binary data and UTF-8, SSE is limited to UTF-8.
+  1. Maximum open connections limit: This limit is per browser + domain, so that means that you can open 6 SSE connections across all of the tabs to www.example1.com and another 6 SSE connections to www.example2.com
+
 
   
   
