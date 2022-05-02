@@ -27,6 +27,13 @@
 5. (Compare with Transaction Isolations) Transaction isolation is primarily about avoiding race conditions due to concurrently executing transactions, whereas distributed consistency is mostly about coordinating the state of replicas in the face of delays and faults.
 
 ## Types of Consistency Models
+
+Strict Serializability: Total order + real time guarantees over transactions
+Linearizability: Total order + real time guarantees over operations
+Sequential consistency: Total order + process order
+Causal+ consistency: Causally ordered + replicas eventually converge
+Eventual consistency: Eventually everyone should agree on state
+
 ### Strict Serializability
 1. Total order: There exists a legal total ordering of transactions.
   1. Legal: In the total ordering, a read operation sees the latest write operation.
@@ -51,11 +58,35 @@
 6. Cons: High read and write latencies
 
 ### Sequential Consistency
-### Causal Consistency
+Total order: There exists a legal total ordering of operations.
+○ Legal: In the total ordering, a read operation sees the latest write operation.
+● Preserves process ordering: All of a process’ operations appear in that order
+in the total order.
+● Difference from linearizability?
+○ Sequence of ops across processes not determined by real-time
+Pros: Can allow more orderings than linearizability
+Cons: Many possible sequential executions
+
+### Causal + Consistency
+Partial order: Order causally related ops the same way across all processes
+● +: Replicas eventually converge
+● Difference from sequential consistency?
+○ Only causally related ops need to be ordered: no total order
+○ Concurrent ops may be ordered differently across different processes
+Pros: Preserves causality while improving efficiency
+Cons: Need to reason about concurrency
 ### Eventual Consistency
 1. This is a very weak guarantee—it doesn’t say anything about whenthe repli‐cas  will  converge.
   1. No "Read-Your-Own-Write" guarantee
   2. The edge cases of eventual consistency only become apparent when thereis a fault in the system (e.g., a network interruption) or at high concurrency.
+
+Eventual convergence: If no more writes, all replicas eventually agree
+● Difference from causal consistency?
+○ Does not preserve causal relationships
+○ Is the “+” in causal+
+● Frequently used with application conflict resolution, anti-entropy
+Pros: Super duper highly available
+Cons: No safety guarantees, need conflict resolution
 
 # Linearizability
 1. the basic idea is to make a system appear as if there were only one copy of the data, and all operations on it are atomic. With  this  guarantee,  even  though  there  may  bemultiple replicas in reality, the application does not need to worry about them.
@@ -78,18 +109,24 @@
 3. However, serializable snapshot isolation is not linearizable: by design, it makes reads from a consistent snapshot, to avoid lock contention between readers and writers. The whole point of a consistent snapshot is that it does not include writes that are more recent than the snapshot, and thus reads from the snapshot are not linearizable.
 
 ## Relying on Linearizability
+1. There a few areas in whichlinearizability is an important requirement for making a system work correctly.
+
 ### Locking and leader election
 1. One way of electing a leader is to use a lock: every node that starts up tries to acquire the lock, and the one that succeeds becomes the leader. No matter how this lock is implemented, it must be linearizable: all nodes must agree which node owns the lock; otherwise it is useless
-2. Coordination services like Apache ZooKeeper and etcd are often used to implement distributed locks and leader election. They use consensus algorithms to implement linearizable operations in a fault-tolerant way
-3. ZooKeeper and etcd provide linearizable writes, but reads may be stale, since by default they can be served by any one of the replicas. You can optionally request a linearizable read: etcd calls this a quorum read, and in ZooKeeper you need to call sync() before the read
+2. Coordination services like Apache ZooKeeper and etcd are often used to implement distributed locks and leader election. They use consensus algorithms to implement linearizable operations in a fault-tolerant way. However, a linearizable storage service is the basic foundation for these coordination tasks.
+3. Strictly speaking,ZooKeeper and etcd provide linearizable writes, but reads may be stale, since by default they can be served by any one of the replicas. You can optionally request a linearizable read: etcd calls this a quorum read, and in ZooKeeper you need to call sync() before the read
+
 ### Constraints and uniqueness guarantees
 1. If you want to enforce this constraint as the data is written (such that if two people try to concurrently create a user or a file with the same name, one of them will be returned an error), you need linearizability
 2. This situation is actually similar to a lock: when a user registers for your service, you can think of them acquiring a “lock” on their chosen username. The operation is also very similar to an atomic compare-and-set, setting the username to the ID of the user who claimed it, provided that the username is not already taken.
+3. a  hard  uniqueness  constraint,  such  as  the  one  you  typically  find  in  rela‐tional  databases,  requires  linearizability.  Other  kinds  of  constraints,  such  as  foreignkey  or  attribute  constraints,  can  be  implemented  without  requiring  linearizability
+
 ### Cross-channel timing dependencies
-This problem arises because there are two different communication channels between the web server and the resizer: the file storage and the message queue. Without the recency guarantee of linearizability, race conditions between these two channels are possible. This
+1. This problem arises because there are two different communication channels between the web server and the resizer: the file storage and the message queue. Without the recency guarantee of linearizability, race conditions between these two channels are possible. 
+2. Linearizability is not the only way of avoiding this race condition, but it’s the simplestto understand.  you  can  use  alternativeapproaches similar to what we discussed in “Reading Your Own Writes” on page 162,at the cost of additional complexity.
 
 ## Implementing Linearizable Systems
-1. Since linearizability essentially means “behave as though there is only a single copy of the data, and all operations on it are atomic,” the simplest answer would be to really only use a single copy of the data. However,
+1. Since linearizability essentially means “behave as though there is only a single copy of the data, and all operations on it are atomic,” the simplest answer would be to really only use a single copy of the data.
 2. However, that approach would not be able to tolerate faults: if the node holding that one copy failed, the data would be lost, or at least inaccessible until the node was brought up again.
 3. The most common approach to making a system fault-tolerant is to use replication
 4. Single-leader replication (potentially linearizable)
@@ -105,26 +142,38 @@ This problem arises because there are two different communication channels betwe
    * Even with strict quorums, nonlinearizable behavior is possible
 
 ### Linearizability and quorums
-1. Intuitively, it seems as though strict quorum reads and writes should be linearizable in a Dynamo-style model. However, when we have variable network delays, it is pos‐ sible to have race conditions
-2. Interestingly, it is possible to make Dynamo-style quorums linearizable at the cost of reduced performance: a reader must perform read repair (see “Read repair and anti- entropy” on page 178) synchronously, before returning results to the application, and a writer must read the latest state of a quorum of nodes before sending its writes
-3. However, Riak does not perform synchronous read repair due to the performance penalty [26]. Cassandra does wait for read repair to complete on quo‐ rum reads [27], but it loses linearizability if there are multiple concurrent writes to the same key, due to its use of last-write-wins conflict resolution.
-4. In summary, it is safest to assume that a leaderless system with Dynamo-style replica‐ tion does not provide linearizability
+1. Intuitively, it seems as though strict quorum reads and writes should be linearizable in a Dynamo-style model. However, when we have variable network delays, it is possible to have race conditions
+2. Interestingly, it is possible to make Dynamo-style quorums linearizable at the cost of reduced performance: a reader must perform read repair (see “Read repair and anti-entropy” on page 178) synchronously, before returning results to the application, and a writer must read the latest state of a quorum of nodes before sending its writes
+3. However, Riak does not perform synchronous read repair due to the performance penalty. Cassandra does wait for read repair to complete on quo‐ rum reads, but it loses linearizability if there are multiple concurrent writes to the same key, due to its use of last-write-wins conflict resolution.
+4. Moreover,  only  linearizable  read  and  write  operations  can  be  implemented  in  thisway;  a  linearizable  compare-and-set  operation  cannot,  because  it  requires  a  consensus algorithm.
+5. In summary, it is safest to assume that a leaderless system with Dynamo-style replication does not provide linearizability
 
 ## The Cost of Linearizability
 1. With a multi-leader database, each datacenter can continue operating normally: since writes from one datacenter are asynchronously replicated to the other, the writes are simply queued up and exchanged when network connectivity is restored.
-2. If the network between datacenters is interrupted in a single-leader setup, clients con‐ nected to follower datacenters cannot contact the leader, so they cannot make any writes to the database, nor any linearizable reads. They can still make reads from the follower, but they might be stale (nonlinearizable). If the application requires linear‐ izable reads and writes, the network interruption causes the application to become unavailable in the datacenters that cannot contact the leader.
-3. any linearizable database has this problem, no matter how it is implemented. The
+2. if single-leader replication is used, then the leader must be in oneof the datacenters. Any writes and any linearizable reads must be sent to the leader—thus, for any clients connected to a follower datacenter, those read and write requestsmust be sent synchronously over the network to the leader datacenter.
+3. If the network between datacenters is interrupted in a single-leader setup, clients con‐ nected to follower datacenters cannot contact the leader, so they cannot make any writes to the database, nor any linearizable reads. They can still make reads from the follower, but they might be stale (nonlinearizable). If the application requires linearizable reads and writes, the network interruption causes the application to become unavailable in the datacenters that cannot contact the leader.
+  1. If the network between datacenters is interrupted in a single-leader setup, clients con‐nected  to  follower  datacenters  cannot  contact  the  leader,  so  they  cannot  make  anywrites to the database, nor any linearizable reads. They can still make reads from thefollower, but they might be stale (nonlinearizable). If the application requires linear‐izable  reads  and  writes,  the  network  interruption  causes  the  application  to  becomeunavailable in the datacenters that cannot contact the leader.
+3. any linearizable database has this problem, no matter how it is implemented.
+
 ### The CAP Theorem
 1. The trade-off is as follows
 2. If your application requires linearizability, and some replicas are disconnected from the other replicas due to a network problem, then some replicas cannot process requests while they are disconnected: they must either wait until the network problem is fixed, or return an error (either way, they become unavailable).
 3. If your application does not require linearizability, then it can be written in a way that each replica can process requests independently, even if it is disconnected from other replicas (e.g., multi-leader). In this case, the application can remain available in the face of a network problem, but its behavior is not linearizable
 4. Thus, applications that don’t require linearizability can be more tolerant of network problems. This insight is popularly known as the CAP theorem
 ### The Unhelpful CAP Theorem
-1. CAP is sometimes presented as Consistency, Availability, Partition tolerance: pick 2 out of 3. Unfortunately, putting it this way is misleading [32] because network parti‐ tions are a kind of fault, so they aren’t something about which you have a choice: they will happen whether you like it or not
-2. Thus, a better way of phras‐ ing CAP would be either Consistent or Available when Partitioned
-3. The CAP theorem as formally defined [30] is of very narrow scope: it only considers one consistency model (namely linearizability) and one kind of fault (network parti‐ tions, or nodes that are alive but disconnected from each other). It doesn’t say any‐thing about network delays, dead nodes, or other trade-offs.
+1. CAP is sometimes presented as Consistency, Availability, Partition tolerance: pick 2 out of 3. Unfortunately, putting it this way is misleading because network partitions are a kind of fault, so they aren’t something about which you have a choice: they will happen whether you like it or not
+2. At  times  when  the  network  is  working  correctly,  a  system  can  provide  both  consis‐tency (linearizability) and total availability. 
+3. Thus, a better way of phrasing CAP would be either Consistent or Available when Partitioned
+4. The CAP theorem as formally defined is of very narrow scope: it only considers one consistency model (namely linearizability) and one kind of fault (network parti‐ tions, or nodes that are alive but disconnected from each other). It doesn’t say any‐thing about network delays, dead nodes, or other trade-offs.
+5. Thus, although CAP hasbeen historically influential, it has little practical value for designing systems 
+
 ### Linearizability and network delays
-1. The same is true of many distributed databases that choose not to provide lineariza‐ ble guarantees: they do so primarily to increase performance, not so much for fault tolerance. Linearizability is slow—and this is true all the time, not only during a network fault
+1. Surprisingly  few  systems  are  actuallylinearizable in practice. For example, even RAM on a modern multi-core CPU is notlinearizable  [43]:  if  a  thread  running  on  one  CPU  core  writes  to  a  memory  address,and a thread on another CPU core reads the same address shortly afterward, it is notguaranteed  to  read  the  value  written  by  the  first  thread  (unless  a  memory  barrier  orfence [44] is used).
+  1.  The  reason  for  this  behavior  is  that  every  CPU  core  has  its  own  memory  cache  and store  buffer.  
+  2.  The  reason  fordropping linearizability is performance, not fault tolerance.
+3. The same is true of many distributed databases that choose not to provide lineariza‐ ble guarantees: they do so primarily to increase performance, not so much for fault tolerance. Linearizability is slow—and this is true all the time, not only during a network fault
+  1. Attiya and Welch [47] prove that if you want linearizability,the response time of read and write requests is at least proportional to the uncertaintyof  delays  in  the  network.
+
 
 # Ordering Guarantees
 1. Ordering Examples
