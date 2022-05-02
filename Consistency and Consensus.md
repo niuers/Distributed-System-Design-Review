@@ -6,22 +6,69 @@
    * In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
 1. The best way of building fault-tolerant systems is to find some general-purpose abstractions with useful guarantees, implement them once, and then let applications rely on those guarantees. This is the same approach as we used with transactions: by using a transaction, the application can pretend that there are no crashes (atomicity), that nobody else is concurrently accessing the database (isolation), and that storage devices are perfectly reliable (durability).
 2. one of the most important abstractions for distributed systems is consensus: that is, getting all of the nodes to agree on something
+3. Data inconsistency between replicas can happen  no  matter what  replication  method  the  database  uses  (single-leader,  multi-leader,  or  leaderlessreplication)
+4. What is consistency?
+  1. What processes can expect when RD/WR shared data concurrently
+5. When do consistency concerns arise?
+  1. With replication and caching
+
+6. What is a consistency model?
+  1. Contract between a distributed data system (e.g., DFS, DSM) and processes constituting its applications
+    * E.g.: “If a process reads a certain piece of data, I (the DFS/DSM) pledge to return the value of the last write”
+7. Variations boil down to:
+  1. The allowable staleness of reads
+  2. The ordering of writes across all replicas
 
 # Consistency Guarantees
 1. Most replicated databases provide at least eventual consistency, which means that if you stop writing to the database and wait for some unspecified length of time, then eventually all read requests will return the same value
 2. However, this is a very weak guarantee—it doesn’t say anything about when the repli‐ cas will converge.
 3. The edge cases of eventual consistency only become apparent when there is a fault in the system (e.g., a network interruption) or at high concurrency
 4. systems with stronger guarantees may have worse performance or be less fault-tolerant than systems with weaker guaran‐ tees.
-5. transaction isolation is primarily about avoiding race conditions due to concurrently executing transactions, whereas distributed consistency is mostly about coordinating the state of replicas in the face of delays and faults.
+5. (Compare with Transaction Isolations) Transaction isolation is primarily about avoiding race conditions due to concurrently executing transactions, whereas distributed consistency is mostly about coordinating the state of replicas in the face of delays and faults.
+
+## Types of Consistency Models
+### Strict Serializability
+1. Total order: There exists a legal total ordering of transactions.
+  1. Legal: In the total ordering, a read operation sees the latest write operation.
+2. Preserves real-time ordering: Any transaction A that completes before transaction B begins, occurs before B in the total order.
+3. Properties
+4. Writes in a completed transaction appear to all future reads
+5. Once a read sees a value, all future reads must also return the same value (until new write)
+6. Pros: Easily reason about correctness of transactions
+7. Cons: High read and write latencies
+8. A database may provide both serializability and linearizability, and this combinationis known as strict serializability or strong one-copy serializability (strong-1SR)
+### Linearizability (Atomic Consistency/Strong Consistency/Immediate  Consistency/External  Consistency)
+1. Total order: There exists a legal total ordering of operations
+  1. Legal: In the total ordering, a read operation sees the latest write operation.
+2. Preserves real-time ordering: Any operation A that completes before operation B begins, occurs before B in the total order.
+3. Difference from strict serializability?
+  1. In Linearizability, clients only have consistency guarantees for operations, where strict serializability allows clients to use transactions.
+    1. It does not prevent problems such as write skew, unless you take additional measures such as materializing conflicts
+4. Properties
+  1. A completed write appears to all future reads
+  1. Once a read sees a value, all future reads must also return the same value (until new write) even if the reads are concurrent with write
+5. Pros: Easy to reason about correctness
+6. Cons: High read and write latencies
+
+### Sequential Consistency
+### Causal Consistency
+### Eventual Consistency
+1. This is a very weak guarantee—it doesn’t say anything about whenthe repli‐cas  will  converge.
+  1. No "Read-Your-Own-Write" guarantee
+  2. The edge cases of eventual consistency only become apparent when thereis a fault in the system (e.g., a network interruption) or at high concurrency.
 
 # Linearizability
-1. Linearizability/atomic consistency/strong consistency/immediate consistency/external consistency: one of the strongest consistency models
-2. the basic idea is to make a system appear as if there were only one copy of the data, and all operations on it are atomic.
-3. Maintaining the illusion of a single copy of the data means guaranteeing that the value read is the most recent, up-to-date value, and doesn’t come from a stale cache or replica. In other words, linearizability is a *recency guarantee*
+1. the basic idea is to make a system appear as if there were only one copy of the data, and all operations on it are atomic. With  this  guarantee,  even  though  there  may  bemultiple replicas in reality, the application does not need to worry about them.
+3. linearizability is a *recency guarantee*: it guarantees that the value read is the most recent, up-to-date value, and doesn’t come from a stale cache or replica.
 4. it has the downside of being slow, especially in environments with large network delays
 ## What Makes a System Linearizable?
 1. In a linearizable system we imagine that there must be some point in time (between the start and end of the write operation) at which the value of x atomically flips from 0 to 1.
-2. recency guarantee we discussed earlier: once a new value has been written or read, all subsequent reads see the value that was written, until it is overwritten again.
+2. recency guarantee we discussed earlier: once a new value has been written or read, all subsequent reads see the value that was written, until it is overwritten again. once a new value has been writtenor  read,  all  subsequent  reads  see  the  value  that  was  written,  until  it  is  overwrittenagain.
+
+3. Any  read  operations  that  overlap  in  time  with  the  write  operation  might  return either 0 or 1, because we don’t know whether or not the write has taken effect at the  time  when  the  read  operation  is  processed.  These  operations  are  concurrent with the write.
+4. However,  that  is  not  yet  sufficient  to  fully  describe  linearizability:  if  reads  that  areconcurrent with a write can return either the old or the new value, then readers couldsee a value flip back and forth between the old and the new value several times whilea  write  is  going  on.  That  is  not  what  we  expect  of  a  system  that  emulates  a  “singlecopy of the data.”
+  1. Timing Dependency: In a linearizable system we imagine that there must be some point in time (betweenthe start and end of the write operation) at which the value of x atomically flips from 0  to  1.  Thus,  if  one  client’s  read  returns  the  new  value  1,  all  subsequent  reads  must also return the new value, even if the write operation has not yet completed
+
 ### Linearizability Versus Serializability
 1. Serializability is an isolation property of transactions, where every transaction may read and write multiple objects (rows, documents, records)
    * It guarantees that transactions behave the same as if they had executed in some serial order (each transaction running to completion before the next transaction starts). It is okay for that serial order to be different from the order in which transactions were actually run.
