@@ -204,6 +204,23 @@
 2. Pods facilitate node discovery. In a peer-to-peer network, there is no way of discovering other nodes, and we would just sit in the dark if it weren’t for a centralized node registry or something. The other way is to run a scan through the network to try to discover other nodes. This is a really time-consuming and tedious task. 
 3. A pod in a federated architecture acts like a server to which a large number of nodes are subscribed.
 
+# [API Key](https://www.freecodecamp.org/news/best-practices-for-building-api-keys-97c26eabfea9/)
+1. [API keys are for projects, authentication is for users](https://cloud.google.com/endpoints/docs/openapi/when-why-api-key)
+  1. API keys identify the calling project — the application or site — making the call to an API. API keys aren't as secure as authentication tokens (see Security of API keys), but they identify the application or project that's calling an API. 
+    1. API keys are generally not considered secure; they are typically accessible to clients, making it easy for someone to steal an API key. Once the key is stolen, it has no expiration, so it may be used indefinitely, unless the project owner revokes or regenerates the key. While the restrictions you can set on an API key mitigate this, there are better approaches for authorization.
+  3. Authentication tokens identify a user — the person — that is using the app or site.
+    1.  User authentication — Securely verify that the calling user is who they claim to be.
+    2.  User authorization — Check whether the user should have access to make this request.
 
+2. When to use API keys
+  1. An API may restrict some or all of its methods to require API keys. It makes sense to do this if:
+    1. You do want to block anonymous traffic. API keys identify an application's traffic for the API producer, in case the application developer needs to work with the API producer to debug an issue or show their application's usage.
+    2. You want to control the number of calls made to your API.
+    3. You want to identify usage patterns in your API's traffic. You can see application usage in APIs & services.
+    4. You want to filter logs by API key.
+  2. API keys cannot be used for:
+    1. Identifying individual users — API keys don't identify users, they identify projects.
+    2. Secure authorization.
+    3. Identifying the creators of a project.
 
 
