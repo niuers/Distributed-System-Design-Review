@@ -177,8 +177,8 @@ Cons: No safety guarantees, need conflict resolution
 
 # Ordering Guarantees
 1. Ordering Examples
-   * the main purpose of the leader in single-leader replica‐ tion is to determine the order of writes in the replication log, —that is, the order in which followers apply those writes.
-   * Serializability, which we discussed in Chapter 7, is about ensuring that transac‐ tions behave as if they were executed in some sequential order
+   * the main purpose of the leader in single-leader replication is to determine the order of writes in the replication log, —that is, the order in which followers apply those writes.
+   * Serializability is about ensuring that transactions behave as if they were executed in some sequential order
    * The use of timestamps and clocks in distributed systems
 1. It turns out that there are deep connections between ordering, linearizability, and consensus.
 
