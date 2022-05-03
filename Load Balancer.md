@@ -17,6 +17,23 @@
    * Sessions can be stored in a centralized data store such as a database (SQL, NoSQL) or a persistent cache (Redis, Memcached)
    * Downstream servers such as caches and databases need to handle more simultaneous connections as upstream servers scale out
 
+## [When to Use Load Balancer](https://queue.acm.org/detail.cfm?id=3028689#:~:text=The%20determining%20factor%20in%20how,load%20balancer%20for%20increased%20capacity.)
+### Load Balancing for Capacity versus Resilience
+1. There are two primary ways to use load balancers: 
+  1. To increase capacity: 
+  2. To improve resiliency: by leaving enough spare capacity that a single replica can fail and the remaining replicas can handle the incoming requests.
+1. The term N+1 redundancy refers to a system that is configured such that if a single replica dies, enough capacity is left over in the remaining N replicas for the system to work properly. A system is N+0 if there is no spare capacity. A system can also be designed to be N+2 redundant, which would permit the system to survive two dead replicas, and so on.
+2. Three Ways To Do It Wrong
+  1. Level 1: The Team Disagrees
+  2. Level 2: Capacity Undefined
+    1. To know for sure, you have to know the actual capacity of each replica.The largest QPS rate that resulted in sufficiently fast response times determines the capacity of the replica.
+  4. Level 3: Definition but no Monitoring to detect whether or not you are in compliance
+
+
+
+
+
+
 
 ## Disadvantage(s): load balancer
 1. The load balancer can become a performance bottleneck if it does not have enough resources or if it is not configured properly.
