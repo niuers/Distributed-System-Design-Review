@@ -1,10 +1,10 @@
 # Overview
 
 1. A transaction is a way for an application to group several reads and writes together into a logical unit.
-2. Conceptually, all the reads and writes in a transaction are executed as one operation: either the entire transaction succeeds (commit) or it fails (abort, rollback).
-3. By using transactions, the application is free to ignore certain potential error scenarios and concurrency issues, because the database takes care of them instead (we call these safety guarantees).
+  1. Conceptually, all the reads and writes in a transaction are executed as one operation: either the entire transaction succeeds (commit) or it fails (abort, rollback). If  it  fails,  the  application  can  safely  retry.
+  2.  With  transactions,  errorhandling becomes much simpler for an application, because it doesn’t need to worryabout partial failure
+2. Transactions are created to simplify the programming  model  for  applications accessing  a database. By using transactions, the application is free to ignore certain potential error scenarios and concurrency issues, because the database takes care of them instead (we call these safety guarantees).
 4. Transactions are an abstraction layer that allows an application to pretend that certain concurrency problems and certain kinds of hardware and software faults don’t exist. A large class of errors is reduced down to a simple transaction abort, and the application just needs to try again.
-5. Transactions in distributed databases open a new set of difficult challenges.
 
 # The Slippery Concept of a Transaction
 1. Nonrelational (NoSQL) databases aimed to improve upon the relational status quo by offering a choice of new data models, ***and by including replication  and partitioning by default**. Transactions were the main casualty of this movement: many abandoned transactions entirely, or redefined the word to describe a much weaker set of guarantees than had previously been understood
@@ -14,22 +14,24 @@
 1. Systems that do not meet the ACID criteria are sometimes called BASE, which stands for Basically Available, Soft State, and Eventual consistency
 
 ### Atomicity
-1. In the context of ACID, atomicity is not about concurrency, ACID atomicity describes what happens if a client wants to make several writes, but a fault occurs after some of the writes have been processed. 
+1. In the context of ACID, atomicity is not about concurrency (it's covered under Isolation), ACID atomicity describes what happens if a client wants to make several writes, but a fault occurs after some of the writes have been processed. 
 2. If the writes are grouped together into an atomic transaction, and the transaction cannot be completed (committed) due to a fault, then the transaction is aborted and the database must discard or undo any writes it has made so far in that transaction.
-3. The ability to abort a transaction on error and have all writes from that transaction discarded is the defining feature of ACID atomicity
-4. The database saves you from having to worry about partial failure, by giving an all-or-nothing guarantee.
+3. Atomicity  simplifies  this  problem:  if  a  transaction  was  aborted,  the application can be sure that it didn’t change anything, so it can safely be retried
+4. The ability to abort a transaction on error and have all writes from that transaction discarded is the defining feature of ACID atomicity
+5. The database saves you from having to worry about partial failure, by giving an all-or-nothing guarantee.
 
 ### Consistency
 1. In the context of ACID, consistency refers to an application-specific notion of the database being in a “good state.”
-2. The idea of ACID consistency is that you have certain statements about your data (invariants) that must always be true
+2. The idea of ACID consistency is that you have certain statements about your data (invariants) that must always be true.  If a transaction starts with adatabase that is valid according to these invariants, and any writes during the transac‐tion preserve the validity, then you can be sure that the invariants are always satisfied.
 3. However, this idea of consistency depends on the application’s notion of invariants, and it’s the application’s responsibility to define its transactions correctly so that they preserve consistency. This is not something that the database can guarantee.
-4. Atomicity, isolation, and durability are properties of the database, whereas consistency (in the ACID sense) is a property of the application.
+  1. if  youwrite  bad  data  that  violates  your  invariants,  the  database  can’t  stop  you.  (Some  spe‐cific  kinds  of  invariants  can  be  checked  by  the  database,  for  example  using  foreignkey  constraints  or  uniqueness  constraints.  However,  in  general,  the  applicationdefines what data is valid or invalid—the database only stores it.)
+5. Atomicity, isolation, and durability are properties of the database, whereas consistency (in the ACID sense) is a property of the application.
 
 ### Isolation
 1. If read/write are accessing the same database records, you can run into concurrency problems (race conditions)
 2. Isolation in the sense of ACID means that concurrently executing transactions are isolated from each other: they cannot step on each other’s toes.
 3. The classic database textbooks formalize isolation as *serializability*, which means that each transaction can pretend that it is the only transaction running on the entire database. The database ensures that when the transactions have committed, the result is the same as if they had run serially (one after another), even though in reality they may have run concurrently.
-1. However, in practice, serializable isolation is rarely used, because it carries a performance penalty.
+1. However, in practice, serializable isolation is rarely used, because it carries a performance penalty. Some popular databases, such as Oracle 11g, don’t even implement it.
 2. Concurrently running transactions shouldn’t interfere with each other. For example, if one transaction makes several writes, then another transaction should see either all or none of those writes, but not some subset.
 
 ### Durability
@@ -38,12 +40,14 @@
 3. In a replicated database, durability may mean that the data has been successfully copied to some number of nodes. In order to provide a durability guarantee, a database must wait until these writes or replications are complete before reporting a transaction as successfully committed.
 
 ## Single-Object and Multi-Object Operations
-1. Not all applications are susceptible to all those problems: an application with very simple access patterns, such as reading and writing only a single record, can probably manage without transactions.
-2. However, for more complex access patterns, transactions can hugely reduce the number of potential error cases you need to think about.
-3. in ACID, atomicity and isolation describe what the database should do if a client makes several writes within the same transaction
+1. in ACID, atomicity and isolation describe what the database should do if aclient makes several writes within the same transaction
+2. These definitions assume that you want to modify several objects (rows, documents,records)  at  once.  Such  multi-object  transactions  are  often  needed  if  several  pieces  ofdata need to be kept in sync.
+3. Not all applications are susceptible to all those problems: an application with very simple access patterns, such as reading and writing only a single record, can probably manage without transactions.
+4. However, for more complex access patterns, transactions can hugely reduce the number of potential error cases you need to think about.
+5. in ACID, atomicity and isolation describe what the database should do if a client makes several writes within the same transaction
    * These definitions assume that you want to modify several objects (rows, documents, records) at once (e.g. check for unread email while having a counter of unread messages). Such multi-object transactions are often needed if several pieces of data need to be kept in sync.
-4. Multi-object transactions require some way of determining which read and write operations belong to the same transaction. In relational databases, that is typically done based on the client’s TCP connection to the database server: on any particular connection, everything between a BEGIN TRANSACTION and a COMMIT statement is considered to be part of the same transaction.
-5. On the other hand, many nonrelational databases don’t have such a way of grouping operations together. 
+6. Multi-object transactions require some way of determining which read and write operations belong to the same transaction. In relational databases, that is typically done based on the client’s TCP connection to the database server: on any particular connection, everything between a BEGIN TRANSACTION and a COMMIT statement is considered to be part of the same transaction.
+7. On the other hand, many nonrelational databases don’t have such a way of grouping operations together. 
 
 ### Single-Object Writes
 1. Atomicity and isolation also apply when a single object is being changed. For example, imagine you are writing a 20 KB JSON document to a database
