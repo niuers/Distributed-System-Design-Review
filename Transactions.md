@@ -47,7 +47,7 @@
 5. in ACID, atomicity and isolation describe what the database should do if a client makes several writes within the same transaction
    * These definitions assume that you want to modify several objects (rows, documents, records) at once (e.g. check for unread email while having a counter of unread messages). Such multi-object transactions are often needed if several pieces of data need to be kept in sync.
 6. Multi-object transactions require some way of determining which read and write operations belong to the same transaction. In relational databases, that is typically done based on the client’s TCP connection to the database server: on any particular connection, everything between a BEGIN TRANSACTION and a COMMIT statement is considered to be part of the same transaction.
-7. On the other hand, many nonrelational databases don’t have such a way of grouping operations together. 
+7. On the other hand, many nonrelational databases don’t have such a way of grouping operations together. ven  if  there  is  a  multi-object  API  (for  example,  a  key-valuestore may have a multi-putoperation that updates several keys in one operation), thatdoesn’t necessarily mean it has transaction semantics: the command may succeed forsome keys and fail for others, leaving the database in a partially updated state.
 
 ### Single-Object Writes
 1. Atomicity and isolation also apply when a single object is being changed. For example, imagine you are writing a 20 KB JSON document to a database
@@ -227,10 +227,12 @@
 2. Code running in a database is difficult to manage
 3. A database is often much more performance-sensitive than an application server, because a single database instance is often shared by many application servers. A badly written stored procedure (e.g., using a lot of memory or CPU time) in a database can cause much more trouble.
 4. With stored procedures and in-memory data, executing all transactions on a single thread becomes feasible. As they don’t need to wait for I/O and they avoid the over‐ head of other concurrency control mechanisms, they can achieve quite good throughput on a single thread.
+
 #### Partitioning
 1. Read-only transactions may execute elsewhere, using snapshot isola‐ tion, but for applications with high write throughput, the single-threaded transaction processor can become a serious bottleneck.
 2. In order to scale to multiple CPU cores, and multiple nodes, you can potentially par‐ tition your data (see Chapter 6), which is supported in VoltDB.
    * but data with multiple secondary indexes is likely to require a lot of cross- partition coordination
+
 #### Summary of Serial Execution Constraints
 1. Every transaction must be small and fast, because it takes only one slow transac‐ tion to stall all transaction processing.
 1. It is limited to use cases where the active dataset can fit in memory. Rarely accessed data could potentially be moved to disk, but if it needed to be accessed in a single-threaded transaction, the system would get very slow. We can do anti-caching here by abort the transaction, asynchronously fetch data and re-try.
